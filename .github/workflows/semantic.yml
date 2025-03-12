@@ -9,17 +9,26 @@ on:
     branches:
       - main
       - develop
+  workflow_dispatch:  # GitHub Actions에서 수동 실행 가능하도록 추가
 
 jobs:
   semantic-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          node-version: 'lts/*'
+          fetch-depth: 0  # Semantic Release가 전체 Git 기록을 확인할 수 있도록 설정
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
           registry-url: 'https://npm.pkg.github.com/'
-      - run: npm install
-      - run: npx semantic-release
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Semantic Release
+        run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -8,7 +8,7 @@ function Navigation() {
     <nav className="mt-auto border-t">
       <ul className="flex justify-around py-3">
         <li>
-          <button 
+          <button
             className={`flex flex-col items-center ${location.pathname === '/' ? 'text-blue-600' : ''}`}
             onClick={() => navigate('/')}
           >
@@ -17,7 +17,7 @@ function Navigation() {
           </button>
         </li>
         <li>
-          <button 
+          <button
             className={`flex flex-col items-center ${location.pathname === '/map' ? 'text-blue-600' : ''}`}
             onClick={() => navigate('/map')}
           >
@@ -26,7 +26,7 @@ function Navigation() {
           </button>
         </li>
         <li>
-          <button 
+          <button
             className="flex flex-col items-center"
             onClick={() => navigate('/mypage')}
           >
@@ -39,4 +39,4 @@ function Navigation() {
   )
 }
 
-export default Navigation 
+export default Navigation

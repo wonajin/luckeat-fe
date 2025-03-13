@@ -14,10 +14,7 @@ function CategoryList() {
     <div className="p-4 bg-gray-50">
       <div className="grid grid-cols-4 gap-4">
         {categories.map((category) => (
-          <button
-            key={category.id}
-            className="flex flex-col items-center p-2"
-          >
+          <button key={category.id} className="flex flex-col items-center p-2">
             <span className="text-2xl mb-1">{category.icon}</span>
             <span className="text-xs">{category.name}</span>
           </button>
@@ -27,4 +24,4 @@ function CategoryList() {
   )
 }
 
-export default CategoryList 
+export default CategoryList

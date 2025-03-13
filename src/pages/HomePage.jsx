@@ -9,7 +9,7 @@ function HomePage() {
   const [showSortOptions, setShowSortOptions] = useState(false)
   const [selectedSort, setSelectedSort] = useState('distance')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-  
+
   const sortOptions = [
     { id: 'distance', label: '가까운 순' },
     { id: 'reviews', label: '리뷰 많은 순' },
@@ -17,13 +17,13 @@ function HomePage() {
   ]
 
   const getSortLabel = () => {
-    return sortOptions.find(option => option.id === selectedSort)?.label
+    return sortOptions.find((option) => option.id === selectedSort)?.label
   }
-  
+
   return (
     <>
       <Header />
-      
+
       {/* 검색바 */}
       <div className="px-4 py-2">
         <input
@@ -53,21 +53,23 @@ function HomePage() {
           </label>
         </div>
         <div className="relative">
-          <button 
+          <button
             className="text-sm text-gray-600 flex items-center gap-1"
             onClick={() => setShowSortOptions(!showSortOptions)}
           >
             {getSortLabel()} ▾
           </button>
-          
+
           {/* 정렬 옵션 드롭다운 */}
           {showSortOptions && (
             <div className="absolute right-0 top-full mt-1 bg-white border rounded-lg shadow-lg py-1 w-32 z-10">
-              {sortOptions.map(option => (
+              {sortOptions.map((option) => (
                 <button
                   key={option.id}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                    selectedSort === option.id ? 'text-blue-600' : 'text-gray-700'
+                    selectedSort === option.id
+                      ? 'text-blue-600'
+                      : 'text-gray-700'
                   }`}
                   onClick={() => {
                     setSelectedSort(option.id)
@@ -88,7 +90,7 @@ function HomePage() {
 
       {/* 드롭다운 외부 클릭 시 닫기 */}
       {showSortOptions && (
-        <div 
+        <div
           className="fixed inset-0 z-0"
           onClick={() => setShowSortOptions(false)}
         />
@@ -97,4 +99,4 @@ function HomePage() {
   )
 }
 
-export default HomePage 
+export default HomePage

@@ -10,10 +10,7 @@ function MapPage() {
     <div className="flex flex-col h-full">
       {/* 헤더 */}
       <div className="px-4 py-3 border-b flex items-center">
-        <button 
-          onClick={() => navigate(-1)}
-          className="text-2xl mr-4"
-        >
+        <button onClick={() => navigate(-1)} className="text-2xl mr-4">
           ←
         </button>
         <h1 className="text-xl font-semibold text-orange-500">Luckeat</h1>
@@ -48,16 +45,14 @@ function MapPage() {
       {/* 지도 영역 */}
       <div className="flex-1 relative bg-gray-100">
         {/* 지도가 들어갈 자리 */}
-        <div className="absolute inset-0">
-          {/* 실제 지도는 나중에 구현 */}
-        </div>
+        <div className="absolute inset-0">{/* 실제 지도는 나중에 구현 */}</div>
 
         {/* 마감 할인 필터 */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2">
-          <button 
+          <button
             className={`px-4 py-2 rounded-full text-sm flex items-center gap-2 ${
-              showDiscountOnly 
-                ? 'bg-blue-600 text-white' 
+              showDiscountOnly
+                ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-700 border'
             }`}
             onClick={() => setShowDiscountOnly(!showDiscountOnly)}
@@ -83,4 +78,4 @@ function MapPage() {
   )
 }
 
-export default MapPage 
+export default MapPage

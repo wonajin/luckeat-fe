@@ -32,8 +32,8 @@ const stores = [
 
 function StoreList({ sortBy = 'distance', showDiscountOnly = false }) {
   // 필터링
-  const filteredStores = showDiscountOnly 
-    ? stores.filter(store => store.isDiscounted)
+  const filteredStores = showDiscountOnly
+    ? stores.filter((store) => store.isDiscounted)
     : stores
 
   // 정렬
@@ -67,10 +67,14 @@ function StoreList({ sortBy = 'distance', showDiscountOnly = false }) {
               <span>공유 {store.shares}</span>
             </div>
             {store.status && (
-              <span className="text-sm text-gray-500 block mt-1">{store.status}</span>
+              <span className="text-sm text-gray-500 block mt-1">
+                {store.status}
+              </span>
             )}
             {store.isDiscounted && (
-              <span className="text-sm text-blue-600 block mt-1">마감 할인중</span>
+              <span className="text-sm text-blue-600 block mt-1">
+                마감 할인중
+              </span>
             )}
           </div>
         </div>
@@ -79,4 +83,4 @@ function StoreList({ sortBy = 'distance', showDiscountOnly = false }) {
   )
 }
 
-export default StoreList 
+export default StoreList

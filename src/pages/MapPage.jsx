@@ -14,17 +14,17 @@ function MapPage() {
   // 할인 필터와 카테고리 변경 시 가게 목록 필터링
   useEffect(() => {
     let result = [...stores]
-    
+
     if (showDiscountOnly) {
       result = result.filter((store) =>
         store.products.some((product) => !product.isSoldOut),
       )
     }
-    
+
     if (selectedCategory !== '전체') {
       result = result.filter((store) => store.category === selectedCategory)
     }
-    
+
     setFilteredStores(result)
   }, [showDiscountOnly, selectedCategory])
 
@@ -58,7 +58,9 @@ function MapPage() {
       {/* 지도 영역 */}
       <div className="flex-1 relative bg-gray-100 overflow-hidden">
         {/* 지도가 들어갈 자리 */}
-        <div className="absolute inset-0 h-2/3">{/* 실제 지도는 나중에 구현 */}</div>
+        <div className="absolute inset-0 h-2/3">
+          {/* 실제 지도는 나중에 구현 */}
+        </div>
 
         {/* 마감 할인 필터 */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2">
@@ -88,7 +90,9 @@ function MapPage() {
         {/* 가게 목록 */}
         <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-white rounded-t-2xl shadow-lg overflow-y-auto">
           <div className="p-4">
-            <h3 className="font-bold mb-2">주변 가게 ({filteredStores.length})</h3>
+            <h3 className="font-bold mb-2">
+              주변 가게 ({filteredStores.length})
+            </h3>
             <div className="space-y-3">
               {filteredStores.slice(0, 3).map((store) => (
                 <div

@@ -50,7 +50,10 @@ function EditProfilePage() {
               className="w-full border p-2 rounded"
             />
           </div>
-          <button type="submit" className="w-full py-2 bg-yellow-500 text-white rounded">
+          <button
+            type="submit"
+            className="w-full py-2 bg-yellow-500 text-white rounded"
+          >
             정보 수정
           </button>
         </form>
@@ -60,4 +63,4 @@ function EditProfilePage() {
   )
 }
 
-export default EditProfilePage; 
+export default EditProfilePage

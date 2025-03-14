@@ -8,13 +8,19 @@ function CategoryList({ selectedCategory, onSelectCategory }) {
         <button
           key={category.id}
           className={`flex flex-col items-center ${
-            selectedCategory === category.name ? 'text-yellow-500' : 'text-gray-700'
+            selectedCategory === category.name
+              ? 'text-yellow-500'
+              : 'text-gray-700'
           }`}
-          onClick={() => onSelectCategory(category.name === '전체' ? '' : category.name)}
+          onClick={() =>
+            onSelectCategory(category.name === '전체' ? '' : category.name)
+          }
         >
           <div
             className={`w-14 h-14 rounded-full flex items-center justify-center mb-1 ${
-              selectedCategory === category.name ? 'bg-yellow-100' : 'bg-gray-200'
+              selectedCategory === category.name
+                ? 'bg-yellow-100'
+                : 'bg-gray-200'
             }`}
           >
             <span className="text-2xl">{category.icon}</span>

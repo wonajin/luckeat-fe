@@ -20,36 +20,36 @@ function ReviewManagementPage() {
     rating: 5,
     content: '',
     image: null,
-    imagePreview: null
+    imagePreview: null,
   })
   const [editReview, setEditReview] = useState({
     rating: 5,
     content: '',
     image: null,
-    imagePreview: null
+    imagePreview: null,
   })
 
   // 작성 가능한 가게와 작성한 리뷰 초기화
   useEffect(() => {
     // 실제 구현에서는 API 호출로 데이터를 가져옴
     // 여기서는 임시 데이터 사용
-    
+
     // 작성 가능한 가게 목록 (예: 주문 완료된 가게 중 리뷰 미작성)
-    const writable = stores.slice(0, 2).map(store => ({
+    const writable = stores.slice(0, 2).map((store) => ({
       ...store,
-      orderDate: '24.05.15'
+      orderDate: '24.05.15',
     }))
-    
+
     // 사용자가 작성한 리뷰 목록
-    const written = stores.slice(2, 4).flatMap(store => 
-      store.reviews.slice(0, 1).map(review => ({ 
-        ...review, 
+    const written = stores.slice(2, 4).flatMap((store) =>
+      store.reviews.slice(0, 1).map((review) => ({
+        ...review,
         storeId: store.id,
         storeName: store.name,
-        orderDate: '24.02.06'
-      }))
+        orderDate: '24.02.06',
+      })),
     )
-    
+
     setWritableStores(writable)
     setWrittenReviews(written)
   }, [user])
@@ -72,7 +72,7 @@ function ReviewManagementPage() {
         rating: 5,
         content: '',
         image: null,
-        imagePreview: null
+        imagePreview: null,
       })
     }
   }
@@ -82,7 +82,7 @@ function ReviewManagementPage() {
     if (editingReviewId === review.id) {
       // 이미 수정 중인 리뷰를 취소하려고 할 때
       if (
-        editReview.content !== review.content || 
+        editReview.content !== review.content ||
         editReview.rating !== review.rating ||
         editReview.image !== review.image
       ) {
@@ -99,7 +99,7 @@ function ReviewManagementPage() {
         rating: review.rating,
         content: review.content,
         image: review.image,
-        imagePreview: review.image
+        imagePreview: review.image,
       })
     }
   }
@@ -110,9 +110,18 @@ function ReviewManagementPage() {
     if (!file) return
 
     // 파일 유효성 검사
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heif', 'image/heic']
+    const validTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/heif',
+      'image/heic',
+    ]
     if (!validTypes.includes(file.type)) {
-      alert('지원하지 않는 파일 형식입니다. JPG, JPEG, PNG, WEBP, HEIF, HEIC 형식만 가능합니다.')
+      alert(
+        '지원하지 않는 파일 형식입니다. JPG, JPEG, PNG, WEBP, HEIF, HEIC 형식만 가능합니다.',
+      )
       return
     }
 
@@ -125,16 +134,16 @@ function ReviewManagementPage() {
     const reader = new FileReader()
     reader.onloadend = () => {
       if (isEdit) {
-        setEditReview(prev => ({
+        setEditReview((prev) => ({
           ...prev,
           image: file,
-          imagePreview: reader.result
+          imagePreview: reader.result,
         }))
       } else {
-        setNewReview(prev => ({
+        setNewReview((prev) => ({
           ...prev,
           image: file,
-          imagePreview: reader.result
+          imagePreview: reader.result,
         }))
       }
     }
@@ -147,18 +156,18 @@ function ReviewManagementPage() {
     if (content.length > 100) return // 100자 제한
 
     if (isEdit) {
-      setEditReview(prev => ({ ...prev, content }))
+      setEditReview((prev) => ({ ...prev, content }))
     } else {
-      setNewReview(prev => ({ ...prev, content }))
+      setNewReview((prev) => ({ ...prev, content }))
     }
   }
 
   // 별점 변경 처리
   const handleRatingChange = (rating, isEdit = false) => {
     if (isEdit) {
-      setEditReview(prev => ({ ...prev, rating }))
+      setEditReview((prev) => ({ ...prev, rating }))
     } else {
-      setNewReview(prev => ({ ...prev, rating }))
+      setNewReview((prev) => ({ ...prev, rating }))
     }
   }
 
@@ -173,33 +182,36 @@ function ReviewManagementPage() {
     const newReviewObj = {
       id: Date.now(), // 임시 ID
       storeId,
-      storeName: writableStores.find(s => s.id === storeId).name,
+      storeName: writableStores.find((s) => s.id === storeId).name,
       userName: user?.nickname || '사용자',
       rating: newReview.rating,
       content: newReview.content,
       image: newReview.imagePreview,
-      date: new Date().toLocaleDateString('ko-KR', {
-        year: '2-digit',
-        month: '2-digit',
-        day: '2-digit'
-      }).replace(/\. /g, '.').replace(/\.$/, '')
+      date: new Date()
+        .toLocaleDateString('ko-KR', {
+          year: '2-digit',
+          month: '2-digit',
+          day: '2-digit',
+        })
+        .replace(/\. /g, '.')
+        .replace(/\.$/, ''),
     }
 
     // 작성한 리뷰 목록에 추가
-    setWrittenReviews(prev => [newReviewObj, ...prev])
-    
+    setWrittenReviews((prev) => [newReviewObj, ...prev])
+
     // 작성 가능한 가게 목록에서 제거
-    setWritableStores(prev => prev.filter(store => store.id !== storeId))
-    
+    setWritableStores((prev) => prev.filter((store) => store.id !== storeId))
+
     // 폼 닫기
     setExpandedStoreId(null)
-    
+
     // 리뷰 초기화
     setNewReview({
       rating: 5,
       content: '',
       image: null,
-      imagePreview: null
+      imagePreview: null,
     })
   }
 
@@ -211,19 +223,19 @@ function ReviewManagementPage() {
     }
 
     // 실제 구현에서는 API 호출로 리뷰 업데이트
-    setWrittenReviews(prev => 
-      prev.map(review => 
+    setWrittenReviews((prev) =>
+      prev.map((review) =>
         review.id === reviewId
-          ? { 
-              ...review, 
-              rating: editReview.rating, 
+          ? {
+              ...review,
+              rating: editReview.rating,
               content: editReview.content,
-              image: editReview.imagePreview
+              image: editReview.imagePreview,
             }
-          : review
-      )
+          : review,
+      ),
     )
-    
+
     // 수정 모드 종료
     setEditingReviewId(null)
   }
@@ -237,20 +249,25 @@ function ReviewManagementPage() {
   // 리뷰 삭제 처리
   const handleDeleteReview = () => {
     // 실제 구현에서는 API 호출로 리뷰 삭제
-    setWrittenReviews(prev => prev.filter(review => review.id !== reviewToDelete))
-    
+    setWrittenReviews((prev) =>
+      prev.filter((review) => review.id !== reviewToDelete),
+    )
+
     // 삭제된 가게를 다시 작성 가능한 목록에 추가 (실제 구현에서는 API 응답에 따라 처리)
-    const deletedReview = writtenReviews.find(r => r.id === reviewToDelete)
+    const deletedReview = writtenReviews.find((r) => r.id === reviewToDelete)
     if (deletedReview) {
-      const store = stores.find(s => s.id === deletedReview.storeId)
+      const store = stores.find((s) => s.id === deletedReview.storeId)
       if (store) {
-        setWritableStores(prev => [...prev, {
-          ...store,
-          orderDate: deletedReview.orderDate
-        }])
+        setWritableStores((prev) => [
+          ...prev,
+          {
+            ...store,
+            orderDate: deletedReview.orderDate,
+          },
+        ])
       }
     }
-    
+
     // 모달 닫기
     setShowDeleteModal(false)
     setReviewToDelete(null)
@@ -266,10 +283,15 @@ function ReviewManagementPage() {
   }
 
   // 별점 렌더링 함수
-  const renderStars = (rating, isInteractive = false, isEdit = false, maxRating = 5) => {
+  const renderStars = (
+    rating,
+    isInteractive = false,
+    isEdit = false,
+    maxRating = 5,
+  ) => {
     return Array.from({ length: maxRating }, (_, i) => (
-      <span 
-        key={i} 
+      <span
+        key={i}
         className={`text-2xl cursor-${isInteractive ? 'pointer' : 'default'}`}
         onClick={() => isInteractive && handleRatingChange(i + 1, isEdit)}
       >
@@ -283,7 +305,7 @@ function ReviewManagementPage() {
       <Header title="리뷰 관리" onBack={handleBack} />
       <div className="p-4 flex-1 overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">나의 리뷰</h2>
-        
+
         {/* 작성 가능한 리뷰 섹션 */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-2">작성 가능한 리뷰</h3>
@@ -293,24 +315,28 @@ function ReviewManagementPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {writableStores.map(store => (
+              {writableStores.map((store) => (
                 <div key={store.id} className="border rounded overflow-hidden">
-                  <div 
+                  <div
                     className="p-4 flex justify-between items-center cursor-pointer"
                     onClick={() => toggleReviewForm(store.id)}
                   >
                     <div>
                       <p className="font-semibold">{store.name}</p>
-                      <p className="text-sm text-gray-500">{store.orderDate} 주문</p>
+                      <p className="text-sm text-gray-500">
+                        {store.orderDate} 주문
+                      </p>
                     </div>
                     <button className="text-gray-700 flex items-center">
-                      리뷰쓰기 
-                      <span className={`ml-1 transform transition-transform ${expandedStoreId === store.id ? 'rotate-180' : ''}`}>
+                      리뷰쓰기
+                      <span
+                        className={`ml-1 transform transition-transform ${expandedStoreId === store.id ? 'rotate-180' : ''}`}
+                      >
                         ▼
                       </span>
                     </button>
                   </div>
-                  
+
                   {/* 리뷰 작성 폼 */}
                   {expandedStoreId === store.id && (
                     <div className="p-4 border-t">
@@ -319,7 +345,7 @@ function ReviewManagementPage() {
                           {renderStars(newReview.rating, true)}
                         </div>
                       </div>
-                      
+
                       <div className="mb-3">
                         <textarea
                           className="w-full border rounded p-2"
@@ -333,7 +359,7 @@ function ReviewManagementPage() {
                           {newReview.content.length}/100
                         </div>
                       </div>
-                      
+
                       <div className="mb-4">
                         <label className="block mb-2 text-sm font-medium text-gray-700">
                           사진 첨부 파일
@@ -359,7 +385,7 @@ function ReviewManagementPage() {
                           </div>
                         )}
                       </div>
-                      
+
                       <button
                         className="w-full py-2 bg-yellow-500 text-white rounded"
                         onClick={() => handleSubmitReview(store.id)}
@@ -373,7 +399,7 @@ function ReviewManagementPage() {
             </div>
           )}
         </div>
-        
+
         {/* 작성한 리뷰 섹션 */}
         <div>
           <h3 className="text-lg font-semibold mb-2">작성한 리뷰</h3>
@@ -383,14 +409,16 @@ function ReviewManagementPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {writtenReviews.map(review => (
+              {writtenReviews.map((review) => (
                 <div key={review.id} className="border rounded p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="font-semibold">{review.storeName}</p>
-                      <p className="text-sm text-gray-500">{review.orderDate} 주문</p>
+                      <p className="text-sm text-gray-500">
+                        {review.orderDate} 주문
+                      </p>
                       <div className="text-yellow-400 my-1">
-                        {editingReviewId === review.id 
+                        {editingReviewId === review.id
                           ? renderStars(editReview.rating, true, true)
                           : renderStars(review.rating)}
                       </div>
@@ -398,13 +426,13 @@ function ReviewManagementPage() {
                     <div className="flex space-x-2">
                       {editingReviewId === review.id ? (
                         <>
-                          <button 
+                          <button
                             className="px-3 py-1 border rounded"
                             onClick={() => handleUpdateReview(review.id)}
                           >
                             수정완료
                           </button>
-                          <button 
+                          <button
                             className="px-3 py-1 border rounded"
                             onClick={() => setEditingReviewId(null)}
                           >
@@ -413,13 +441,13 @@ function ReviewManagementPage() {
                         </>
                       ) : (
                         <>
-                          <button 
+                          <button
                             className="px-3 py-1 border rounded"
                             onClick={() => toggleEditMode(review)}
                           >
                             수정
                           </button>
-                          <button 
+                          <button
                             className="px-3 py-1 border rounded"
                             onClick={() => showDeleteConfirmation(review.id)}
                           >
@@ -429,7 +457,7 @@ function ReviewManagementPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* 리뷰 내용 및 이미지 */}
                   {editingReviewId === review.id ? (
                     <>
@@ -446,7 +474,7 @@ function ReviewManagementPage() {
                           {editReview.content.length}/100
                         </div>
                       </div>
-                      
+
                       <div className="mb-2">
                         <label className="block mb-2 text-sm font-medium text-gray-700">
                           사진 첨부 파일
@@ -493,12 +521,14 @@ function ReviewManagementPage() {
           )}
         </div>
       </div>
-      
+
       {/* 삭제 확인 모달 */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
-            <h3 className="font-bold text-lg text-center mb-4">리뷰를 삭제하시겠습니까?</h3>
+            <h3 className="font-bold text-lg text-center mb-4">
+              리뷰를 삭제하시겠습니까?
+            </h3>
             <div className="flex justify-center space-x-4">
               <button
                 className="px-4 py-2 bg-yellow-500 text-white rounded"
@@ -516,12 +546,14 @@ function ReviewManagementPage() {
           </div>
         </div>
       )}
-      
+
       {/* 취소 확인 모달 */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
-            <h3 className="font-bold text-lg text-center mb-4">작성중인 내용은 사라집니다. 뒤로 가시겠습니까?</h3>
+            <h3 className="font-bold text-lg text-center mb-4">
+              작성중인 내용은 사라집니다. 뒤로 가시겠습니까?
+            </h3>
             <div className="flex justify-center space-x-4">
               <button
                 className="px-4 py-2 bg-yellow-500 text-white rounded"
@@ -543,10 +575,10 @@ function ReviewManagementPage() {
           </div>
         </div>
       )}
-      
+
       <Navigation />
     </div>
   )
 }
 
-export default ReviewManagementPage 
+export default ReviewManagementPage

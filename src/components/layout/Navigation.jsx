@@ -22,9 +22,7 @@ function Navigation() {
         <li>
           <button
             className={`flex items-center justify-center w-10 h-10 ${
-              location.pathname === '/map'
-                ? 'text-yellow-500'
-                : 'text-black'
+              location.pathname === '/map' ? 'text-yellow-500' : 'text-black'
             }`}
             onClick={() => navigate('/map')}
           >
@@ -34,9 +32,7 @@ function Navigation() {
         <li>
           <button
             className={`flex items-center justify-center w-10 h-10 ${
-              location.pathname === '/mypage'
-                ? 'text-yellow-500'
-                : 'text-black'
+              location.pathname === '/mypage' ? 'text-yellow-500' : 'text-black'
             }`}
             onClick={() => navigate('/mypage')}
           >

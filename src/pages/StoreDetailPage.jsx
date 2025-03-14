@@ -300,4 +300,4 @@ function StoreDetailPage() {
   )
 }
 
-export default StoreDetailPage 
+export default StoreDetailPage

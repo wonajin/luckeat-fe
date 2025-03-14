@@ -25,7 +25,8 @@ export const stores = [
         id: 1,
         userName: '김맛있어',
         rating: 5,
-        content: '정말 맛있어요! 할인된 가격에 신선한 도넛을 먹을 수 있어서 좋았습니다.',
+        content:
+          '정말 맛있어요! 할인된 가격에 신선한 도넛을 먹을 수 있어서 좋았습니다.',
         date: '2023-08-15',
       },
       {
@@ -210,4 +211,4 @@ export const stores = [
       },
     ],
   },
-] 
+]

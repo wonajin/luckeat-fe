@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
       email,
       nickname: email.split('@')[0], // 이메일의 @ 앞부분을 닉네임으로 사용
     }
-    
+
     setUser(userData)
     setIsLoggedIn(true)
     localStorage.setItem('user', JSON.stringify(userData))
@@ -65,4 +65,4 @@ export function AuthProvider({ children }) {
 // 인증 컨텍스트 사용을 위한 훅
 export function useAuth() {
   return useContext(AuthContext)
-} 
+}

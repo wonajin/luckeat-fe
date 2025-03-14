@@ -4,6 +4,7 @@ import Navigation from '../components/layout/Navigation'
 import CategoryList from '../components/store/CategoryList'
 import { stores, categories } from '../data/storeData'
 import { useAuth } from '../context/AuthContext'
+import Header from '../components/layout/Header'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -75,11 +76,10 @@ function HomePage() {
 
     // 할인 필터링
     if (showDiscountOnly) {
-      // 할인율이 30% 이상인 가게만 필터링
-      result = result.filter((store) => {
-        const discountRate = parseInt(store.discount)
-        return discountRate >= 30
-      })
+      // 할인 상품이 있는 가게만 필터링
+      result = result.filter((store) =>
+        store.products.some((product) => !product.isSoldOut),
+      )
     }
 
     // 정렬 옵션 적용
@@ -102,27 +102,21 @@ function HomePage() {
       <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-20">
         <h1 className="text-2xl font-bold text-yellow-500">Luckeat</h1>
         <div className="absolute right-4 text-sm">
-          {isLoggedIn ? (
-            <span className="text-gray-700">
-              {user?.nickname || '사용자'}님
-            </span>
-          ) : (
-            <div className="flex space-x-2">
-              <button
-                className="text-blue-500"
-                onClick={() => navigate('/login')}
-              >
-                로그인
-              </button>
-              <span className="text-gray-300">|</span>
-              <button
-                className="text-blue-500"
-                onClick={() => navigate('/signup')}
-              >
-                회원가입
-              </button>
-            </div>
-          )}
+          <div className="flex space-x-2">
+            <button
+              className="text-gray-700"
+              onClick={() => navigate('/login')}
+            >
+              로그인
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              className="text-gray-700"
+              onClick={() => navigate('/signup')}
+            >
+              회원가입
+            </button>
+          </div>
         </div>
       </div>
 
@@ -156,9 +150,8 @@ function HomePage() {
       </div>
 
       {/* 카테고리 */}
-      <div className="border-b bg-gray-50">
+      <div className="border-b">
         <CategoryList
-          categories={categories}
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
         />
@@ -240,7 +233,7 @@ function HomePage() {
       {/* 가게 목록 */}
       <div
         ref={storeListRef}
-        className="flex-1 overflow-y-auto px-4 pb-20 scroll-container"
+        className="flex-1 overflow-y-auto px-4 pb-20 scroll-container scrollbar-hide"
         onScroll={handleScroll}
       >
         <div className="py-2">
@@ -282,7 +275,7 @@ function HomePage() {
         {showScrollTopButton && (
           <button
             onClick={scrollToTop}
-            className="fixed bottom-24 right-50 bg-yellow-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-10 hover:bg-yellow-600"
+            className="fixed bottom-24 left-1/2 transform -translate-x-1/2 translate-x-28 bg-yellow-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-10 hover:bg-yellow-600 scro ll-container"
             aria-label="맨 위로 스크롤"
           >
             <svg

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
+import Header from '../components/layout/Header'
 
 function SignupPage() {
   const navigate = useNavigate()
@@ -48,24 +49,17 @@ function SignupPage() {
   return (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
-      <div className="px-4 py-3 border-b flex items-center">
-        <button onClick={() => navigate(-1)} className="text-2xl mr-4">
-          ←
-        </button>
-        <h1 className="text-xl font-semibold text-yellow-500">Luckeat</h1>
-      </div>
+      <Header title="회원가입" />
 
       <div className="flex-1 p-4 overflow-y-auto">
-        <h2 className="text-2xl font-bold text-center my-6">회원가입</h2>
-
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4">
             {error}
           </div>
         )}
 
         {/* 회원가입 폼 */}
-        <form onSubmit={handleSignup} className="space-y-6">
+        <form onSubmit={handleSignup} className="space-y-6 mt-4">
           {/* 회원 유형 선택 */}
           <div className="border border-red-500 rounded-lg p-3">
             <div className="flex items-center space-x-4">

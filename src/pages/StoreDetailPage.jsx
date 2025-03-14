@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import { stores } from '../data/storeData'
+import Header from '../components/layout/Header'
 
 function StoreDetailPage() {
   const navigate = useNavigate()
@@ -44,12 +45,7 @@ function StoreDetailPage() {
   return (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
-      <div className="px-4 py-3 border-b flex items-center">
-        <button onClick={() => navigate(-1)} className="text-2xl mr-4">
-          ←
-        </button>
-        <h1 className="text-xl font-semibold text-yellow-500">Luckeat</h1>
-      </div>
+      <Header title={store.name} />
 
       <div className="flex-1 overflow-y-auto">
         {/* 가게 이미지 */}

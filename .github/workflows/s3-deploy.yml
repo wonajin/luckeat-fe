@@ -23,13 +23,45 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: List build directory
+        run: |
+          echo "Checking build output directories..."
+          ls -la
+          if [ -d "build" ]; then
+            echo "Found build directory"
+            ls -la build
+          elif [ -d "dist" ]; then
+            echo "Found dist directory"
+            ls -la dist
+          else
+            echo "No standard build directory found. Checking other possibilities..."
+            find . -type d -maxdepth 2 | grep -v "node_modules" | grep -v ".git"
+          fi
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-2  # 사용 중인 AWS 리전으로 변경하세요
+          aws-region: ap-northeast-2
+
+      - name: Install AWS CLI v2
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install --update
 
       - name: Deploy to S3
-        run: aws s3 sync ./build s3://luckeat-front/assets --delete
+        run: |
+          if [ -d "build" ]; then
+            echo "Deploying from build directory..."
+            aws s3 sync ./build s3://luckeat-front/assets --delete
+          elif [ -d "dist" ]; then
+            echo "Deploying from dist directory..."
+            aws s3 sync ./dist s3://luckeat-front/assets --delete
+          else
+            echo "No build directory found. Please check your build configuration."
+            exit 1
+          fi
+          echo "Deployment completed successfully"
         # 빌드 결과물이 있는 디렉토리(예: ./build 또는 ./dist)와 S3 버킷 이름을 적절히 변경하세요 

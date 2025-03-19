@@ -9,34 +9,29 @@ function Navigation() {
       <ul className="flex justify-around py-3">
         <li>
           <button
-            className={`flex items-center justify-center w-10 h-10 ${
-              location.pathname === '/' || location.pathname === '/home'
-                ? 'text-yellow-500'
-                : 'text-black'
-            }`}
+            className={`flex flex-col items-center ${location.pathname === '/' ? 'text-blue-600' : ''}`}
             onClick={() => navigate('/')}
           >
             <span className="text-2xl">🏠</span>
+            <span className="text-xs mt-1">홈</span>
           </button>
         </li>
         <li>
           <button
-            className={`flex items-center justify-center w-10 h-10 ${
-              location.pathname === '/map' ? 'text-yellow-500' : 'text-black'
-            }`}
+            className={`flex flex-col items-center ${location.pathname === '/map' ? 'text-blue-600' : ''}`}
             onClick={() => navigate('/map')}
           >
             <span className="text-2xl">📍</span>
+            <span className="text-xs mt-1">지도</span>
           </button>
         </li>
         <li>
           <button
-            className={`flex items-center justify-center w-10 h-10 ${
-              location.pathname === '/mypage' ? 'text-yellow-500' : 'text-black'
-            }`}
+            className="flex flex-col items-center"
             onClick={() => navigate('/mypage')}
           >
             <span className="text-2xl">👤</span>
+            <span className="text-xs mt-1">마이</span>
           </button>
         </li>
       </ul>

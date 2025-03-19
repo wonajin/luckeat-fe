@@ -55,10 +55,10 @@ jobs:
         run: |
           if [ -d "build" ]; then
             echo "Deploying from build directory..."
-            aws s3 sync ./build s3://luckeat-front/assets --delete
+            aws s3 sync ./build s3://luckeat-front --delete
           elif [ -d "dist" ]; then
             echo "Deploying from dist directory..."
-            aws s3 sync ./dist s3://luckeat-front/assets --delete
+            aws s3 sync ./dist s3://luckeat-front --delete
           else
             echo "No build directory found. Please check your build configuration."
             exit 1

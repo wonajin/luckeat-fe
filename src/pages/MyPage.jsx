@@ -1,120 +1,61 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
-import Header from '../components/layout/Header'
-import { useAuth } from '../context/AuthContext'
 
 function MyPage() {
   const navigate = useNavigate()
-  const { logout } = useAuth()
-  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleLogout = () => {
-    logout()
-    setShowLogoutModal(false)
-    navigate('/')
+    navigate('/login')
   }
 
   return (
     <div className="flex flex-col h-full">
-      {/* 헤더 */}
-      <Header title="마이페이지" />
-
-      <div className="flex-1 overflow-y-auto">
-        {/* 사용자 정보 */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-              <img
-                src="https://via.placeholder.com/100?text=Profile"
-                alt="프로필"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-bold"> 배이맥스님, 혼저서예</h3>
-              <p className="text-sm text-gray-500">
-                베이맥스님을 기다리는 음식이 있어요!
-              </p>
-              <div className="flex items-center mt-1">
-                <span className="text-yellow-500 font-bold">2</span>
-                <span className="ml-1 text-sm text-gray-500">그릇</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 메뉴 목록 */}
-        <div className="p-4 space-y-4">
-          <div className="border-b pb-2">
-            <button
-              className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-              onClick={() => navigate('/reviews')}
-            >
-              <span>리뷰 관리</span>
-              <span className="text-gray-400">→</span>
-            </button>
-          </div>
-
-          <div className="border-b pb-2">
-            <button
-              className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-              onClick={() => navigate('/edit-profile')}
-            >
-              <span>회원 정보 수정</span>
-              <span className="text-gray-400">→</span>
-            </button>
-          </div>
-
-          <div className="border-b pb-2">
-            <button
-              className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-              onClick={() => setShowLogoutModal(true)}
-            >
-              <span>로그아웃</span>
-              <span className="text-gray-400">→</span>
-            </button>
-          </div>
-
-          <div className="border-b pb-2">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">고객 문의</span>
-              <span className="text-gray-400">luckeat@example.com</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 푸터 */}
-        <div className="p-4 mt-auto">
-          <p className="text-center text-sm text-gray-400">
-            Copyright @MYRO Corp. All Rights Reserved
-          </p>
-        </div>
+      <div className="px-4 py-3 border-b">
+        <h1 className="text-xl font-semibold text-orange-500">마이페이지</h1>
       </div>
 
-      {/* 로그아웃 모달 */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
-            <h3 className="font-bold text-lg text-center mb-4">로그아웃</h3>
-            <p className="text-center mb-4">로그아웃 하시겠습니까?</p>
-            <div className="flex space-x-2">
-              <button
-                className="flex-1 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg"
-                onClick={() => setShowLogoutModal(false)}
-              >
-                취소
-              </button>
-              <button
-                className="flex-1 py-2 bg-yellow-500 text-white font-bold rounded-lg"
-                onClick={handleLogout}
-              >
-                확인
-              </button>
+      <div className="flex-1 p-4">
+        {/* 프로필 섹션 */}
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-2xl">
+              👤
+            </div>
+            <div>
+              <h2 className="font-medium">사용자 닉네임</h2>
+              <p className="text-sm text-gray-500">example@example.com</p>
             </div>
           </div>
         </div>
-      )}
+
+        {/* 메뉴 리스트 */}
+        <div className="space-y-2">
+          <button
+            onClick={() => navigate('/profile-edit')}
+            className="w-full text-left px-4 py-3 bg-white rounded-lg border hover:bg-gray-50"
+          >
+            회원정보 수정
+          </button>
+          <button
+            onClick={() => alert('찜한 가게 기능은 준비중입니다.')}
+            className="w-full text-left px-4 py-3 bg-white rounded-lg border hover:bg-gray-50"
+          >
+            내가 찜한 가게
+          </button>
+          <button
+            onClick={() => alert('리뷰 관리 기능은 준비중입니다.')}
+            className="w-full text-left px-4 py-3 bg-white rounded-lg border hover:bg-gray-50"
+          >
+            리뷰 관리
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full text-left px-4 py-3 bg-white rounded-lg border hover:bg-gray-50 text-red-500"
+          >
+            로그아웃
+          </button>
+        </div>
+      </div>
 
       <Navigation />
     </div>

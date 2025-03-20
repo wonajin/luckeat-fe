@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
           // 저장된 사용자 정보가 있으면 바로 설정
           setUser(JSON.parse(storedUser))
           setIsLoggedIn(true)
-          
+
           // 선택적으로 백엔드에서 최신 사용자 정보 요청 (refreshUser 함수와 같은 걸 만들 수 있음)
           try {
             const response = await userApi.getUserInfo()

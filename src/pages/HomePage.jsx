@@ -174,8 +174,8 @@ function HomePage() {
               <button
                 className="text-gray-700"
                 onClick={async () => {
-                  await logout();
-                  navigate(0);
+                  await logout()
+                  navigate(0)
                 }}
               >
                 로그아웃

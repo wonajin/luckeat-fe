@@ -16,26 +16,29 @@ export function AuthProvider({ children }) {
     const checkAuthStatus = async () => {
       try {
         setLoading(true)
-        const token = localStorage.getItem('token')
+        const accessToken = localStorage.getItem('accessToken')
+        const storedUser = localStorage.getItem('user')
 
-        if (token) {
-          // 토큰이 있으면 사용자 정보 요청
+        if (accessToken && storedUser) {
+          // 저장된 사용자 정보가 있으면 바로 설정
+          setUser(JSON.parse(storedUser))
+          setIsLoggedIn(true)
+          
+          // 선택적으로 백엔드에서 최신 사용자 정보 요청 (refreshUser 함수와 같은 걸 만들 수 있음)
           try {
             const response = await userApi.getUserInfo()
             if (response.success) {
               setUser(response.data)
-              setIsLoggedIn(true)
-            } else {
-              // 토큰이 유효하지 않은 경우
-              localStorage.removeItem('token')
-              localStorage.removeItem('user')
+              localStorage.setItem('user', JSON.stringify(response.data))
             }
           } catch (error) {
-            // 토큰이 유효하지 않은 경우
-            console.error('인증 오류:', error)
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
+            console.log('사용자 정보 갱신 실패:', error)
+            // 오류가 있더라도 로그인 상태는 유지
           }
+        } else {
+          // 토큰이나 사용자 정보가 없는 경우 로그아웃 상태로 설정
+          setUser(null)
+          setIsLoggedIn(false)
         }
       } catch (error) {
         console.error('인증 상태 확인 오류:', error)
@@ -53,16 +56,14 @@ export function AuthProvider({ children }) {
       setLoading(true)
       const response = await userApi.login(credentials)
 
-      if (
-        response.success &&
-        response.message === SUCCESS_MESSAGES.LOGIN_SUCCESS
-      ) {
-        // 로그인 성공 후 사용자 정보 가져오기
-        const userResponse = await userApi.getUserInfo()
-        if (userResponse.success) {
-          setUser(userResponse.data)
+      if (response.success) {
+        // 로그인 성공 시 이미 userApi.login에서 로컬 스토리지에 사용자 정보와 토큰을 저장함
+        // 저장된 사용자 정보 가져오기
+        const storedUser = localStorage.getItem('user')
+        if (storedUser) {
+          const userData = JSON.parse(storedUser)
+          setUser(userData)
           setIsLoggedIn(true)
-          localStorage.setItem('user', JSON.stringify(userResponse.data))
           return { success: true }
         }
       }
@@ -115,7 +116,8 @@ export function AuthProvider({ children }) {
       if (response.success) {
         setUser(null)
         setIsLoggedIn(false)
-        localStorage.removeItem('token')
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
         return { success: true }
       }
@@ -204,7 +206,8 @@ export function AuthProvider({ children }) {
       ) {
         setUser(null)
         setIsLoggedIn(false)
-        localStorage.removeItem('token')
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
         return { success: true }
       }

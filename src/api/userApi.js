@@ -36,9 +36,24 @@ export const login = async (credentials) => {
     const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
     console.log('로그인 성공:', response.data)
 
-    // 로그인 성공 시 토큰 저장
-    if (response.data && response.data.token) {
-      localStorage.setItem('token', response.data.token)
+    // 로그인 성공 시 사용자 정보 및 토큰 저장
+    if (response.data) {
+      // 토큰 저장
+      if (response.data.accessToken) {
+        localStorage.setItem('accessToken', response.data.accessToken)
+      }
+      if (response.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.refreshToken)
+      }
+      
+      // 사용자 정보 저장
+      const userData = {
+        userId: response.data.userId,
+        email: response.data.email,
+        nickname: response.data.nickname,
+        role: response.data.role,
+      }
+      localStorage.setItem('user', JSON.stringify(userData))
     }
 
     return handleSuccessResponse(response)

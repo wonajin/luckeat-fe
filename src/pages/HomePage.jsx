@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import { getStores } from '../api/storeApi'
 import { getCategories } from '../api/categoryApi'
+import defaultImage from '../assets/images/luckeat-default.png'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -328,13 +329,12 @@ function HomePage() {
             >
               <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
                 <img
-                  src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
+                  src={defaultImage}
                   alt={store.storeName || '가게 이미지'}
                   className="w-full h-full object-cover"
                   crossOrigin="anonymous"
                   onError={(e) => {
-                    e.target.src =
-                      'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'
+                    e.target.src = defaultImage
                   }}
                 />
               </div>

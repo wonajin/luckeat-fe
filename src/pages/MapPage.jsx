@@ -7,6 +7,7 @@ import StoreMarker from '../components/map/StoreMarker'
 import MapController from '../components/map/MapController'
 import { getStores } from '../api/storeApi'
 import { getCategories } from '../api/categoryApi'
+import defaultImage from '../assets/images/luckeat-default.png'
 
 function MapPage() {
   const navigate = useNavigate()
@@ -243,14 +244,13 @@ function MapPage() {
                 >
                   <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
                     <img
-                      src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
+                      src={defaultImage}
                       alt={store.name}
                       className="w-full h-full object-cover rounded-md"
                       crossOrigin="anonymous"
                       onError={(e) => {
                         e.target.onerror = null
-                        e.target.src =
-                          'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'
+                        e.target.src = defaultImage
                       }}
                     />
                   </div>

@@ -1,5 +1,6 @@
 import React from 'react'
 import { MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk'
+import defaultImage from '../../assets/images/luckeat-default.png'
 
 function StoreMarker({ store, isSelected, onClick }) {
   return (
@@ -22,14 +23,13 @@ function StoreMarker({ store, isSelected, onClick }) {
             <div className="flex items-center gap-2">
               <div className="w-12 h-12 bg-gray-200 rounded overflow-hidden">
                 <img
-                  src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
+                  src={defaultImage}
                   alt={store.name}
                   className="w-full h-full object-cover"
                   crossOrigin="anonymous"
                   onError={(e) => {
                     e.target.onerror = null
-                    e.target.src =
-                      'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'
+                    e.target.src = defaultImage
                   }}
                 />
               </div>

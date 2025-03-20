@@ -196,7 +196,7 @@ function EditProfilePage() {
       const result = await updatePassword({
         currentPassword,
         newPassword,
-        confirmPassword
+        confirmPassword,
       })
 
       if (result.success) {
@@ -208,7 +208,10 @@ function EditProfilePage() {
         setPasswordError('')
         setPasswordsNotMatch(false)
       } else {
-        if (result.message.includes('현재 비밀번호') || result.message.includes('일치하지 않')) {
+        if (
+          result.message.includes('현재 비밀번호') ||
+          result.message.includes('일치하지 않')
+        ) {
           setCurrentPasswordError('현재 비밀번호가 일치하지 않습니다.')
         } else {
           setPasswordError(result.message || '비밀번호 수정에 실패했습니다.')
@@ -224,7 +227,7 @@ function EditProfilePage() {
   // 회원 탈퇴 처리
   const handleDeleteAccount = async () => {
     setIsLoading(true)
-    
+
     try {
       const result = await deleteAccount()
       if (result.success) {
@@ -297,7 +300,9 @@ function EditProfilePage() {
 
         {/* 비밀번호 수정 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-1">현재 비밀번호</label>
+          <label className="block text-sm font-medium mb-1">
+            현재 비밀번호
+          </label>
           <input
             type="password"
             value={currentPassword}
@@ -306,7 +311,9 @@ function EditProfilePage() {
             className="w-full p-3 bg-gray-200 rounded border border-gray-300 mb-2"
           />
           {currentPasswordError && (
-            <p className="text-red-500 text-sm mb-2">* {currentPasswordError}</p>
+            <p className="text-red-500 text-sm mb-2">
+              * {currentPasswordError}
+            </p>
           )}
 
           <label className="block text-sm font-medium mb-1">새 비밀번호</label>
@@ -332,7 +339,9 @@ function EditProfilePage() {
             className="w-full p-3 bg-gray-200 rounded border border-gray-300"
           />
           {passwordsNotMatch && (
-            <p className="text-red-500 text-sm mt-1">* {confirmPasswordError}</p>
+            <p className="text-red-500 text-sm mt-1">
+              * {confirmPasswordError}
+            </p>
           )}
 
           <div className="mt-2">
@@ -389,7 +398,8 @@ function EditProfilePage() {
               회원을 탈퇴하시겠습니까?
             </p>
             <p className="text-sm text-gray-600 text-center mb-4">
-              탈퇴 시 계정과 관련된 모든 정보가 삭제되며, 이 작업은 되돌릴 수 없습니다.
+              탈퇴 시 계정과 관련된 모든 정보가 삭제되며, 이 작업은 되돌릴 수
+              없습니다.
             </p>
             <div className="flex justify-center space-x-4">
               <button

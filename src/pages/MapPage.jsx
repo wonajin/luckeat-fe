@@ -29,10 +29,10 @@ function MapPage() {
   const [userLocation, setUserLocation] = useState(null)
   const mapRef = useRef(null)
   const storeListRef = useRef(null)
-  
+
   // 선택된 가게 아이템의 ref들을 저장
-  const storeItemRefs = useRef({});
-  
+  const storeItemRefs = useRef({})
+
   // API 기본 URL 직접 설정
   const API_BASE_URL = 'http://3.34.255.222:8080'
 
@@ -60,7 +60,7 @@ function MapPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        
+
         // 카테고리 데이터 가져오기
         const categoriesData = await getCategories()
         console.log('카테고리 데이터:', categoriesData)
@@ -84,78 +84,98 @@ function MapPage() {
           const response = await axios.get(`${API_BASE_URL}/api/v1/stores`)
           const storesData = response.data
           console.log('가게 데이터:', storesData)
-          
+
           if (!storesData || storesData.length === 0) {
-            console.log('가게 데이터가 없습니다.');
-            setLoading(false);
-            return;
+            console.log('가게 데이터가 없습니다.')
+            setLoading(false)
+            return
           }
-          
+
           // 가게 목록에 있는 고유 카테고리 추출
-          const uniqueCategories = new Set();
-          storesData.forEach(store => {
+          const uniqueCategories = new Set()
+          storesData.forEach((store) => {
             if (store.category) {
-              uniqueCategories.add(store.category);
+              uniqueCategories.add(store.category)
             }
-          });
-          console.log('추출된 고유 카테고리:', Array.from(uniqueCategories));
-          
+          })
+          console.log('추출된 고유 카테고리:', Array.from(uniqueCategories))
+
           // 더미 카테고리 설정 (API에서 카테고리가 없을 경우)
           if (uniqueCategories.size === 0) {
             // 화면에 표시된 가게들의 이름을 기반으로 더미 카테고리 할당
             const dummyCategories = {
-              '김재훈고사리육개장': '한식',
-              '플베버거': '패스트푸드',
-              '철판요리': '중식',
-              '카페브브': '카페',
-              '맛있겠다': '일식',
-              '호식이두마리치킨': '치킨',
-              '농심가락': '편의점',
-              '맥도날드': '패스트푸드',
-              '롯데리아': '패스트푸드',
-              '스타벅스': '카페',
-              '와플대학': '디저트',
-              '아리랑': '한식'
-            };
-            
-            console.log('더미 카테고리 할당 시작');
-            
+              김재훈고사리육개장: '한식',
+              플베버거: '패스트푸드',
+              철판요리: '중식',
+              카페브브: '카페',
+              맛있겠다: '일식',
+              호식이두마리치킨: '치킨',
+              농심가락: '편의점',
+              맥도날드: '패스트푸드',
+              롯데리아: '패스트푸드',
+              스타벅스: '카페',
+              와플대학: '디저트',
+              아리랑: '한식',
+            }
+
+            console.log('더미 카테고리 할당 시작')
+
             // 유효한 위치 정보가 있는 매장만 처리
             const storesWithValidLocation = storesData.map((store) => {
               // 가게 이름으로 카테고리 매칭
-              const storeName = store.name || store.storeName || '';
-              let category = store.category;
-              
+              const storeName = store.name || store.storeName || ''
+              let category = store.category
+
               if (!category) {
                 // 카테고리가 없으면 더미 카테고리에서 찾거나 기본값 설정
                 for (const [keyword, cat] of Object.entries(dummyCategories)) {
                   if (storeName.includes(keyword)) {
-                    category = cat;
-                    break;
+                    category = cat
+                    break
                   }
                 }
-                
+
                 // 여전히 없으면 가게 ID에 따라 랜덤 카테고리 할당
                 if (!category) {
-                  const availableCategories = ['한식', '중식', '일식', '양식', '카페', '디저트', '패스트푸드'];
-                  const index = (store.id % availableCategories.length);
-                  category = availableCategories[index];
+                  const availableCategories = [
+                    '한식',
+                    '중식',
+                    '일식',
+                    '양식',
+                    '카페',
+                    '디저트',
+                    '패스트푸드',
+                  ]
+                  const index = store.id % availableCategories.length
+                  category = availableCategories[index]
                 }
-                
-                console.log(`가게 [${store.id}] ${storeName}에 카테고리 할당: ${category}`);
+
+                console.log(
+                  `가게 [${store.id}] ${storeName}에 카테고리 할당: ${category}`,
+                )
               }
-              
+
               // lat, lng가 문자열이면 숫자로 변환, null이면 랜덤 위치 생성
               let lat = store.lat ? parseFloat(store.lat) : null
               let lng = store.lng ? parseFloat(store.lng) : null
-              
+
               // 유효하지 않은 좌표인 경우 (null, NaN, 0)
-              if (!lat || isNaN(lat) || !lng || isNaN(lng) || (lat === 0 && lng === 0)) {
+              if (
+                !lat ||
+                isNaN(lat) ||
+                !lng ||
+                isNaN(lng) ||
+                (lat === 0 && lng === 0)
+              ) {
                 // 사용자 위치를 기준으로 랜덤한 위치 생성 (반경 500m 이내)
-                console.log(`매장 ${store.id}(${storeName}): 유효한 좌표 없음, 랜덤 위치 생성`)
+                console.log(
+                  `매장 ${store.id}(${storeName}): 유효한 좌표 없음, 랜덤 위치 생성`,
+                )
                 const baseLocation = userLocation || mapCenter
-                const randomLat = baseLocation.lat + (Math.random() - 0.5) * 0.01 // 약 ±500m
-                const randomLng = baseLocation.lng + (Math.random() - 0.5) * 0.01
+                const randomLat =
+                  baseLocation.lat + (Math.random() - 0.5) * 0.01 // 약 ±500m
+                const randomLng =
+                  baseLocation.lng + (Math.random() - 0.5) * 0.01
                 return {
                   ...store,
                   lat: randomLat,
@@ -164,8 +184,10 @@ function MapPage() {
                   category: category, // 수정된 카테고리 적용
                 }
               }
-              
-              console.log(`매장 ${store.id}(${storeName}): 좌표 확인 - 위도 ${lat}, 경도 ${lng}, 카테고리: ${category}`)
+
+              console.log(
+                `매장 ${store.id}(${storeName}): 좌표 확인 - 위도 ${lat}, 경도 ${lng}, 카테고리: ${category}`,
+              )
               return {
                 ...store,
                 lat: lat,
@@ -173,41 +195,63 @@ function MapPage() {
                 hasRandomLocation: false,
                 category: category, // 수정된 카테고리 적용
               }
-            });
-            
+            })
+
             // 더미 카테고리 메뉴 항목 생성
-            const availableCategories = ['한식', '중식', '일식', '양식', '카페', '디저트', '패스트푸드', '치킨', '편의점'];
+            const availableCategories = [
+              '한식',
+              '중식',
+              '일식',
+              '양식',
+              '카페',
+              '디저트',
+              '패스트푸드',
+              '치킨',
+              '편의점',
+            ]
             const dummyCategoryList = availableCategories.map((cat, index) => ({
               id: index + 1,
               name: cat,
-              icon: getCategoryIcon(cat)
-            }));
-            
+              icon: getCategoryIcon(cat),
+            }))
+
             const allDummyCategories = [
               { id: 0, name: '전체', icon: '🍽️' },
-              ...dummyCategoryList
-            ];
-            
-            setCategories(allDummyCategories);
-            console.log('더미 카테고리 메뉴 생성:', allDummyCategories);
-            
-            console.log(`총 ${storesWithValidLocation.length}개 매장 정보 로드 완료`);
-            setStores(storesWithValidLocation);
-            setFilteredStores(storesWithValidLocation);
+              ...dummyCategoryList,
+            ]
+
+            setCategories(allDummyCategories)
+            console.log('더미 카테고리 메뉴 생성:', allDummyCategories)
+
+            console.log(
+              `총 ${storesWithValidLocation.length}개 매장 정보 로드 완료`,
+            )
+            setStores(storesWithValidLocation)
+            setFilteredStores(storesWithValidLocation)
           } else {
             // API에서 카테고리가 있는 경우 정상 처리
             const storesWithValidLocation = storesData.map((store) => {
               // lat, lng가 문자열이면 숫자로 변환, null이면 랜덤 위치 생성
               let lat = store.lat ? parseFloat(store.lat) : null
               let lng = store.lng ? parseFloat(store.lng) : null
-              
+
               // 유효하지 않은 좌표인 경우 (null, NaN, 0)
-              if (!lat || isNaN(lat) || !lng || isNaN(lng) || (lat === 0 && lng === 0)) {
+              if (
+                !lat ||
+                isNaN(lat) ||
+                !lng ||
+                isNaN(lng) ||
+                (lat === 0 && lng === 0)
+              ) {
                 // 사용자 위치를 기준으로 랜덤한 위치 생성 (반경 500m 이내)
-                console.log(`매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 랜덤 위치 생성`)
+                console.log(
+                  `매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 랜덤 위치 생성`,
+                )
                 const baseLocation = userLocation || mapCenter
-                const randomLat = baseLocation.lat + (Math.random() - 0.5) * 0.01 // 약 ±500m
-                const randomLng = baseLocation.lng + (Math.random() - 0.5) * 0.01
+                const randomLat =
+                  baseLocation.lat + (Math.random() - 0.5) * 0.01 // 약 ±500m
+                const randomLng =
+                  baseLocation.lng + (Math.random() - 0.5) * 0.01
                 return {
                   ...store,
                   lat: randomLat,
@@ -215,31 +259,37 @@ function MapPage() {
                   hasRandomLocation: true, // 랜덤 위치 표시
                 }
               }
-              
-              console.log(`매장 ${store.id}(${store.name || store.storeName}): 좌표 확인 - 위도 ${lat}, 경도 ${lng}`)
+
+              console.log(
+                `매장 ${store.id}(${store.name || store.storeName}): 좌표 확인 - 위도 ${lat}, 경도 ${lng}`,
+              )
               return {
                 ...store,
                 lat: lat,
                 lng: lng,
                 hasRandomLocation: false,
               }
-            });
-            
-            console.log(`총 ${storesWithValidLocation.length}개 매장 정보 로드 완료`);
-            setStores(storesWithValidLocation);
-            setFilteredStores(storesWithValidLocation);
+            })
+
+            console.log(
+              `총 ${storesWithValidLocation.length}개 매장 정보 로드 완료`,
+            )
+            setStores(storesWithValidLocation)
+            setFilteredStores(storesWithValidLocation)
           }
         } catch (error) {
           console.error('가게 정보 로드 실패:', error)
           // 오류가 있으면 getStores 함수로 재시도
           try {
             const storesData = await getStores()
-            console.log('getStores 함수로 재시도:', storesData);
-            const storeList = Array.isArray(storesData) ? storesData : storesData?.data || []
+            console.log('getStores 함수로 재시도:', storesData)
+            const storeList = Array.isArray(storesData)
+              ? storesData
+              : storesData?.data || []
             setStores(storeList)
             setFilteredStores(storeList)
           } catch (retryError) {
-            console.error('getStores 함수 재시도 실패:', retryError);
+            console.error('getStores 함수 재시도 실패:', retryError)
           }
         }
 
@@ -300,12 +350,15 @@ function MapPage() {
       const query = searchQuery.toLowerCase()
       result = result.filter((store) => {
         const storeName = store.storeName || store.name || ''
-        const address = store.address || '';
-        return storeName.toLowerCase().includes(query) || address.toLowerCase().includes(query);
+        const address = store.address || ''
+        return (
+          storeName.toLowerCase().includes(query) ||
+          address.toLowerCase().includes(query)
+        )
       })
       console.log('검색 필터링 후 가게 수:', result.length)
     }
-    
+
     // 할인 필터링
     if (showDiscountOnly) {
       result = result.filter((store) => {
@@ -329,16 +382,21 @@ function MapPage() {
       result = result.filter((store) => {
         // categoryId 또는 category 필드 검사
         const storeCategory = store.category || store.categoryId || ''
-        console.log(`가게 [${store.storeName || store.name}] 카테고리:`, storeCategory, '선택된 카테고리:', selectedCategory);
-        
+        console.log(
+          `가게 [${store.storeName || store.name}] 카테고리:`,
+          storeCategory,
+          '선택된 카테고리:',
+          selectedCategory,
+        )
+
         // 카테고리 이름으로 비교 (대소문자 구분 없이)
         if (typeof storeCategory === 'string') {
-          return storeCategory.toLowerCase() === selectedCategory.toLowerCase();
+          return storeCategory.toLowerCase() === selectedCategory.toLowerCase()
         }
-        
+
         // 카테고리 ID로 비교 (ID가 숫자인 경우)
-        return String(storeCategory) === String(selectedCategory);
-      });
+        return String(storeCategory) === String(selectedCategory)
+      })
       console.log('카테고리 필터링 후 가게 수:', result.length)
     }
 
@@ -346,28 +404,31 @@ function MapPage() {
   }, [searchQuery, showDiscountOnly, selectedCategory, stores])
 
   // 마커 클릭 핸들러
-  const handleMarkerClick = useCallback((store) => {
-    console.log('마커 클릭:', store.id, store.name || store.storeName);
-    
-    // 선택된 가게 ID 설정
-    setSelectedStoreId(selectedStoreId === store.id ? null : store.id);
-    
-    // 선택된 가게로 지도 중심 이동
-    if (selectedStoreId !== store.id) {
-      setMapCenter({ lat: store.lat, lng: store.lng });
-    }
-    
-    // 선택된 가게로 목록 스크롤
-    if (storeItemRefs.current[store.id] && storeListRef.current) {
-      // 약간의 지연을 두고 스크롤 (UI 업데이트 후에 실행되도록)
-      setTimeout(() => {
-        storeItemRefs.current[store.id].scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
-        });
-      }, 100);
-    }
-  }, [selectedStoreId]);
+  const handleMarkerClick = useCallback(
+    (store) => {
+      console.log('마커 클릭:', store.id, store.name || store.storeName)
+
+      // 선택된 가게 ID 설정
+      setSelectedStoreId(selectedStoreId === store.id ? null : store.id)
+
+      // 선택된 가게로 지도 중심 이동
+      if (selectedStoreId !== store.id) {
+        setMapCenter({ lat: store.lat, lng: store.lng })
+      }
+
+      // 선택된 가게로 목록 스크롤
+      if (storeItemRefs.current[store.id] && storeListRef.current) {
+        // 약간의 지연을 두고 스크롤 (UI 업데이트 후에 실행되도록)
+        setTimeout(() => {
+          storeItemRefs.current[store.id].scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          })
+        }, 100)
+      }
+    },
+    [selectedStoreId],
+  )
 
   // 지도 확대
   const handleZoomIn = () => {
@@ -411,12 +472,13 @@ function MapPage() {
     <div className="flex flex-col h-full">
       {/* 헤더 */}
       <Header title="지도" />
-      
+
       {/* 카테고리 */}
       <div className="border-b overflow-x-auto whitespace-nowrap">
         <div className="inline-flex p-2">
           {categories.map((category) => {
-            const categoryName = category.name || category.categoryName || '카테고리'
+            const categoryName =
+              category.name || category.categoryName || '카테고리'
             return (
               <button
                 key={category.id}
@@ -444,7 +506,7 @@ function MapPage() {
           })}
         </div>
       </div>
-      
+
       {/* 검색바 */}
       <div className="px-4 py-2">
         <div className="relative">
@@ -470,15 +532,31 @@ function MapPage() {
         {loading && (
           <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-20">
             <div className="text-blue-500 font-bold flex items-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               데이터 로딩 중...
             </div>
           </div>
         )}
-        
+
         {/* 카카오 지도 */}
         {mapLoaded ? (
           <Map
@@ -498,7 +576,7 @@ function MapPage() {
                 title="내 위치"
               />
             )}
-            
+
             {/* 가게 마커 */}
             {filteredStores.map((store) => (
               <StoreMarker
@@ -532,9 +610,9 @@ function MapPage() {
 
         {/* 확대/축소 버튼 */}
         <MapController onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
-        
+
         {/* 가게 목록 */}
-        <div 
+        <div
           ref={storeListRef}
           className="absolute bottom-0 left-0 right-0 h-1/3 bg-white rounded-t-2xl shadow-lg overflow-y-auto z-10 scroll-container"
         >
@@ -547,7 +625,7 @@ function MapPage() {
                 filteredStores.map((store) => (
                   <div
                     key={store.id}
-                    ref={el => storeItemRefs.current[store.id] = el}
+                    ref={(el) => (storeItemRefs.current[store.id] = el)}
                     className={`flex items-center p-2 border rounded-lg cursor-pointer transition-all duration-200 ${
                       selectedStoreId === store.id
                         ? 'border-blue-500 bg-blue-50 shadow-md'

@@ -316,7 +316,10 @@ function StoreDetailPage() {
                 </p>
 
                 {store.reviews.map((review) => (
-                  <div key={review.reviewId} className="border rounded-lg p-3 mb-4">
+                  <div
+                    key={review.reviewId}
+                    className="border rounded-lg p-3 mb-4"
+                  >
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center">
                         <div className="bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center mr-2">
@@ -333,23 +336,23 @@ function StoreDetailPage() {
                         <span className="font-medium">{review.rating}</span>
                       </div>
                     </div>
-                    
+
                     {review.reviewImage && (
                       <div className="my-2">
-                        <img 
-                          src={review.reviewImage} 
-                          alt="리뷰 이미지" 
+                        <img
+                          src={review.reviewImage}
+                          alt="리뷰 이미지"
                           className="w-full h-48 object-cover rounded-lg"
                           onError={(e) => {
-                            e.target.src = defaultImage;
-                            e.target.className = "hidden";
+                            e.target.src = defaultImage
+                            e.target.className = 'hidden'
                           }}
                         />
                       </div>
                     )}
-                    
+
                     <p className="text-gray-700 my-2">{review.reviewContent}</p>
-                    
+
                     <p className="text-xs text-gray-400 mt-2">
                       {new Date(review.createdAt).toLocaleDateString('ko-KR', {
                         year: 'numeric',

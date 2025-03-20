@@ -25,9 +25,25 @@ export const registerStore = async (storeData, storeImage) => {
 // 가게 목록 조회 (필터링 및 정렬 옵션 지원)
 export const getStores = async (params = {}) => {
   try {
+    console.log('getStores 호출 - 파라미터:', params)
+    
+    // isDiscountOpen 파라미터가 있는지 확인
+    let url = 'stores'
+    
+    // 파라미터에 isDiscountOpen가 있을 때만 URL에 직접 추가
+    if (params.isDiscountOpen === true) {
+      url = `stores?isDiscountOpen=true`
+      // 다른 파라미터는 그대로 유지하되 isDiscountOpen는 제거
+      const { isDiscountOpen, ...otherParams } = params
+      params = otherParams
+    }
+    
+    console.log('API 요청 URL:', url)
+    console.log('API 요청 파라미터(수정됨):', params)
+
     // API_BASE_URL에 이미 슬래시가 포함되어 있으므로 'stores'만 사용
     // 또는 API_ENDPOINTS.STORES 사용 권장
-    const response = await apiClient.get('stores', {
+    const response = await apiClient.get(url, {
       params,
     })
 

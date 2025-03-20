@@ -26,43 +26,50 @@ function HomePage() {
 
   // 백엔드에서 데이터 가져오기
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-
-        // 카테고리 데이터 가져오기
-        const categoriesData = await getCategories()
-        console.log('카테고리 API 응답:', categoriesData)
-
-        // 응답 구조 확인 및 로그
-        const categoriesList = Array.isArray(categoriesData)
-          ? categoriesData
-          : categoriesData?.data || []
-
-        console.log('처리된 카테고리 목록:', categoriesList)
-        setCategories(categoriesList)
-
-        // 가게 데이터 가져오기
-        const storesData = await getStores()
-        console.log('가게 데이터 API 응답:', storesData)
-
-        // 데이터 구조 확인 후 적절히 설정
-        const storesList = Array.isArray(storesData)
-          ? storesData
-          : storesData?.data || []
-        console.log('처리된 가게 목록:', storesList)
-
-        setStores(storesList)
-        setFilteredStores(storesList)
-        setLoading(false)
-      } catch (error) {
-        console.error('데이터 로딩 중 오류 발생:', error)
-        setLoading(false)
-      }
-    }
-
     fetchData()
-  }, [])
+  }, [showDiscountOnly]) // showDiscountOnly 상태가 변경될 때마다 데이터 다시 가져오기
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+
+      // 카테고리 데이터 가져오기
+      const categoriesData = await getCategories()
+      console.log('카테고리 API 응답:', categoriesData)
+
+      // 응답 구조 확인 및 로그
+      const categoriesList = Array.isArray(categoriesData)
+        ? categoriesData
+        : categoriesData?.data || []
+
+      console.log('처리된 카테고리 목록:', categoriesList)
+      setCategories(categoriesList)
+
+      // API 호출 시 필터링 파라미터 설정
+      const params = {}
+      // 할인중만 버튼이 활성화된 경우에만 파라미터 추가
+      if (showDiscountOnly) {
+        params.isDiscountOpen = true
+      }
+
+      // 가게 데이터 가져오기 (필터링 적용)
+      const storesData = await getStores(params)
+      console.log('가게 데이터 API 응답:', storesData)
+
+      // 데이터 구조 확인 후 적절히 설정
+      const storesList = Array.isArray(storesData)
+        ? storesData
+        : storesData?.data || []
+      console.log('처리된 가게 목록:', storesList)
+
+      setStores(storesList)
+      setFilteredStores(storesList)
+      setLoading(false)
+    } catch (error) {
+      console.error('데이터 로딩 중 오류 발생:', error)
+      setLoading(false)
+    }
+  }
 
   // 로딩 및 데이터 상태 디버깅
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
@@ -101,7 +108,7 @@ function HomePage() {
     }
   }, [])
 
-  // 검색어, 할인 필터, 카테고리가 변경될 때 가게 목록 필터링
+  // 검색어, 카테고리가 변경될 때 가게 목록 필터링 (할인 필터는 API에서 처리)
   useEffect(() => {
     if (!stores || stores.length === 0) return
 
@@ -128,24 +135,7 @@ function HomePage() {
       console.log('검색 필터링 후 가게 수:', result.length)
     }
 
-    // 할인 필터링
-    if (showDiscountOnly) {
-      // 할인 상품이 있는 가게만 필터링
-      result = result.filter((store) => {
-        const hasDiscountProducts =
-          store.products &&
-          Array.isArray(store.products) &&
-          store.products.some(
-            (product) => !product.isSoldOut && product.discountRate > 0,
-          )
-
-        // 원래 조건이 맞지 않으면 discount 필드로 확인
-        return (
-          hasDiscountProducts || (store.discount && store.discount !== '0%')
-        )
-      })
-      console.log('할인 필터링 후 가게 수:', result.length)
-    }
+    // 할인 필터링은 API에서 처리하므로 제거
 
     // 정렬 옵션 적용
     if (sortOption === '가까운 순') {
@@ -185,7 +175,7 @@ function HomePage() {
 
     console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
-  }, [searchQuery, showDiscountOnly, selectedCategory, sortOption, stores])
+  }, [searchQuery, selectedCategory, sortOption, stores])
 
   console.log('현재 stores 데이터:', stores)
   console.log('현재 filteredStores 데이터:', filteredStores)

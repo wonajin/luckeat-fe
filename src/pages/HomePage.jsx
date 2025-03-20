@@ -107,7 +107,7 @@ function HomePage() {
     }
   }, [])
 
-  // 검색어, 카테고리가 변경될 때 가게 목록 필터링 (할인 필터는 API에서 처리)
+  // 검색어, 할인 필터, 카테고리가 변경될 때 가게 목록 필터링
   useEffect(() => {
     if (!stores || stores.length === 0) return
 
@@ -118,6 +118,7 @@ function HomePage() {
     // 카테고리 필터링 - 백엔드 API 응답 구조에 맞게 수정
     if (selectedCategory) {
       result = result.filter((store) => {
+        // categoryId를 비교 (API 응답 구조에 맞게 수정)
         return store.categoryId === selectedCategory
       })
       console.log('카테고리 필터링 후 가게 수:', result.length)
@@ -133,39 +134,363 @@ function HomePage() {
       console.log('검색 필터링 후 가게 수:', result.length)
     }
 
+    // 할인 필터링은 API에서 처리하므로 여기서는 제거
+    // 이미 showDiscountOnly 변경 시 useEffect를 통해 API 요청이 다시 이루어짐
+
+    // 정렬 옵션 적용
+    if (sortOption === '가까운 순') {
+      result.sort((a, b) => {
+        // distance가 문자열 형식이면(예: "0.5km") 숫자로 변환
+        const distanceA =
+          typeof a.distance === 'string'
+            ? parseFloat(a.distance.replace(/[^0-9.]/g, ''))
+            : parseFloat(a.distance || 0)
+        const distanceB =
+          typeof b.distance === 'string'
+            ? parseFloat(b.distance.replace(/[^0-9.]/g, ''))
+            : parseFloat(b.distance || 0)
+        return distanceA - distanceB
+      })
+    } else if (sortOption === '리뷰 많은 순') {
+      result.sort((a, b) => {
+        const reviewsA = a.reviews
+          ? Array.isArray(a.reviews)
+            ? a.reviews.length
+            : 0
+          : 0
+        const reviewsB = b.reviews
+          ? Array.isArray(b.reviews)
+            ? b.reviews.length
+            : 0
+          : 0
+        return reviewsB - reviewsA
+      })
+    } else if (sortOption === '공유 많은 순') {
+      result.sort((a, b) => {
+        const shareCountA = a.shareCount || 0
+        const shareCountB = b.shareCount || 0
+        return shareCountB - shareCountA
+      })
+    } else if (sortOption === '별점 높은 순') {
+      result.sort((a, b) => {
+        // 별점 계산: 리뷰가 없으면 0점, 있으면 평균 별점 계산
+        const getAverageRating = (store) => {
+          if (!store.reviews || !Array.isArray(store.reviews) || store.reviews.length === 0) {
+            return 0;
+          }
+          
+          // 리뷰의 rating 값을 합산하고 평균 계산
+          const totalRating = store.reviews.reduce((sum, review) => {
+            return sum + (review.rating || 0);
+          }, 0);
+          
+          return totalRating / store.reviews.length;
+        };
+        
+        const ratingA = getAverageRating(a);
+        const ratingB = getAverageRating(b);
+        
+        // 별점이 같으면 리뷰 수가 많은 순으로 정렬
+        if (ratingB === ratingA) {
+          const reviewsA = a.reviews ? a.reviews.length : 0;
+          const reviewsB = b.reviews ? b.reviews.length : 0;
+          return reviewsB - reviewsA;
+        }
+        
+        return ratingB - ratingA; // 별점 높은 순으로 내림차순 정렬
+      });
+    }
+
+    console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
   }, [searchQuery, selectedCategory, sortOption, stores]) // showDiscountOnly 제거
 
-  return (
-    <div>
-      {/* 헤더 */}
-      <Header />
+  console.log('현재 stores 데이터:', stores)
+  console.log('현재 filteredStores 데이터:', filteredStores)
 
-      {/* 카테고리 리스트 */}
-      <CategoryList
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelectCategory={handleCategorySelect}
-      />
+  // 첫 번째 가게 항목의 구조 확인 (있는 경우)
+  if (stores && stores.length > 0) {
+    console.log('첫 번째 가게 데이터 구조:', stores[0])
+    console.log('첫 번째 가게 키:', Object.keys(stores[0]))
+  }
+
+  // 카테고리 핸들러
+  const handleCategorySelect = (category) => {
+    console.log('카테고리 선택:', category)
+    setSelectedCategory(category)
+  }
+
+  // HomePage.jsx 파일에서 가게 카드 클릭 핸들러 추가
+  const handleStoreClick = (store) => {
+    console.log('가게 선택:', store)
+    const storeId = store.id || store.storeId
+
+    if (!storeId) {
+      console.error('가게 ID가 없습니다:', store)
+      return
+    }
+
+    console.log(`가게 상세 페이지로 이동: /store/${storeId}`)
+    navigate(`/store/${storeId}`)
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* 헤더 */}
+      <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-20">
+        <h1
+          className="text-2xl font-bold text-yellow-500"
+          onClick={() => navigate(0)}
+        >
+          Luckeat
+        </h1>
+        <div className="absolute right-4 text-sm">
+          {isLoggedIn ? (
+            <div className="flex space-x-2">
+              <button
+                className="text-gray-700"
+                onClick={async () => {
+                  await logout()
+                  navigate(0)
+                }}
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <div className="flex space-x-2">
+              <button
+                className="text-gray-700"
+                onClick={() => navigate('/login')}
+              >
+                로그인
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                className="text-gray-700"
+                onClick={() => navigate('/signup')}
+              >
+                회원가입
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 검색창 */}
+      <div className="px-4 py-2 border-b">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="가게 이름, 메뉴 검색"
+            className="w-full py-2 px-4 pr-10 border border-gray-300 rounded-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* 카테고리 */}
+      <div className="border-b">
+        <CategoryList
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+        />
+      </div>
+
+      {/* 필터링 및 정렬 옵션 */}
+      <div className="px-4 py-2 border-b flex justify-between items-center">
+        <div className="flex items-center">
+          <button
+            className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center mr-2 ${showDiscountOnly ? 'bg-yellow-100' : 'bg-gray-100'}`}
+            onClick={() => setShowDiscountOnly(!showDiscountOnly)}
+          >
+            <span className="w-4 h-4 inline-flex items-center justify-center mr-1 bg-yellow-400 text-white rounded-full text-xs">
+              {showDiscountOnly ? '✓' : ''}
+            </span>
+            할인중만
+          </button>
+        </div>
+
+        {/* 정렬 옵션 */}
+        <div className="relative" ref={sortOptionsRef}>
+          <button
+            className="text-sm text-gray-500 flex items-center"
+            onClick={() => setShowSortOptions(!showSortOptions)}
+          >
+            <span>{sortOption}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 ml-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {showSortOptions && (
+            <div className="absolute right-0 mt-1 w-32 bg-white border rounded-lg shadow-lg z-10">
+              <div className="py-1">
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '가까운 순' ? 'bg-gray-100 font-bold' : ''}`}
+                  onClick={() => {
+                    setSortOption('가까운 순')
+                    setShowSortOptions(false)
+                  }}
+                >
+                  가까운 순
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '리뷰 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
+                  onClick={() => {
+                    setSortOption('리뷰 많은 순')
+                    setShowSortOptions(false)
+                  }}
+                >
+                  리뷰 많은 순
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '공유 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
+                  onClick={() => {
+                    setSortOption('공유 많은 순')
+                    setShowSortOptions(false)
+                  }}
+                >
+                  공유 많은 순
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '별점 높은 순' ? 'bg-gray-100 font-bold' : ''}`}
+                  onClick={() => {
+                    setSortOption('별점 높은 순')
+                    setShowSortOptions(false)
+                  }}
+                >
+                  별점 높은 순
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* 가게 목록 */}
-      <div>
+      <div
+        ref={storeListRef}
+        className="flex-1 overflow-y-auto px-4 pb-20 scroll-container scrollbar-hide"
+        onScroll={handleScroll}
+      >
+        <div className="py-2">
+          <h2 className="font-bold text-lg">
+            내 주변 마감 할인 ({filteredStores.length})
+          </h2>
+        </div>
+
         {loading ? (
-          <p>로딩 중...</p>
-        ) : filteredStores.length > 0 ? (
-          filteredStores.map((store) => (
-            <div key={store.id} onClick={() => handleStoreClick(store)}>
-              <img src={defaultImage} alt="가게 이미지" />
-              <p>{store.storeName}</p>
-              <p>{store.address}</p>
+          <div className="flex justify-center items-center py-8">
+            <p>로딩 중...</p>
+          </div>
+        ) : filteredStores && filteredStores.length > 0 ? (
+          filteredStores.map((store, index) => (
+            <div
+              key={store.id || store.storeId || index}
+              className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer"
+              onClick={() => handleStoreClick(store)}
+            >
+              <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
+                <img
+                  src={defaultImage}
+                  alt={store.storeName || store.name || '가게 이미지'}
+                  className="w-full h-full object-cover"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    e.target.src = defaultImage
+                  }}
+                />
+              </div>
+              <div className="flex-1 ml-3">
+                <h3 className="font-bold">
+                  {store.storeName || store.name || '이름 없음'}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {store.address || '주소 정보 없음'}
+                </p>
+                <div className="flex items-center">
+                  {/* 별점 표시 */}
+                  <div className="flex items-center text-sm text-yellow-500 mr-2">
+                    <span className="mr-1">★</span>
+                    <span>
+                      {store.reviews && store.reviews.length > 0
+                        ? (store.reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / store.reviews.length).toFixed(1)
+                        : '0.0'}
+                    </span>
+                    <span className="text-gray-500 ml-1">
+                      ({store.reviews ? store.reviews.length : 0})
+                    </span>
+                  </div>
+                  {/* 공유 수 표시 */}
+                  <p className="text-sm font-medium">
+                    공유 {store.shareCount || 0}회
+                  </p>
+                </div>
+              </div>
             </div>
           ))
         ) : (
-          <p>표시할 가게가 없습니다.</p>
+          <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+            <p>표시할 가게가 없습니다.</p>
+          </div>
+        )}
+
+        {/* 맨 위로 스크롤 버튼 */}
+        {showScrollTopButton && (
+          <button
+            onClick={scrollToTop}
+            className="fixed bottom-24 left-1/2 transform -translate-x-1/2 translate-x-28 bg-yellow-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-10 hover:bg-yellow-600 scro ll-container"
+            aria-label="맨 위로 스크롤"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 10l7-7m0 0l7 7m-7-7v18"
+              />
+            </svg>
+          </button>
         )}
       </div>
 
-      {/* 네비게이션 */}
+      {/* 네비게이션 바 */}
       <Navigation />
     </div>
   )

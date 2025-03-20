@@ -27,7 +27,8 @@ function LoginPage() {
       const result = await login({ email, password })
 
       if (result.success) {
-        navigate('/home')
+        // 로그인 성공 시 메인 페이지로 리다이렉션
+        navigate('/')
       } else {
         setError(result.message || '로그인에 실패했습니다.')
       }

@@ -9,7 +9,7 @@ import { getCategories } from '../api/categoryApi'
 
 function HomePage() {
   const navigate = useNavigate()
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
   const [stores, setStores] = useState([])
@@ -169,21 +169,35 @@ function HomePage() {
           Luckeat
         </h1>
         <div className="absolute right-4 text-sm">
-          <div className="flex space-x-2">
-            <button
-              className="text-gray-700"
-              onClick={() => navigate('/login')}
-            >
-              로그인
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              className="text-gray-700"
-              onClick={() => navigate('/signup')}
-            >
-              회원가입
-            </button>
-          </div>
+          {isLoggedIn ? (
+            <div className="flex space-x-2">
+              <button
+                className="text-gray-700"
+                onClick={async () => {
+                  await logout();
+                  navigate(0);
+                }}
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <div className="flex space-x-2">
+              <button
+                className="text-gray-700"
+                onClick={() => navigate('/login')}
+              >
+                로그인
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                className="text-gray-700"
+                onClick={() => navigate('/signup')}
+              >
+                회원가입
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

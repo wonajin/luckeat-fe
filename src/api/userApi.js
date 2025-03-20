@@ -10,18 +10,38 @@ export const register = async (userData) => {
   try {
     console.log('회원가입 요청 데이터:', userData)
 
-    // 사용자 유형(role) 확인 및 추가
-    if (!userData.role && userData.userType) {
-      userData.role = userData.userType === '사업자' ? 'seller' : 'buyer'
+    // 복사본 생성 (원본 데이터 변경 방지)
+    const requestData = { ...userData }
+    
+    // 사용자 유형(role) 확인 및 대문자로 변환
+    if (requestData.role) {
+      requestData.role = requestData.role.toUpperCase()
+    } else if (requestData.userType) {
+      requestData.role = requestData.userType === '사업자' ? 'SELLER' : 'BUYER'
+    }
+    
+    // userType 필드 제거
+    if (requestData.userType) {
+      delete requestData.userType
     }
 
     // 프록시를 통한 요청
-    console.log('회원가입 요청 시작...')
-    const response = await apiClient.post(API_ENDPOINTS.REGISTER, userData)
+    console.log('회원가입 수정된 요청 데이터:', requestData)
+    const response = await apiClient.post(API_ENDPOINTS.REGISTER, requestData)
     console.log('회원가입 요청 성공:', response.data)
     return handleSuccessResponse(response)
   } catch (error) {
     console.error('회원가입 오류:', error)
+    
+    // 서버 오류(500)인 경우 더 자세한 메시지 제공
+    if (error.response && error.response.status === 500) {
+      return {
+        success: false,
+        message: '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+        error: error.response.data || error.message,
+      }
+    }
+    
     return handleErrorResponse(error)
   }
 }

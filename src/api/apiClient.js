@@ -17,7 +17,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // 로컬 스토리지에서 토큰 가져오기
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('accessToken')
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }

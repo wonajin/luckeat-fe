@@ -2,6 +2,13 @@ import axios from 'axios'
 import { handleErrorResponse, ERROR_MESSAGES } from '../utils/apiMessages'
 import { API_BASE_URL } from '../config/apiConfig'
 
+// 토큰 관련 상수
+export const TOKEN_KEYS = {
+  ACCESS: 'accessToken', // 액세스 토큰 키
+  REFRESH: 'refreshToken', // 리프레시 토큰 키
+  LEGACY: 'token', // 이전 버전 호환용 토큰 키
+}
+
 // axios 인스턴스 생성
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -16,11 +23,15 @@ const apiClient = axios.create({
 // 요청 인터셉터 설정
 apiClient.interceptors.request.use(
   (config) => {
-    // 로컬 스토리지에서 토큰 가져오기
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`
+    // 로컬 스토리지에서 토큰 가져오기 (여러 키 시도)
+    const accessToken =
+      localStorage.getItem(TOKEN_KEYS.ACCESS) ||
+      localStorage.getItem(TOKEN_KEYS.LEGACY)
+
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`
     }
+
     console.log('요청 전송:', config.method.toUpperCase(), config.url)
     console.log('요청 헤더:', JSON.stringify(config.headers, null, 2))
     if (config.data) {
@@ -64,8 +75,8 @@ apiClient.interceptors.response.use(
         // 토큰 만료인 경우
         if (errorMessage === ERROR_MESSAGES.TOKEN_EXPIRED) {
           // 토큰 제거 및 로그인 페이지로 리다이렉션
-          localStorage.removeItem('accessToken')
-          localStorage.removeItem('refreshToken')
+          localStorage.removeItem(TOKEN_KEYS.ACCESS)
+          localStorage.removeItem(TOKEN_KEYS.REFRESH)
           localStorage.removeItem('user')
           window.location.href = '/login'
         }

@@ -316,10 +316,52 @@ function StoreDetailPage() {
                 </p>
 
                 {store.reviews.map((review) => (
-                  <div key={review.id} className="border rounded-lg p-3 mb-4">
-                    <p className="font-bold">{review.userName}</p>
-                    <p className="text-gray-600">{review.content}</p>
-                    <p className="text-xs text-gray-400 mt-2">{review.date}</p>
+                  <div
+                    key={review.reviewId}
+                    className="border rounded-lg p-3 mb-4"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center">
+                        <div className="bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center mr-2">
+                          <span className="text-gray-500 text-sm">
+                            {review.userId ? String(review.userId)[0] : '?'}
+                          </span>
+                        </div>
+                        <span className="font-bold">
+                          사용자 {review.userId || '알 수 없음'}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-yellow-500 mr-1">★</span>
+                        <span className="font-medium">{review.rating}</span>
+                      </div>
+                    </div>
+
+                    {review.reviewImage && (
+                      <div className="my-2">
+                        <img
+                          src={review.reviewImage}
+                          alt="리뷰 이미지"
+                          className="w-full h-48 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.src = defaultImage
+                            e.target.className = 'hidden'
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <p className="text-gray-700 my-2">{review.reviewContent}</p>
+
+                    <p className="text-xs text-gray-400 mt-2">
+                      {new Date(review.createdAt).toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
                   </div>
                 ))}
               </div>

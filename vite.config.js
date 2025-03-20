@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://3.34.255.222:8080',
+        target: 'http://api.luckeat.site',
         changeOrigin: true,
         secure: false,
         ws: true,
@@ -28,7 +28,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['react-kakao-maps-sdk'],
+      //external: ['react-kakao-maps-sdk'],
     },
   },
 })

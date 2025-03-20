@@ -19,13 +19,13 @@ function MyPage() {
     const fetchUserData = async () => {
       try {
         setLoading(true)
-        
+
         // 사용자 정보 가져오기
         const userResponse = await getUserInfo()
         if (userResponse.success) {
           setUserData(userResponse.data)
         }
-        
+
         // 사용자 리뷰 가져오기
         const reviewsResponse = await getMyReviews()
         if (reviewsResponse && reviewsResponse.data) {
@@ -91,12 +91,17 @@ function MyPage() {
                     {displayUser.email || '이메일 정보가 없습니다'}
                   </p>
                   <div className="flex items-center mt-1">
-                    <span className="text-[#F7B32B] font-bold">{reviews.length}</span>
-                    <span className="ml-1 text-sm text-gray-500">개의 리뷰</span>
+                    <span className="text-[#F7B32B] font-bold">
+                      {reviews.length}
+                    </span>
+                    <span className="ml-1 text-sm text-gray-500">
+                      개의 리뷰
+                    </span>
                   </div>
                   {displayUser.createdAt && (
                     <p className="text-xs text-gray-400 mt-1">
-                      가입일: {new Date(displayUser.createdAt).toLocaleDateString()}
+                      가입일:{' '}
+                      {new Date(displayUser.createdAt).toLocaleDateString()}
                     </p>
                   )}
                 </div>

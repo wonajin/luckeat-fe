@@ -47,9 +47,9 @@ export const getStoreReviews = async (storeId) => {
 // 사용자 id로 리뷰 조회 (내 리뷰)
 export const getMyReviews = async () => {
   try {
-    console.log('내 리뷰 불러오기 요청 시작');
+    console.log('내 리뷰 불러오기 요청 시작')
     const response = await apiClient.get('/reviews/my-reviews')
-    console.log('내 리뷰 응답 받음:', response);
+    console.log('내 리뷰 응답 받음:', response)
     return response
   } catch (error) {
     console.error('내 리뷰 조회 중 오류:', error)

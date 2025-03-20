@@ -4,12 +4,12 @@ import defaultImage from '../../assets/images/luckeat-default.png'
 
 function StoreMarker({ store, isSelected, onClick }) {
   // 콘솔 로그 간소화
-  console.log('마커 생성:', store.id, store.name || store.storeName);
+  console.log('마커 생성:', store.id, store.name || store.storeName)
 
   const handleStoreClick = (e) => {
-    e.stopPropagation();
-    window.location.href = `/store/${store.id}`;
-  };
+    e.stopPropagation()
+    window.location.href = `/store/${store.id}`
+  }
 
   return (
     <React.Fragment>
@@ -17,10 +17,12 @@ function StoreMarker({ store, isSelected, onClick }) {
       <MapMarker
         position={{ lat: store.lat, lng: store.lng }}
         image={{
-          src: isSelected 
+          src: isSelected
             ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png' // 선택 시 노란 별표 마커
             : 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png', // 기본 파란색 마커
-          size: isSelected ? { width: 24, height: 35 } : { width: 28, height: 40 },
+          size: isSelected
+            ? { width: 24, height: 35 }
+            : { width: 28, height: 40 },
         }}
         onClick={onClick}
         title={store.name || store.storeName}
@@ -35,11 +37,17 @@ function StoreMarker({ store, isSelected, onClick }) {
         >
           <div className="bg-white p-3 rounded-lg shadow-lg border max-w-xs relative">
             {/* 화살표 */}
-            <div 
+            <div
               className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
-              style={{ width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: '8px solid white' }}
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: '8px solid transparent',
+                borderRight: '8px solid transparent',
+                borderBottom: '8px solid white',
+              }}
             />
-            
+
             <div className="flex items-start gap-3">
               <div className="w-16 h-16 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                 <img
@@ -54,8 +62,10 @@ function StoreMarker({ store, isSelected, onClick }) {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-sm truncate">{store.name || store.storeName}</h4>
-                <div 
+                <h4 className="font-bold text-sm truncate">
+                  {store.name || store.storeName}
+                </h4>
+                <div
                   className="text-xs mt-1 px-2 py-1 rounded inline-block"
                   style={{ backgroundColor: '#E3F2FD', color: '#1E88E5' }}
                 >

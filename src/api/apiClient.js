@@ -64,7 +64,8 @@ apiClient.interceptors.response.use(
         // 토큰 만료인 경우
         if (errorMessage === ERROR_MESSAGES.TOKEN_EXPIRED) {
           // 토큰 제거 및 로그인 페이지로 리다이렉션
-          localStorage.removeItem('token')
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
           localStorage.removeItem('user')
           window.location.href = '/login'
         }

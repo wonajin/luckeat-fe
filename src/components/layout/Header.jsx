@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 
-function Header() {
+function Header({ title }) {
   const navigate = useNavigate()
   const location = useLocation()
   const isMainPage = location.pathname === '/' || location.pathname === '/home'
@@ -19,7 +19,7 @@ function Header() {
         className="text-2xl font-bold text-yellow-500 w-full text-center"
         onClick={() => navigate('/')}
       >
-        Luckeat
+        {title || 'Luckeat'}
       </h1>
     </header>
   )

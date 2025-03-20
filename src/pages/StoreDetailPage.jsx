@@ -4,6 +4,7 @@ import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
 import { Map, MapMarker } from 'react-kakao-maps-sdk' //카카오맵 추가
 import { getStoreById } from '../api/storeApi'
+import defaultImage from '../assets/images/luckeat-default.png'
 
 function StoreDetailPage() {
   const { id } = useParams()
@@ -74,7 +75,7 @@ function StoreDetailPage() {
       <div className="flex-1 overflow-y-auto scroll-container">
         {/* 가게 이미지 */}
         <img
-          src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
+          src={defaultImage}
           alt={store.name}
           className="w-full h-48 object-cover"
           crossOrigin="anonymous"
@@ -127,7 +128,7 @@ function StoreDetailPage() {
                 </div>
                 <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center relative">
                   <img
-                    src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
+                    src={defaultImage}
                     alt={product.name}
                     className="w-full h-full object-cover rounded-md"
                     crossOrigin="anonymous"

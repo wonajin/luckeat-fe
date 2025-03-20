@@ -19,7 +19,7 @@ function Header({ title }) {
         className="text-2xl font-bold text-yellow-500 w-full text-center"
         onClick={() => navigate('/')}
       >
-        {title || 'Luckeat'}
+        Luckeat
       </h1>
     </header>
   )

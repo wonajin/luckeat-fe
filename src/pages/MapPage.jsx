@@ -7,6 +7,7 @@ import StoreMarker from '../components/map/StoreMarker'
 import MapController from '../components/map/MapController'
 import { getStores } from '../api/storeApi'
 import { getCategories } from '../api/categoryApi'
+import defaultImage from '../assets/images/luckeat-default.png'
 
 function MapPage() {
   const navigate = useNavigate()
@@ -23,7 +24,27 @@ function MapPage() {
   const [mapLevel, setMapLevel] = useState(3)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [userLocation, setUserLocation] = useState(null)
   const mapRef = useRef(null)
+
+  // 사용자 위치 가져오기
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          console.log('사용자 위치:', latitude, longitude);
+          setUserLocation({ lat: latitude, lng: longitude });
+          setMapCenter({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error('위치 정보를 가져오는데 실패했습니다:', error);
+        }
+      );
+    } else {
+      console.error('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
+    }
+  }, []);
 
   // 백엔드에서 데이터 가져오기
   useEffect(() => {
@@ -32,13 +53,40 @@ function MapPage() {
         setLoading(true)
         // 카테고리 데이터 가져오기
         const categoriesData = await getCategories()
-        setCategories(categoriesData.data || [])
+        console.log('카테고리 데이터:', categoriesData);
+        
+        const categoriesList = Array.isArray(categoriesData) 
+          ? categoriesData 
+          : (categoriesData?.data || []);
+        
+        // 전체 카테고리 추가
+        const allCategories = [
+          { id: 0, categoryName: '전체', icon: '🍽️' },
+          ...categoriesList
+        ];
+        
+        setCategories(allCategories)
 
         // 가게 데이터 가져오기
         const storesData = await getStores()
-        setStores(storesData.data || [])
-        setFilteredStores(storesData.data || [])
-
+        console.log('가게 데이터:', storesData);
+        
+        const storesList = Array.isArray(storesData) 
+          ? storesData 
+          : (storesData?.data || []);
+        
+        console.log('가게 목록:', storesList);
+        
+        // 위도/경도 데이터가 없는 가게 필터링
+        const validStores = storesList.filter(store => 
+          store.lat && store.lng && 
+          !isNaN(parseFloat(store.lat)) && !isNaN(parseFloat(store.lng))
+        );
+        
+        console.log('유효한 위치 정보가 있는 가게:', validStores.length);
+        
+        setStores(validStores)
+        setFilteredStores(validStores)
         setLoading(false)
       } catch (error) {
         console.error('데이터 로딩 중 오류 발생:', error)
@@ -89,17 +137,28 @@ function MapPage() {
     if (stores.length === 0) return
 
     let result = [...stores]
+    console.log('필터링 전 가게 수:', result.length);
 
     if (showDiscountOnly) {
-      result = result.filter(
-        (store) =>
-          store.products &&
-          store.products.some((product) => !product.isSoldOut),
-      )
+      result = result.filter((store) => {
+        const hasDiscountProducts = store.products && 
+          Array.isArray(store.products) && 
+          store.products.some((product) => !product.isSoldOut && product.discountRate > 0);
+        
+        // 원래 조건이 맞지 않으면 discount 필드로 확인
+        return hasDiscountProducts || (store.discount && store.discount !== '0%');
+      })
+      console.log('할인 필터링 후 가게 수:', result.length);
     }
 
-    if (selectedCategory !== '전체') {
-      result = result.filter((store) => store.category === selectedCategory)
+    if (selectedCategory && selectedCategory !== '전체') {
+      result = result.filter((store) => {
+        // categoryId 또는 category 필드 검사
+        const storeCategory = store.categoryId || store.category || '';
+        const categoryMatch = String(storeCategory).toLowerCase() === String(selectedCategory).toLowerCase();
+        return categoryMatch;
+      })
+      console.log('카테고리 필터링 후 가게 수:', result.length);
     }
 
     setFilteredStores(result)
@@ -124,6 +183,30 @@ function MapPage() {
     }
   }
 
+  // 카테고리 아이콘 매핑 함수
+  const getCategoryIcon = (categoryName) => {
+    const iconMap = {
+      '전체': '🍽️',
+      '한식': '🍚',
+      '중식': '🥢',
+      '일식': '🍣',
+      '양식': '🍝',
+      '디저트': '🍰',
+      '패스트푸드': '🍔',
+      '분식': '🍜',
+      '베이커리': '🥖',
+      '카페': '☕',
+      '퓨전음식': '🍲',
+      '정육': '🥩',
+      '수산': '🐟',
+      '야채/과일': '🥬',
+      '카페/디저트': '🍰',
+      '기타': '🛒'
+    }
+    
+    return iconMap[categoryName] || '🍽️'
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
@@ -132,28 +215,31 @@ function MapPage() {
       {/* 카테고리 */}
       <div className="border-b overflow-x-auto whitespace-nowrap">
         <div className="inline-flex p-2">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              className={`flex flex-col items-center px-3 ${
-                selectedCategory === category.name
-                  ? 'text-yellow-500'
-                  : 'text-gray-700'
-              }`}
-              onClick={() => setSelectedCategory(category.name)}
-            >
-              <div
-                className={`w-14 h-14 rounded-full flex items-center justify-center mb-1 ${
-                  selectedCategory === category.name
-                    ? 'bg-yellow-100'
-                    : 'bg-gray-200'
+          {categories.map((category) => {
+            const categoryName = category.categoryName || category.name || '카테고리';
+            return (
+              <button
+                key={category.id}
+                className={`flex flex-col items-center px-3 ${
+                  selectedCategory === categoryName
+                    ? 'text-yellow-500'
+                    : 'text-gray-700'
                 }`}
+                onClick={() => setSelectedCategory(categoryName)}
               >
-                <span className="text-2xl">{category.icon}</span>
-              </div>
-              <span className="text-xs">{category.name}</span>
-            </button>
-          ))}
+                <div
+                  className={`w-14 h-14 rounded-full flex items-center justify-center mb-1 ${
+                    selectedCategory === categoryName
+                      ? 'bg-yellow-100'
+                      : 'bg-gray-200'
+                  }`}
+                >
+                  <span className="text-2xl">{getCategoryIcon(categoryName)}</span>
+                </div>
+                <span className="text-xs">{categoryName}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -195,14 +281,31 @@ function MapPage() {
             />
 
             {/* 가게 마커 */}
-            {filteredStores.map((store) => (
-              <StoreMarker
-                key={store.id}
-                store={store}
-                isSelected={selectedStoreId === store.id}
-                onClick={() => handleMarkerClick(store.id)}
-              />
-            ))}
+            {filteredStores.map((store) => {
+              // 위도/경도 확인 및 파싱
+              const storeLat = parseFloat(store.lat);
+              const storeLng = parseFloat(store.lng);
+              
+              // 유효한 위치 정보가 있는 경우에만 마커 렌더링
+              if (isNaN(storeLat) || isNaN(storeLng)) {
+                console.log(`유효하지 않은 위치 정보: ${store.name || store.storeName}, lat: ${store.lat}, lng: ${store.lng}`);
+                return null;
+              }
+              
+              return (
+                <StoreMarker
+                  key={store.id}
+                  store={{
+                    ...store,
+                    lat: storeLat,
+                    lng: storeLng,
+                    name: store.storeName || store.name
+                  }}
+                  isSelected={selectedStoreId === store.id}
+                  onClick={() => handleMarkerClick(store.id)}
+                />
+              );
+            })}
           </Map>
         ) : (
           <div className="flex items-center justify-center h-full">
@@ -235,34 +338,39 @@ function MapPage() {
               주변 가게 ({filteredStores.length})
             </h3>
             <div className="space-y-3">
-              {filteredStores.map((store) => (
-                <div
-                  key={store.id}
-                  className="flex items-center p-2 border rounded-lg"
-                  onClick={() => navigate(`/store/${store.id}`)}
-                >
-                  <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
-                    <img
-                      src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
-                      alt={store.name}
-                      className="w-full h-full object-cover rounded-md"
-                      crossOrigin="anonymous"
-                      onError={(e) => {
-                        e.target.onerror = null
-                        e.target.src =
-                          'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'
-                      }}
-                    />
+              {filteredStores.length > 0 ? (
+                filteredStores.map((store) => (
+                  <div
+                    key={store.id}
+                    className="flex items-center p-2 border rounded-lg"
+                    onClick={() => navigate(`/store/${store.id}`)}
+                  >
+                    <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
+                      <img
+                        src={defaultImage}
+                        alt={store.name || store.storeName}
+                        className="w-full h-full object-cover rounded-md"
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          e.target.onerror = null
+                          e.target.src = defaultImage
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-sm">{store.storeName || store.name}</h4>
+                      <p className="text-xs text-gray-500">{store.address || '주소 정보 없음'}</p>
+                      <p className="text-xs text-gray-700 font-bold">
+                        {store.discount ? `${store.discount} 할인` : '할인 정보 없음'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-sm">{store.name}</h4>
-                    <p className="text-xs text-gray-500">{store.distance}</p>
-                    <p className="text-xs text-gray-700 font-bold">
-                      {store.discount} 할인
-                    </p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  {loading ? '가게 정보를 불러오는 중...' : '표시할 가게가 없습니다.'}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

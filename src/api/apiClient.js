@@ -23,13 +23,10 @@ const apiClient = axios.create({
 // 요청 인터셉터 설정
 apiClient.interceptors.request.use(
   (config) => {
-    // 로컬 스토리지에서 토큰 가져오기 (여러 키 시도)
-    const accessToken =
-      localStorage.getItem(TOKEN_KEYS.ACCESS) ||
-      localStorage.getItem(TOKEN_KEYS.LEGACY)
-
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`
+    // 로컬 스토리지에서 토큰 가져오기
+    const token = localStorage.getItem('accessToken')
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`
     }
 
     console.log('요청 전송:', config.method.toUpperCase(), config.url)

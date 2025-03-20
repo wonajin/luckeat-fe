@@ -86,30 +86,21 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true)
       const response = await userApi.register(userData)
-      console.log('AuthContext - 회원가입 응답:', response);
 
-      // API 문서에 따라 상태 코드 201 혹은 success 필드로 성공 여부 확인
-      if (response.statusCode === 201 || response.success) {
-        console.log('AuthContext - 회원가입 성공 처리');
-        return { 
-          success: true, 
-          message: '회원가입 성공', 
-          statusCode: response.statusCode || 201 
-        }
+      if (
+        response.success &&
+        response.message === SUCCESS_MESSAGES.REGISTER_SUCCESS
+      ) {
+        return { success: true, message: '회원가입에 성공했습니다.' }
       }
-      
-      console.log('AuthContext - 회원가입 실패 처리:', response.message);
       return {
         success: false,
         message: response.message || '회원가입에 실패했습니다.',
-        statusCode: response.statusCode
       }
     } catch (error) {
-      console.error('AuthContext - 회원가입 오류:', error)
       return {
         success: false,
         message: error.message || '회원가입에 실패했습니다.',
-        statusCode: error.response?.status
       }
     } finally {
       setLoading(false)

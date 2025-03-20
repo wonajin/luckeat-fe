@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
@@ -14,41 +14,33 @@ function SignupPage() {
   const [nickname, setNickname] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
-  
-  // 디버깅용 - 팝업 표시 상태 변경 감지
-  useEffect(() => {
-    console.log('팝업 표시 상태 변경:', showSuccessPopup);
-  }, [showSuccessPopup]);
 
   const handleSignup = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    console.log('회원가입 시작...');
+    e.preventDefault()
+    setLoading(true)
 
     // 간단한 유효성 검사
     if (!email || !nickname || !password || !confirmPassword) {
-      setError('모든 필드를 입력해주세요.');
-      setLoading(false);
-      return;
+      setError('모든 필드를 입력해주세요.')
+      setLoading(false)
+      return
     }
 
     if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
-      setLoading(false);
-      return;
+      setError('비밀번호가 일치하지 않습니다.')
+      setLoading(false)
+      return
     }
 
     // 비밀번호 길이와 복잡성 검사
     if (password.length < 8 || password.length > 20) {
-      setError('비밀번호는 8자 이상, 20자 이하여야 합니다.');
-      setLoading(false);
-      return;
+      setError('비밀번호는 8자 이상, 20자 이하여야 합니다.')
+      setLoading(false)
+      return
     }
 
     // 회원 유형에 따라 role 값 설정 (대문자로 변환)
-    const role = userType === '사업자' ? 'SELLER' : 'BUYER';
+    const role = userType === '사업자' ? 'SELLER' : 'BUYER'
 
     try {
       // 회원가입 데이터 준비
@@ -56,110 +48,30 @@ function SignupPage() {
         email,
         nickname,
         password,
-        role,
-      };
+        role, // 대문자로 변환된 role 필드 사용
+      }
 
-      console.log('회원가입 요청 데이터:', userData);
+      console.log('회원가입 요청 데이터:', userData)
 
       // 회원가입 요청
-      const result = await signup(userData);
-      console.log('회원가입 응답 결과:', result);
+      const result = await signup(userData)
 
-      // 응답 상태 코드 확인 (API 명세에 따르면 201이 성공)
-      if (result && result.statusCode === 201) {
-        console.log('회원가입 성공 (상태 코드 201), 성공 팝업 표시');
-        setShowSuccessPopup(true); // 성공 시 팝업 표시
-      } 
-      // result.success 값으로도 확인 (양쪽에서 이중 체크)
-      else if (result && result.success) {
-        console.log('회원가입 성공 (success=true), 성공 팝업 표시');
-        setShowSuccessPopup(true); // 성공 시 팝업 표시
-      }
-      // "회원가입 성공" 메시지 확인 (세 번째 체크)
-      else if (result && result.message === '회원가입 성공') {
-        console.log('회원가입 성공 (메시지 확인), 성공 팝업 표시');
-        setShowSuccessPopup(true); // 성공 시 팝업 표시
-      }
-      else {
-        // 실패 처리
-        console.log('회원가입 실패:', result);
+      if (result.success) {
+        // 회원가입 성공 시 로그인 페이지로 이동
+        alert('회원가입이 완료되었습니다. 로그인해주세요.')
+        navigate('/login')
+      } else {
         setError(
-          (result && result.message) || '회원가입에 실패했습니다. 다시 시도해주세요.'
-        );
+          result.message || '회원가입에 실패했습니다. 다시 시도해주세요.',
+        )
       }
     } catch (err) {
-      console.error('회원가입 처리 중 오류 발생:', err);
-      setError('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error('회원가입 오류:', err)
+      setError('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  // 로그인 페이지로 이동
-  const goToLogin = () => {
-    console.log('로그인 페이지로 이동');
-    navigate('/login');
-  };
-
-  // 홈 화면으로 이동
-  const goToHome = () => {
-    console.log('홈 화면으로 이동');
-    navigate('/');
-  };
-
-  // 회원가입 성공 팝업 렌더링
-  const renderSuccessPopup = () => {
-    console.log('팝업 렌더링 함수 호출됨, 상태:', showSuccessPopup);
-    
-    if (!showSuccessPopup) return null;
-    
-    return (
-      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-        <div className="bg-white p-6 rounded-lg shadow-xl w-11/12 max-w-md">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-8 h-8 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                ></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold mb-2">회원가입 완료!</h3>
-            <p className="text-gray-600 mb-6">
-              회원가입이 성공적으로 완료되었습니다.
-              <br />
-              로그인 후 서비스를 이용해보세요.
-            </p>
-            <div className="flex flex-col space-y-3">
-              <button
-                onClick={goToLogin}
-                className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg"
-              >
-                로그인하러 가기
-              </button>
-              <button
-                onClick={goToHome}
-                className="w-full py-3 bg-gray-200 text-gray-700 font-bold rounded-lg"
-              >
-                홈 화면으로 가기
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  console.log('SignupPage 렌더링, 팝업 상태:', showSuccessPopup);
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -205,8 +117,7 @@ function SignupPage() {
               </label>
             </div>
           </div>
-          
-          {/* 나머지 폼 필드들 */}
+          {/* 이메일 */}
           <div className="border rounded-lg p-4 space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">
@@ -291,12 +202,9 @@ function SignupPage() {
         </div>
       </div>
 
-      {/* 회원가입 성공 팝업 - renderSuccessPopup 함수 사용 */}
-      {renderSuccessPopup()}
-
       <Navigation />
     </div>
-  );
+  )
 }
 
-export default SignupPage;
+export default SignupPage

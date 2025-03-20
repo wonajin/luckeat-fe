@@ -92,7 +92,7 @@ export const getMessageByStatusCode = (statusCode, message = null) => {
     case 200:
       return '요청이 성공적으로 처리되었습니다.'
     case 201:
-      return '정상적으로 처리되었습니다.'
+      return '리소스가 성공적으로 생성되었습니다.'
     case 400:
       return ERROR_MESSAGES.BAD_REQUEST
     case 401:
@@ -114,25 +114,10 @@ export const getMessageByStatusCode = (statusCode, message = null) => {
  * @returns {Object} 성공 정보를 담은 객체
  */
 export const handleSuccessResponse = (response) => {
-  console.log('apiMessages - handleSuccessResponse 호출됨. 상태 코드:', response.status);
-  
-  // 성공 상태 코드인지 확인 (200대)
-  const isSuccessStatus = response.status >= 200 && response.status < 300;
-  
-  // 응답에서 메시지 추출
-  const message = response.data?.message || getMessageByStatusCode(response.status);
-  
-  console.log('apiMessages - 응답 처리 결과:', { 
-    success: isSuccessStatus, 
-    statusCode: response.status,
-    message
-  });
-  
   return {
-    success: isSuccessStatus, // 명시적으로 success 플래그 설정
+    success: true,
     data: response.data,
-    message: message,
-    statusCode: response.status,
+    message: response.data.message || getMessageByStatusCode(response.status),
   }
 }
 

@@ -342,12 +342,10 @@ function HomePage() {
             >
               <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
                 <img
-                  src={
-                    store.storeImg ||
-                    'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'
-                  }
+                  src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
                   alt={store.storeName || '가게 이미지'}
                   className="w-full h-full object-cover"
+                  crossOrigin="anonymous"
                   onError={(e) => {
                     e.target.src =
                       'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'

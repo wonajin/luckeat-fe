@@ -243,14 +243,14 @@ function MapPage() {
                 >
                   <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
                     <img
-                      src="https://luckeat-front.s3.ap-northeast-2.amazonaws.com/store/luckeat-default.png"
+                      src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
                       alt={store.name}
                       className="w-full h-full object-cover rounded-md"
                       crossOrigin="anonymous"
                       onError={(e) => {
                         e.target.onerror = null
                         e.target.src =
-                          'https://luckeat-front.s3.ap-northeast-2.amazonaws.com/store/luckeat-default.png'
+                          'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'
                       }}
                     />
                   </div>

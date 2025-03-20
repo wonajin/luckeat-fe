@@ -74,7 +74,7 @@ function StoreDetailPage() {
       <div className="flex-1 overflow-y-auto scroll-container">
         {/* 가게 이미지 */}
         <img
-          src="https://luckeat-front.s3.ap-northeast-2.amazonaws.com/store/luckeat-default.png"
+          src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
           alt={store.name}
           className="w-full h-48 object-cover"
           crossOrigin="anonymous"
@@ -127,7 +127,7 @@ function StoreDetailPage() {
                 </div>
                 <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center relative">
                   <img
-                    src="https://luckeat-front.s3.ap-northeast-2.amazonaws.com/store/luckeat-default.png"
+                    src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
                     alt={product.name}
                     className="w-full h-full object-cover rounded-md"
                     crossOrigin="anonymous"

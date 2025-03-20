@@ -380,12 +380,6 @@ function HomePage() {
           <h2 className="font-bold text-lg">
             내 주변 마감 할인 ({filteredStores.length})
           </h2>
-          <p>
-            데이터 상태:{' '}
-            {loading
-              ? '로딩 중'
-              : `${Array.isArray(stores) ? '배열' : '배열 아님'}, 길이: ${stores?.length || 0}`}
-          </p>
         </div>
 
         {loading ? (

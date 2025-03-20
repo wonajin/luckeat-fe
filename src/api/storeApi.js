@@ -26,10 +26,10 @@ export const registerStore = async (storeData, storeImage) => {
 export const getStores = async (params = {}) => {
   try {
     console.log('getStores 호출 - 파라미터:', params)
-    
+
     // isDiscountOpen 파라미터가 있는지 확인
     let url = 'stores'
-    
+
     // 파라미터에 isDiscountOpen가 있을 때만 URL에 직접 추가
     if (params.isDiscountOpen === true) {
       url = `stores?isDiscountOpen=true`
@@ -37,7 +37,7 @@ export const getStores = async (params = {}) => {
       const { isDiscountOpen, ...otherParams } = params
       params = otherParams
     }
-    
+
     console.log('API 요청 URL:', url)
     console.log('API 요청 파라미터(수정됨):', params)
 

@@ -70,9 +70,3 @@ jobs:
           fi
           echo "Deployment completed successfully"
         # 빌드 결과물이 있는 디렉토리(예: ./build 또는 ./dist)와 S3 버킷 이름을 적절히 변경하세요
-
-      - name: Invalidate CloudFront Cache
-        run: |
-          echo "Invalidating CloudFront distribution cache..."
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
-          echo "CloudFront cache invalidation completed"

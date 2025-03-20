@@ -32,17 +32,19 @@ function HomePage() {
 
         // 카테고리 데이터 가져오기
         const categoriesData = await getCategories()
-        console.log('카테고리 데이터:', categoriesData)
-        // 배열이 아닌 경우 대비
-        setCategories(
-          Array.isArray(categoriesData)
-            ? categoriesData
-            : categoriesData?.data || [],
-        )
+        console.log('카테고리 API 응답:', categoriesData)
+        
+        // 응답 구조 확인 및 로그
+        const categoriesList = Array.isArray(categoriesData)
+          ? categoriesData
+          : categoriesData?.data || []
+        
+        console.log('처리된 카테고리 목록:', categoriesList)
+        setCategories(categoriesList)
 
         // 가게 데이터 가져오기
         const storesData = await getStores()
-        console.log('가게 데이터:', storesData)
+        console.log('가게 데이터 API 응답:', storesData)
 
         // 데이터 구조 확인 후 적절히 설정
         const storesList = Array.isArray(storesData)
@@ -104,49 +106,67 @@ function HomePage() {
     if (!stores || stores.length === 0) return
 
     let result = [...stores]
+    console.log('필터링 전 가게 수:', result.length);
+    console.log('선택된 카테고리:', selectedCategory);
 
-    // 카테고리 필터링 - API 데이터 구조에 맞게 수정
+    // 카테고리 필터링 - 백엔드 API 응답 구조에 맞게 수정
     if (selectedCategory) {
       result = result.filter((store) => {
-        // categoryId 또는 category 필드 검사
-        const storeCategory = store.categoryId || store.category
-        return String(storeCategory) === String(selectedCategory)
+        // categoryId를 비교 (API 응답 구조에 맞게 수정)
+        return store.categoryId === selectedCategory
       })
+      console.log('카테고리 필터링 후 가게 수:', result.length);
     }
 
     // 검색어 필터링 - 필드명 확인 필요
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter((store) => {
-        const storeName = store.storeName || store.name || ''
-        return storeName.toLowerCase().includes(query)
+        const storeName = store.storeName || store.name || '';
+        return storeName.toLowerCase().includes(query);
       })
+      console.log('검색 필터링 후 가게 수:', result.length);
     }
 
     // 할인 필터링
     if (showDiscountOnly) {
       // 할인 상품이 있는 가게만 필터링
-      result = result.filter(
-        (store) =>
-          store.products &&
-          store.products.some((product) => !product.isSoldOut),
-      )
+      result = result.filter((store) => {
+        const hasDiscountProducts = store.products && 
+          Array.isArray(store.products) && 
+          store.products.some((product) => !product.isSoldOut && product.discountRate > 0);
+        
+        // 원래 조건이 맞지 않으면 discount 필드로 확인
+        return hasDiscountProducts || (store.discount && store.discount !== '0%');
+      })
+      console.log('할인 필터링 후 가게 수:', result.length);
     }
 
     // 정렬 옵션 적용
     if (sortOption === '가까운 순') {
-      result.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance))
+      result.sort((a, b) => {
+        // distance가 문자열 형식이면(예: "0.5km") 숫자로 변환
+        const distanceA = typeof a.distance === 'string' ? 
+          parseFloat(a.distance.replace(/[^0-9.]/g, '')) : parseFloat(a.distance || 0);
+        const distanceB = typeof b.distance === 'string' ? 
+          parseFloat(b.distance.replace(/[^0-9.]/g, '')) : parseFloat(b.distance || 0);
+        return distanceA - distanceB;
+      });
     } else if (sortOption === '리뷰 많은 순') {
-      result.sort(
-        (a, b) =>
-          (b.reviews ? b.reviews.length : 0) -
-          (a.reviews ? a.reviews.length : 0),
-      )
+      result.sort((a, b) => {
+        const reviewsA = a.reviews ? (Array.isArray(a.reviews) ? a.reviews.length : 0) : 0;
+        const reviewsB = b.reviews ? (Array.isArray(b.reviews) ? b.reviews.length : 0) : 0;
+        return reviewsB - reviewsA;
+      });
     } else if (sortOption === '공유 많은 순') {
-      // 실제 구현에서는 공유 수에 따라 정렬
-      result.sort((a, b) => (b.shareCount || 0) - (a.shareCount || 0))
+      result.sort((a, b) => {
+        const shareCountA = a.shareCount || 0;
+        const shareCountB = b.shareCount || 0;
+        return shareCountB - shareCountA;
+      });
     }
 
+    console.log('정렬 후 최종 가게 수:', result.length);
     setFilteredStores(result)
   }, [searchQuery, showDiscountOnly, selectedCategory, sortOption, stores])
 
@@ -157,6 +177,12 @@ function HomePage() {
   if (stores && stores.length > 0) {
     console.log('첫 번째 가게 데이터 구조:', stores[0])
     console.log('첫 번째 가게 키:', Object.keys(stores[0]))
+  }
+
+  // 카테고리 핸들러
+  const handleCategorySelect = (category) => {
+    console.log('카테고리 선택:', category);
+    setSelectedCategory(category);
   }
 
   return (
@@ -234,6 +260,7 @@ function HomePage() {
       {/* 카테고리 */}
       <div className="border-b">
         <CategoryList
+          categories={categories}
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
         />

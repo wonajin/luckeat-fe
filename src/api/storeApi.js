@@ -25,6 +25,8 @@ export const registerStore = async (storeData, storeImage) => {
 // 가게 목록 조회 (필터링 및 정렬 옵션 지원)
 export const getStores = async (params = {}) => {
   try {
+    console.log('가게 목록 요청 파라미터:', params);
+    
     // API_BASE_URL에 이미 슬래시가 포함되어 있으므로 'stores'만 사용
     // 또는 API_ENDPOINTS.STORES 사용 권장
     const response = await apiClient.get('stores', {

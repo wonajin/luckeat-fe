@@ -42,8 +42,14 @@ function HomePage() {
         console.log('처리된 카테고리 목록:', categoriesList)
         setCategories(categoriesList)
 
-        // 가게 데이터 가져오기
-        const storesData = await getStores()
+        // 가게 데이터 가져오기 - 필터 파라미터 적용
+        const params = {}
+        // 할인중인 가게만 보여주기 옵션이 선택된 경우 API 파라미터 추가
+        if (showDiscountOnly) {
+          params.isDiscountOpen = true
+        }
+        
+        const storesData = await getStores(params)
         console.log('가게 데이터 API 응답:', storesData)
 
         // 데이터 구조 확인 후 적절히 설정
@@ -62,7 +68,7 @@ function HomePage() {
     }
 
     fetchData()
-  }, [])
+  }, [showDiscountOnly]) // showDiscountOnly 변경 시 데이터 다시 가져오기
 
   // 로딩 및 데이터 상태 디버깅
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
@@ -128,24 +134,8 @@ function HomePage() {
       console.log('검색 필터링 후 가게 수:', result.length)
     }
 
-    // 할인 필터링
-    if (showDiscountOnly) {
-      // 할인 상품이 있는 가게만 필터링
-      result = result.filter((store) => {
-        const hasDiscountProducts =
-          store.products &&
-          Array.isArray(store.products) &&
-          store.products.some(
-            (product) => !product.isSoldOut && product.discountRate > 0,
-          )
-
-        // 원래 조건이 맞지 않으면 discount 필드로 확인
-        return (
-          hasDiscountProducts || (store.discount && store.discount !== '0%')
-        )
-      })
-      console.log('할인 필터링 후 가게 수:', result.length)
-    }
+    // 할인 필터링은 API에서 처리하므로 여기서는 제거
+    // 이미 showDiscountOnly 변경 시 useEffect를 통해 API 요청이 다시 이루어짐
 
     // 정렬 옵션 적용
     if (sortOption === '가까운 순') {
@@ -185,7 +175,7 @@ function HomePage() {
 
     console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
-  }, [searchQuery, showDiscountOnly, selectedCategory, sortOption, stores])
+  }, [searchQuery, selectedCategory, sortOption, stores]) // showDiscountOnly 제거
 
   console.log('현재 stores 데이터:', stores)
   console.log('현재 filteredStores 데이터:', filteredStores)

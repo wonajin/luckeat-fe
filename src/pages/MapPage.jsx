@@ -32,19 +32,19 @@ function MapPage() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
-          console.log('사용자 위치:', latitude, longitude);
-          setUserLocation({ lat: latitude, lng: longitude });
-          setMapCenter({ lat: latitude, lng: longitude });
+          const { latitude, longitude } = position.coords
+          console.log('사용자 위치:', latitude, longitude)
+          setUserLocation({ lat: latitude, lng: longitude })
+          setMapCenter({ lat: latitude, lng: longitude })
         },
         (error) => {
-          console.error('위치 정보를 가져오는데 실패했습니다:', error);
-        }
-      );
+          console.error('위치 정보를 가져오는데 실패했습니다:', error)
+        },
+      )
     } else {
-      console.error('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
+      console.error('이 브라우저에서는 위치 정보를 지원하지 않습니다.')
     }
-  }, []);
+  }, [])
 
   // 백엔드에서 데이터 가져오기
   useEffect(() => {
@@ -53,38 +53,41 @@ function MapPage() {
         setLoading(true)
         // 카테고리 데이터 가져오기
         const categoriesData = await getCategories()
-        console.log('카테고리 데이터:', categoriesData);
-        
-        const categoriesList = Array.isArray(categoriesData) 
-          ? categoriesData 
-          : (categoriesData?.data || []);
-        
+        console.log('카테고리 데이터:', categoriesData)
+
+        const categoriesList = Array.isArray(categoriesData)
+          ? categoriesData
+          : categoriesData?.data || []
+
         // 전체 카테고리 추가
         const allCategories = [
           { id: 0, categoryName: '전체', icon: '🍽️' },
-          ...categoriesList
-        ];
-        
+          ...categoriesList,
+        ]
+
         setCategories(allCategories)
 
         // 가게 데이터 가져오기
         const storesData = await getStores()
-        console.log('가게 데이터:', storesData);
-        
-        const storesList = Array.isArray(storesData) 
-          ? storesData 
-          : (storesData?.data || []);
-        
-        console.log('가게 목록:', storesList);
-        
+        console.log('가게 데이터:', storesData)
+
+        const storesList = Array.isArray(storesData)
+          ? storesData
+          : storesData?.data || []
+
+        console.log('가게 목록:', storesList)
+
         // 위도/경도 데이터가 없는 가게 필터링
-        const validStores = storesList.filter(store => 
-          store.lat && store.lng && 
-          !isNaN(parseFloat(store.lat)) && !isNaN(parseFloat(store.lng))
-        );
-        
-        console.log('유효한 위치 정보가 있는 가게:', validStores.length);
-        
+        const validStores = storesList.filter(
+          (store) =>
+            store.lat &&
+            store.lng &&
+            !isNaN(parseFloat(store.lat)) &&
+            !isNaN(parseFloat(store.lng)),
+        )
+
+        console.log('유효한 위치 정보가 있는 가게:', validStores.length)
+
         setStores(validStores)
         setFilteredStores(validStores)
         setLoading(false)
@@ -137,28 +140,35 @@ function MapPage() {
     if (stores.length === 0) return
 
     let result = [...stores]
-    console.log('필터링 전 가게 수:', result.length);
+    console.log('필터링 전 가게 수:', result.length)
 
     if (showDiscountOnly) {
       result = result.filter((store) => {
-        const hasDiscountProducts = store.products && 
-          Array.isArray(store.products) && 
-          store.products.some((product) => !product.isSoldOut && product.discountRate > 0);
-        
+        const hasDiscountProducts =
+          store.products &&
+          Array.isArray(store.products) &&
+          store.products.some(
+            (product) => !product.isSoldOut && product.discountRate > 0,
+          )
+
         // 원래 조건이 맞지 않으면 discount 필드로 확인
-        return hasDiscountProducts || (store.discount && store.discount !== '0%');
+        return (
+          hasDiscountProducts || (store.discount && store.discount !== '0%')
+        )
       })
-      console.log('할인 필터링 후 가게 수:', result.length);
+      console.log('할인 필터링 후 가게 수:', result.length)
     }
 
     if (selectedCategory && selectedCategory !== '전체') {
       result = result.filter((store) => {
         // categoryId 또는 category 필드 검사
-        const storeCategory = store.categoryId || store.category || '';
-        const categoryMatch = String(storeCategory).toLowerCase() === String(selectedCategory).toLowerCase();
-        return categoryMatch;
+        const storeCategory = store.categoryId || store.category || ''
+        const categoryMatch =
+          String(storeCategory).toLowerCase() ===
+          String(selectedCategory).toLowerCase()
+        return categoryMatch
       })
-      console.log('카테고리 필터링 후 가게 수:', result.length);
+      console.log('카테고리 필터링 후 가게 수:', result.length)
     }
 
     setFilteredStores(result)
@@ -186,24 +196,24 @@ function MapPage() {
   // 카테고리 아이콘 매핑 함수
   const getCategoryIcon = (categoryName) => {
     const iconMap = {
-      '전체': '🍽️',
-      '한식': '🍚',
-      '중식': '🥢',
-      '일식': '🍣',
-      '양식': '🍝',
-      '디저트': '🍰',
-      '패스트푸드': '🍔',
-      '분식': '🍜',
-      '베이커리': '🥖',
-      '카페': '☕',
-      '퓨전음식': '🍲',
-      '정육': '🥩',
-      '수산': '🐟',
+      전체: '🍽️',
+      한식: '🍚',
+      중식: '🥢',
+      일식: '🍣',
+      양식: '🍝',
+      디저트: '🍰',
+      패스트푸드: '🍔',
+      분식: '🍜',
+      베이커리: '🥖',
+      카페: '☕',
+      퓨전음식: '🍲',
+      정육: '🥩',
+      수산: '🐟',
       '야채/과일': '🥬',
       '카페/디저트': '🍰',
-      '기타': '🛒'
+      기타: '🛒',
     }
-    
+
     return iconMap[categoryName] || '🍽️'
   }
 
@@ -216,7 +226,8 @@ function MapPage() {
       <div className="border-b overflow-x-auto whitespace-nowrap">
         <div className="inline-flex p-2">
           {categories.map((category) => {
-            const categoryName = category.categoryName || category.name || '카테고리';
+            const categoryName =
+              category.categoryName || category.name || '카테고리'
             return (
               <button
                 key={category.id}
@@ -234,11 +245,13 @@ function MapPage() {
                       : 'bg-gray-200'
                   }`}
                 >
-                  <span className="text-2xl">{getCategoryIcon(categoryName)}</span>
+                  <span className="text-2xl">
+                    {getCategoryIcon(categoryName)}
+                  </span>
                 </div>
                 <span className="text-xs">{categoryName}</span>
               </button>
-            );
+            )
           })}
         </div>
       </div>
@@ -283,15 +296,17 @@ function MapPage() {
             {/* 가게 마커 */}
             {filteredStores.map((store) => {
               // 위도/경도 확인 및 파싱
-              const storeLat = parseFloat(store.lat);
-              const storeLng = parseFloat(store.lng);
-              
+              const storeLat = parseFloat(store.lat)
+              const storeLng = parseFloat(store.lng)
+
               // 유효한 위치 정보가 있는 경우에만 마커 렌더링
               if (isNaN(storeLat) || isNaN(storeLng)) {
-                console.log(`유효하지 않은 위치 정보: ${store.name || store.storeName}, lat: ${store.lat}, lng: ${store.lng}`);
-                return null;
+                console.log(
+                  `유효하지 않은 위치 정보: ${store.name || store.storeName}, lat: ${store.lat}, lng: ${store.lng}`,
+                )
+                return null
               }
-              
+
               return (
                 <StoreMarker
                   key={store.id}
@@ -299,12 +314,12 @@ function MapPage() {
                     ...store,
                     lat: storeLat,
                     lng: storeLng,
-                    name: store.storeName || store.name
+                    name: store.storeName || store.name,
                   }}
                   isSelected={selectedStoreId === store.id}
                   onClick={() => handleMarkerClick(store.id)}
                 />
-              );
+              )
             })}
           </Map>
         ) : (
@@ -358,17 +373,25 @@ function MapPage() {
                       />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-sm">{store.storeName || store.name}</h4>
-                      <p className="text-xs text-gray-500">{store.address || '주소 정보 없음'}</p>
+                      <h4 className="font-bold text-sm">
+                        {store.storeName || store.name}
+                      </h4>
+                      <p className="text-xs text-gray-500">
+                        {store.address || '주소 정보 없음'}
+                      </p>
                       <p className="text-xs text-gray-700 font-bold">
-                        {store.discount ? `${store.discount} 할인` : '할인 정보 없음'}
+                        {store.discount
+                          ? `${store.discount} 할인`
+                          : '할인 정보 없음'}
                       </p>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="text-center py-4 text-gray-500">
-                  {loading ? '가게 정보를 불러오는 중...' : '표시할 가게가 없습니다.'}
+                  {loading
+                    ? '가게 정보를 불러오는 중...'
+                    : '표시할 가게가 없습니다.'}
                 </div>
               )}
             </div>

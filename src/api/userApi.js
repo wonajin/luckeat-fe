@@ -12,14 +12,14 @@ export const register = async (userData) => {
 
     // 복사본 생성 (원본 데이터 변경 방지)
     const requestData = { ...userData }
-    
+
     // 사용자 유형(role) 확인 및 대문자로 변환
     if (requestData.role) {
       requestData.role = requestData.role.toUpperCase()
     } else if (requestData.userType) {
       requestData.role = requestData.userType === '사업자' ? 'SELLER' : 'BUYER'
     }
-    
+
     // userType 필드 제거
     if (requestData.userType) {
       delete requestData.userType
@@ -32,7 +32,7 @@ export const register = async (userData) => {
     return handleSuccessResponse(response)
   } catch (error) {
     console.error('회원가입 오류:', error)
-    
+
     // 서버 오류(500)인 경우 더 자세한 메시지 제공
     if (error.response && error.response.status === 500) {
       return {
@@ -41,7 +41,7 @@ export const register = async (userData) => {
         error: error.response.data || error.message,
       }
     }
-    
+
     return handleErrorResponse(error)
   }
 }

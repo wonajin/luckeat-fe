@@ -2,37 +2,37 @@ import React from 'react'
 
 // 아이콘 매핑 - 백엔드에서 아이콘 정보가 없으므로 카테고리 이름에 따라 아이콘 지정
 const categoryIcons = {
-  '전체': '🍽️',
-  '한식': '🍚',
-  '중식': '🥢',
-  '일식': '🍣',
-  '양식': '🍕',
-  '디저트': '🍰',
-  '패스트푸드': '🍔',
-  '분식': '🍜',
-  '베이커리': '🍞',
-  '카페': '☕',
-  '퓨전음식': '🥗',
-  '정육': '🥩',
-  '수산': '🐟',
+  전체: '🍽️',
+  한식: '🍚',
+  중식: '🥢',
+  일식: '🍣',
+  양식: '🍕',
+  디저트: '🍰',
+  패스트푸드: '🍔',
+  분식: '🍜',
+  베이커리: '🍞',
+  카페: '☕',
+  퓨전음식: '🥗',
+  정육: '🥩',
+  수산: '🐟',
   '야채/과일': '🥬',
-  '기타': '🛒'
-};
+  기타: '🛒',
+}
 
 function CategoryList({ categories = [], selectedCategory, onSelectCategory }) {
   // 전체 카테고리 추가 (API에서 전체 카테고리가 없는 경우)
   const allCategories = [
     { id: 0, categoryName: '전체', categoryImage: 'all.jpg' },
-    ...(categories || [])
-  ];
+    ...(categories || []),
+  ]
 
   return (
     <div className="grid grid-cols-4 gap-2 p-4 bg-gray-100">
       {allCategories.map((category) => {
         // 백엔드 API의 카테고리 필드명에 맞게 수정
-        const categoryName = category.categoryName;
-        const icon = categoryIcons[categoryName] || '🍴'; // 기본 아이콘
-        
+        const categoryName = category.categoryName
+        const icon = categoryIcons[categoryName] || '🍴' // 기본 아이콘
+
         return (
           <button
             key={category.id}
@@ -56,7 +56,7 @@ function CategoryList({ categories = [], selectedCategory, onSelectCategory }) {
             </div>
             <span className="text-xs">{categoryName}</span>
           </button>
-        );
+        )
       })}
     </div>
   )

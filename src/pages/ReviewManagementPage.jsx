@@ -42,15 +42,15 @@ function ReviewManagementPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        
+
         // 사용자가 작성한 리뷰 목록 가져오기
         const userReviewsResponse = await getMyReviews()
-        
+
         if (userReviewsResponse && userReviewsResponse.data) {
-          const reviewData = userReviewsResponse.data.reviews || [];
-          
+          const reviewData = userReviewsResponse.data.reviews || []
+
           // API 응답에서 리뷰 데이터 형식 매핑
-          const formattedReviews = reviewData.map(review => ({
+          const formattedReviews = reviewData.map((review) => ({
             id: review.reviewId,
             storeId: review.storeId,
             storeName: review.storeName || '가게 정보 없음',
@@ -58,40 +58,47 @@ function ReviewManagementPage() {
             rating: review.rating,
             content: review.reviewContent,
             image: review.reviewImage,
-            date: new Date(review.createdAt).toLocaleDateString('ko-KR', {
-              year: '2-digit',
-              month: '2-digit',
-              day: '2-digit',
-            }).replace(/\. /g, '.').replace(/\.$/, '')
-          }));
-          
-          setWrittenReviews(formattedReviews);
-          console.log('사용자 리뷰 데이터:', formattedReviews);
+            date: new Date(review.createdAt)
+              .toLocaleDateString('ko-KR', {
+                year: '2-digit',
+                month: '2-digit',
+                day: '2-digit',
+              })
+              .replace(/\. /g, '.')
+              .replace(/\.$/, ''),
+          }))
+
+          setWrittenReviews(formattedReviews)
+          console.log('사용자 리뷰 데이터:', formattedReviews)
         } else {
-          console.log('리뷰 데이터가 없습니다.');
-          setWrittenReviews([]);
+          console.log('리뷰 데이터가 없습니다.')
+          setWrittenReviews([])
         }
-        
+
         // 리뷰 작성 가능한 가게 목록 가져오기
         try {
-          const storesResponse = await getStores();
+          const storesResponse = await getStores()
           if (storesResponse && storesResponse.data) {
             // 이미 리뷰를 작성한 가게 ID 목록
-            const reviewedStoreIds = new Set(writtenReviews.map(review => review.storeId));
-            
+            const reviewedStoreIds = new Set(
+              writtenReviews.map((review) => review.storeId),
+            )
+
             // 아직 리뷰를 작성하지 않은 가게만 필터링
             const availableStores = storesResponse.data.stores
-              ? storesResponse.data.stores.filter(store => !reviewedStoreIds.has(store.id))
-              : [];
-            
-            setWritableStores(availableStores);
-            console.log('리뷰 작성 가능한 가게:', availableStores);
+              ? storesResponse.data.stores.filter(
+                  (store) => !reviewedStoreIds.has(store.id),
+                )
+              : []
+
+            setWritableStores(availableStores)
+            console.log('리뷰 작성 가능한 가게:', availableStores)
           }
         } catch (storeError) {
-          console.error('가게 정보 로딩 실패:', storeError);
+          console.error('가게 정보 로딩 실패:', storeError)
         }
-        
-        setLoading(false);
+
+        setLoading(false)
       } catch (err) {
         console.error('데이터 로딩 중 오류 발생:', err)
         setError('리뷰 데이터를 불러오는데 실패했습니다')
@@ -103,7 +110,7 @@ function ReviewManagementPage() {
       fetchData()
     } else {
       // 로그인되어 있지 않은 경우 로그인 페이지로 리다이렉트
-      navigate('/login');
+      navigate('/login')
     }
   }, [user, navigate])
 
@@ -237,20 +244,20 @@ function ReviewManagementPage() {
         storeId: storeId,
         rating: newReview.rating,
         reviewContent: newReview.content,
-        reviewImage: newReview.image || null
-      };
-      
+        reviewImage: newReview.image || null,
+      }
+
       // API로 리뷰 생성
-      const response = await createReview(reviewData);
-      
+      const response = await createReview(reviewData)
+
       if (response && response.message === '리뷰 작성 성공') {
         // 성공적으로 리뷰가 생성되면 리뷰 목록을 업데이트
-        const store = writableStores.find(s => s.id === storeId);
-        
+        const store = writableStores.find((s) => s.id === storeId)
+
         const newReviewObj = {
           id: response.reviewId || Date.now(), // API에서 반환된 ID 또는 임시 ID
           storeId,
-          storeName: store ? (store.storeName || store.name) : '가게 정보',
+          storeName: store ? store.storeName || store.name : '가게 정보',
           userName: user?.nickname || '사용자',
           rating: newReview.rating,
           content: newReview.content,
@@ -263,32 +270,37 @@ function ReviewManagementPage() {
             })
             .replace(/\. /g, '.')
             .replace(/\.$/, ''),
-        };
-        
+        }
+
         // 작성한 리뷰 목록에 추가
-        setWrittenReviews(prev => [newReviewObj, ...prev]);
-        
+        setWrittenReviews((prev) => [newReviewObj, ...prev])
+
         // 작성 가능한 가게 목록에서 제거
-        setWritableStores(prev => prev.filter(store => store.id !== storeId));
-        
+        setWritableStores((prev) =>
+          prev.filter((store) => store.id !== storeId),
+        )
+
         // 폼 닫기
-        setExpandedStoreId(null);
-        
+        setExpandedStoreId(null)
+
         // 리뷰 초기화
         setNewReview({
           rating: 5,
           content: '',
           image: null,
           imagePreview: null,
-        });
-        
-        alert('리뷰가 성공적으로 작성되었습니다.');
+        })
+
+        alert('리뷰가 성공적으로 작성되었습니다.')
       } else {
-        alert('리뷰 작성에 실패했습니다: ' + (response.message || '알 수 없는 오류'));
+        alert(
+          '리뷰 작성에 실패했습니다: ' +
+            (response.message || '알 수 없는 오류'),
+        )
       }
     } catch (error) {
-      console.error('리뷰 작성 중 오류:', error);
-      alert('리뷰 작성 중 오류가 발생했습니다.');
+      console.error('리뷰 작성 중 오류:', error)
+      alert('리뷰 작성 중 오류가 발생했습니다.')
     }
   }
 
@@ -304,16 +316,16 @@ function ReviewManagementPage() {
       const reviewData = {
         rating: editReview.rating,
         reviewContent: editReview.content,
-        reviewImage: editReview.image || null
-      };
-      
+        reviewImage: editReview.image || null,
+      }
+
       // API로 리뷰 수정
-      const response = await updateReview(reviewId, reviewData);
-      
+      const response = await updateReview(reviewId, reviewData)
+
       if (response && response.message === '리뷰 수정 성공') {
         // 성공적으로 리뷰가 수정되면 리뷰 목록을 업데이트
-        setWrittenReviews(prev =>
-          prev.map(review =>
+        setWrittenReviews((prev) =>
+          prev.map((review) =>
             review.id === reviewId
               ? {
                   ...review,
@@ -323,18 +335,21 @@ function ReviewManagementPage() {
                 }
               : review,
           ),
-        );
-        
+        )
+
         // 수정 모드 종료
-        setEditingReviewId(null);
-        
-        alert('리뷰가 성공적으로 수정되었습니다.');
+        setEditingReviewId(null)
+
+        alert('리뷰가 성공적으로 수정되었습니다.')
       } else {
-        alert('리뷰 수정에 실패했습니다: ' + (response.message || '알 수 없는 오류'));
+        alert(
+          '리뷰 수정에 실패했습니다: ' +
+            (response.message || '알 수 없는 오류'),
+        )
       }
     } catch (error) {
-      console.error('리뷰 수정 중 오류:', error);
-      alert('리뷰 수정 중 오류가 발생했습니다.');
+      console.error('리뷰 수정 중 오류:', error)
+      alert('리뷰 수정 중 오류가 발생했습니다.')
     }
   }
 
@@ -346,40 +361,47 @@ function ReviewManagementPage() {
 
   // 리뷰 삭제 처리
   const handleDeleteReview = async () => {
-    if (!reviewToDelete) return;
-    
+    if (!reviewToDelete) return
+
     try {
       // API로 리뷰 삭제
-      const response = await deleteReview(reviewToDelete);
-      
+      const response = await deleteReview(reviewToDelete)
+
       if (response && response.message === '리뷰 삭제 성공') {
         // 리뷰 목록에서 삭제된 리뷰 제거
-        const deletedReview = writtenReviews.find(r => r.id === reviewToDelete);
-        
-        setWrittenReviews(prev => 
-          prev.filter(review => review.id !== reviewToDelete)
-        );
-        
+        const deletedReview = writtenReviews.find(
+          (r) => r.id === reviewToDelete,
+        )
+
+        setWrittenReviews((prev) =>
+          prev.filter((review) => review.id !== reviewToDelete),
+        )
+
         // 리뷰가 삭제된 가게를 작성 가능한 가게 목록에 다시 추가
         if (deletedReview) {
-          const storeToAdd = writableStores.find(s => s.id === deletedReview.storeId);
+          const storeToAdd = writableStores.find(
+            (s) => s.id === deletedReview.storeId,
+          )
           if (storeToAdd) {
-            setWritableStores(prev => [...prev, storeToAdd]);
+            setWritableStores((prev) => [...prev, storeToAdd])
           }
         }
-        
-        setShowDeleteModal(false);
-        setReviewToDelete(null);
-        
-        alert('리뷰가 성공적으로 삭제되었습니다.');
+
+        setShowDeleteModal(false)
+        setReviewToDelete(null)
+
+        alert('리뷰가 성공적으로 삭제되었습니다.')
       } else {
-        alert('리뷰 삭제에 실패했습니다: ' + (response.message || '알 수 없는 오류'));
+        alert(
+          '리뷰 삭제에 실패했습니다: ' +
+            (response.message || '알 수 없는 오류'),
+        )
       }
     } catch (error) {
-      console.error('리뷰 삭제 중 오류:', error);
-      alert('리뷰 삭제 중 오류가 발생했습니다.');
+      console.error('리뷰 삭제 중 오류:', error)
+      alert('리뷰 삭제 중 오류가 발생했습니다.')
     } finally {
-      setShowDeleteModal(false);
+      setShowDeleteModal(false)
     }
   }
 

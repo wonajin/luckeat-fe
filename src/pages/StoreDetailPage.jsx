@@ -21,10 +21,10 @@ function StoreDetailPage() {
         setLoading(true)
         setError(null)
         console.log(`가게 상세 정보 요청 - 가게 ID: ${id}`)
-        
+
         const response = await getStoreById(id)
         console.log('가게 상세 정보 응답:', response)
-        
+
         if (response.success) {
           setStore(response.data)
         } else {
@@ -91,8 +91,9 @@ function StoreDetailPage() {
   }
 
   // 할인 중인 상품만 필터링
-  const openProducts = store.products?.filter(product => product.isOpen) || []
-  const closedProducts = store.products?.filter(product => !product.isOpen) || []
+  const openProducts = store.products?.filter((product) => product.isOpen) || []
+  const closedProducts =
+    store.products?.filter((product) => !product.isOpen) || []
 
   return (
     <div className="flex flex-col h-full">
@@ -154,13 +155,22 @@ function StoreDetailPage() {
                   <p className="text-gray-700 font-bold">
                     {product.discountedPrice.toLocaleString()}원
                     <span className="text-red-500 ml-1">
-                      ({Math.floor((1 - product.discountedPrice / product.originalPrice) * 100)}%)
+                      (
+                      {Math.floor(
+                        (1 - product.discountedPrice / product.originalPrice) *
+                          100,
+                      )}
+                      %)
                     </span>
                   </p>
                 </div>
                 <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center relative">
                   <img
-                    src={product.productImg ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}` : defaultImage}
+                    src={
+                      product.productImg
+                        ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
+                        : defaultImage
+                    }
                     alt={product.productName}
                     className="w-full h-full object-cover rounded-md"
                     crossOrigin="anonymous"
@@ -191,13 +201,23 @@ function StoreDetailPage() {
                       <p className="text-gray-700 font-bold">
                         {product.discountedPrice.toLocaleString()}원
                         <span className="text-red-500 ml-1">
-                          ({Math.floor((1 - product.discountedPrice / product.originalPrice) * 100)}%)
+                          (
+                          {Math.floor(
+                            (1 -
+                              product.discountedPrice / product.originalPrice) *
+                              100,
+                          )}
+                          %)
                         </span>
                       </p>
                     </div>
                     <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center relative">
                       <img
-                        src={product.productImg ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}` : defaultImage}
+                        src={
+                          product.productImg
+                            ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
+                            : defaultImage
+                        }
                         alt={product.productName}
                         className="w-full h-full object-cover rounded-md"
                         crossOrigin="anonymous"
@@ -206,7 +226,9 @@ function StoreDetailPage() {
                         }}
                       />
                       <div className="absolute inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
-                        <span className="text-xl font-bold text-white">품절</span>
+                        <span className="text-xl font-bold text-white">
+                          품절
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -222,12 +244,20 @@ function StoreDetailPage() {
             <div className="border-b pb-2">
               <h3 className="font-bold mb-1">기본 정보</h3>
               <p className="text-gray-600">📍 {store.storeName}</p>
-              <p className="text-gray-600">📞 {store.contactNumber || '연락처 정보 없음'}</p>
-              <p className="text-gray-600">🏷️ 영업시간: 평일 ~{store.weekdayCloseTime || '정보 없음'}</p>
-              <p className="text-gray-600 ml-10">주말 ~{store.weekendCloseTime || '정보 없음'}</p>
-              <p className="text-gray-600">🏪 사업자번호: {store.businessNumber || '정보 없음'}</p>
+              <p className="text-gray-600">
+                📞 {store.contactNumber || '연락처 정보 없음'}
+              </p>
+              <p className="text-gray-600">
+                🏷️ 영업시간: 평일 ~{store.weekdayCloseTime || '정보 없음'}
+              </p>
+              <p className="text-gray-600 ml-10">
+                주말 ~{store.weekendCloseTime || '정보 없음'}
+              </p>
+              <p className="text-gray-600">
+                🏪 사업자번호: {store.businessNumber || '정보 없음'}
+              </p>
             </div>
-            
+
             {/* 가게 소개 */}
             <div className="border-b pb-2">
               <h3 className="font-bold mb-1">가게 소개</h3>
@@ -271,10 +301,8 @@ function StoreDetailPage() {
         {/* 리뷰 탭 */}
         {activeTab === 'reviews' && (
           <div className="p-4">
-            <h3 className="font-bold text-xl text-center mb-4">
-              리뷰
-            </h3>
-            
+            <h3 className="font-bold text-xl text-center mb-4">리뷰</h3>
+
             {store.reviews && store.reviews.length > 0 ? (
               <div>
                 <p className="text-4xl font-bold text-center mb-6">
@@ -286,7 +314,7 @@ function StoreDetailPage() {
                   ).toFixed(1)}
                   <span className="text-xl text-gray-500">/5</span>
                 </p>
-                
+
                 {store.reviews.map((review) => (
                   <div key={review.id} className="border rounded-lg p-3 mb-4">
                     <p className="font-bold">{review.userName}</p>
@@ -320,7 +348,9 @@ function StoreDetailPage() {
           <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
             <h3 className="font-bold text-lg text-center mb-4">가게 연락처</h3>
             <div className="flex items-center justify-between border rounded-lg p-3 mb-4">
-              <span className="text-lg">{store.contactNumber || '연락처 정보 없음'}</span>
+              <span className="text-lg">
+                {store.contactNumber || '연락처 정보 없음'}
+              </span>
               <button onClick={handlePhoneNumberCopy} className="text-blue-500">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

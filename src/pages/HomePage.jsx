@@ -206,12 +206,12 @@ function HomePage() {
   const handleStoreClick = (store) => {
     console.log('가게 선택:', store)
     const storeId = store.id || store.storeId
-    
+
     if (!storeId) {
       console.error('가게 ID가 없습니다:', store)
       return
     }
-    
+
     console.log(`가게 상세 페이지로 이동: /store/${storeId}`)
     navigate(`/store/${storeId}`)
   }
@@ -411,7 +411,9 @@ function HomePage() {
                 />
               </div>
               <div className="flex-1 ml-3">
-                <h3 className="font-bold">{store.storeName || store.name || '이름 없음'}</h3>
+                <h3 className="font-bold">
+                  {store.storeName || store.name || '이름 없음'}
+                </h3>
                 <p className="text-sm text-gray-500">
                   {store.address || '주소 정보 없음'}
                 </p>

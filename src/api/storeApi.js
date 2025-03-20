@@ -53,28 +53,29 @@ export const getStores = async (params = {}) => {
 export const getStoreById = async (storeId) => {
   try {
     console.log(`가게 상세 정보 요청: 가게 ID ${storeId}`)
-    
+
     // 현재 액세스 토큰 확인 (여러 키 시도)
-    const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS) || 
-                       localStorage.getItem(TOKEN_KEYS.LEGACY)
+    const accessToken =
+      localStorage.getItem(TOKEN_KEYS.ACCESS) ||
+      localStorage.getItem(TOKEN_KEYS.LEGACY)
     console.log('요청 시 토큰 확인:', accessToken ? '토큰 있음' : '토큰 없음')
-    
+
     const response = await apiClient.get(`/stores/${storeId}`)
     console.log('가게 상세 정보 응답:', response.data)
-    
+
     // 응답 데이터 확인 및 변환
     const storeData = response.data?.data || response.data
-    
+
     return {
       success: true,
-      data: storeData
+      data: storeData,
     }
   } catch (error) {
     console.error('가게 상세 정보 조회 오류:', error)
-    
+
     // 구체적인 오류 메시지 제공
     let errorMessage = '가게 정보를 불러오는데 실패했습니다.'
-    
+
     if (error.response) {
       // 서버에서 응답이 왔지만 오류 상태 코드인 경우
       const { status } = error.response
@@ -89,11 +90,11 @@ export const getStoreById = async (storeId) => {
       // 요청이 전송되었지만 응답이 없는 경우
       errorMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.'
     }
-    
+
     return {
       success: false,
       message: errorMessage,
-      error: error.message
+      error: error.message,
     }
   }
 }

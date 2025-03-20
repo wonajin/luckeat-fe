@@ -4,9 +4,9 @@ import { API_BASE_URL } from '../config/apiConfig'
 
 // 토큰 관련 상수
 export const TOKEN_KEYS = {
-  ACCESS: 'accessToken',   // 액세스 토큰 키
+  ACCESS: 'accessToken', // 액세스 토큰 키
   REFRESH: 'refreshToken', // 리프레시 토큰 키
-  LEGACY: 'token',         // 이전 버전 호환용 토큰 키
+  LEGACY: 'token', // 이전 버전 호환용 토큰 키
 }
 
 // axios 인스턴스 생성
@@ -31,7 +31,7 @@ apiClient.interceptors.request.use(
     if (accessToken) {
       config.headers['Authorization'] = `Bearer ${accessToken}`
     }
-    
+
     console.log('요청 전송:', config.method.toUpperCase(), config.url)
     console.log('요청 헤더:', JSON.stringify(config.headers, null, 2))
     if (config.data) {

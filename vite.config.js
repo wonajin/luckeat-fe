@@ -6,11 +6,12 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/v1': {
+      '/api': {
         target: 'http://3.34.255.222:8080',
         changeOrigin: true,
         secure: false,
         ws: true,
+        // rewrite: (path) => path.replace(/^\/api/, ''),
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('프록시 에러:', err)

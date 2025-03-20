@@ -22,13 +22,14 @@ function StoreMarker({ store, isSelected, onClick }) {
             <div className="flex items-center gap-2">
               <div className="w-12 h-12 bg-gray-200 rounded overflow-hidden">
                 <img
-                  src={store.image}
+                  src="https://luckeat-front.s3.ap-northeast-2.amazonaws.com/store/luckeat-default.png"
                   alt={store.name}
                   className="w-full h-full object-cover"
+                  crossOrigin="anonymous"
                   onError={(e) => {
                     e.target.onerror = null
                     e.target.src =
-                      'https://via.placeholder.com/150/CCCCCC?text=이미지없음'
+                      'https://luckeat-front.s3.ap-northeast-2.amazonaws.com/store/luckeat-default.png'
                   }}
                 />
               </div>

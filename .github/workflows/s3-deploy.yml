@@ -3,7 +3,7 @@ name: Deploy to S3
 on:
   push:
     branches:
-      - main  # 또는 master 등 배포하고 싶은 브랜치 지정
+      - main # 또는 master 등 배포하고 싶은 브랜치 지정
 
 jobs:
   deploy:
@@ -69,4 +69,4 @@ jobs:
             exit 1
           fi
           echo "Deployment completed successfully"
-        # 빌드 결과물이 있는 디렉토리(예: ./build 또는 ./dist)와 S3 버킷 이름을 적절히 변경하세요 
+        # 빌드 결과물이 있는 디렉토리(예: ./build 또는 ./dist)와 S3 버킷 이름을 적절히 변경하세요

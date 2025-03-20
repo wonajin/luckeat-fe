@@ -33,12 +33,12 @@ function HomePage() {
         // 카테고리 데이터 가져오기
         const categoriesData = await getCategories()
         console.log('카테고리 API 응답:', categoriesData)
-        
+
         // 응답 구조 확인 및 로그
         const categoriesList = Array.isArray(categoriesData)
           ? categoriesData
           : categoriesData?.data || []
-        
+
         console.log('처리된 카테고리 목록:', categoriesList)
         setCategories(categoriesList)
 
@@ -106,8 +106,8 @@ function HomePage() {
     if (!stores || stores.length === 0) return
 
     let result = [...stores]
-    console.log('필터링 전 가게 수:', result.length);
-    console.log('선택된 카테고리:', selectedCategory);
+    console.log('필터링 전 가게 수:', result.length)
+    console.log('선택된 카테고리:', selectedCategory)
 
     // 카테고리 필터링 - 백엔드 API 응답 구조에 맞게 수정
     if (selectedCategory) {
@@ -115,58 +115,75 @@ function HomePage() {
         // categoryId를 비교 (API 응답 구조에 맞게 수정)
         return store.categoryId === selectedCategory
       })
-      console.log('카테고리 필터링 후 가게 수:', result.length);
+      console.log('카테고리 필터링 후 가게 수:', result.length)
     }
 
     // 검색어 필터링 - 필드명 확인 필요
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter((store) => {
-        const storeName = store.storeName || store.name || '';
-        return storeName.toLowerCase().includes(query);
+        const storeName = store.storeName || store.name || ''
+        return storeName.toLowerCase().includes(query)
       })
-      console.log('검색 필터링 후 가게 수:', result.length);
+      console.log('검색 필터링 후 가게 수:', result.length)
     }
 
     // 할인 필터링
     if (showDiscountOnly) {
       // 할인 상품이 있는 가게만 필터링
       result = result.filter((store) => {
-        const hasDiscountProducts = store.products && 
-          Array.isArray(store.products) && 
-          store.products.some((product) => !product.isSoldOut && product.discountRate > 0);
-        
+        const hasDiscountProducts =
+          store.products &&
+          Array.isArray(store.products) &&
+          store.products.some(
+            (product) => !product.isSoldOut && product.discountRate > 0,
+          )
+
         // 원래 조건이 맞지 않으면 discount 필드로 확인
-        return hasDiscountProducts || (store.discount && store.discount !== '0%');
+        return (
+          hasDiscountProducts || (store.discount && store.discount !== '0%')
+        )
       })
-      console.log('할인 필터링 후 가게 수:', result.length);
+      console.log('할인 필터링 후 가게 수:', result.length)
     }
 
     // 정렬 옵션 적용
     if (sortOption === '가까운 순') {
       result.sort((a, b) => {
         // distance가 문자열 형식이면(예: "0.5km") 숫자로 변환
-        const distanceA = typeof a.distance === 'string' ? 
-          parseFloat(a.distance.replace(/[^0-9.]/g, '')) : parseFloat(a.distance || 0);
-        const distanceB = typeof b.distance === 'string' ? 
-          parseFloat(b.distance.replace(/[^0-9.]/g, '')) : parseFloat(b.distance || 0);
-        return distanceA - distanceB;
-      });
+        const distanceA =
+          typeof a.distance === 'string'
+            ? parseFloat(a.distance.replace(/[^0-9.]/g, ''))
+            : parseFloat(a.distance || 0)
+        const distanceB =
+          typeof b.distance === 'string'
+            ? parseFloat(b.distance.replace(/[^0-9.]/g, ''))
+            : parseFloat(b.distance || 0)
+        return distanceA - distanceB
+      })
     } else if (sortOption === '리뷰 많은 순') {
       result.sort((a, b) => {
-        const reviewsA = a.reviews ? (Array.isArray(a.reviews) ? a.reviews.length : 0) : 0;
-        const reviewsB = b.reviews ? (Array.isArray(b.reviews) ? b.reviews.length : 0) : 0;
-        return reviewsB - reviewsA;
-      });
+        const reviewsA = a.reviews
+          ? Array.isArray(a.reviews)
+            ? a.reviews.length
+            : 0
+          : 0
+        const reviewsB = b.reviews
+          ? Array.isArray(b.reviews)
+            ? b.reviews.length
+            : 0
+          : 0
+        return reviewsB - reviewsA
+      })
     } else if (sortOption === '공유 많은 순') {
       result.sort((a, b) => {
-        const shareCountA = a.shareCount || 0;
-        const shareCountB = b.shareCount || 0;
-        return shareCountB - shareCountA;
-      });
+        const shareCountA = a.shareCount || 0
+        const shareCountB = b.shareCount || 0
+        return shareCountB - shareCountA
+      })
     }
 
-    console.log('정렬 후 최종 가게 수:', result.length);
+    console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
   }, [searchQuery, showDiscountOnly, selectedCategory, sortOption, stores])
 
@@ -181,8 +198,8 @@ function HomePage() {
 
   // 카테고리 핸들러
   const handleCategorySelect = (category) => {
-    console.log('카테고리 선택:', category);
-    setSelectedCategory(category);
+    console.log('카테고리 선택:', category)
+    setSelectedCategory(category)
   }
 
   return (

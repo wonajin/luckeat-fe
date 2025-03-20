@@ -39,8 +39,8 @@ function SignupPage() {
       return
     }
 
-    // 회원 유형에 따라 role 값 설정
-    const role = userType === '사업자' ? 'seller' : 'buyer'
+    // 회원 유형에 따라 role 값 설정 (대문자로 변환)
+    const role = userType === '사업자' ? 'SELLER' : 'BUYER'
 
     try {
       // 회원가입 데이터 준비
@@ -48,8 +48,7 @@ function SignupPage() {
         email,
         nickname,
         password,
-        userType, // 원래 유형도 포함
-        role, // 백엔드 API에 맞는 role 필드 추가
+        role, // 대문자로 변환된 role 필드 사용
       }
 
       console.log('회원가입 요청 데이터:', userData)

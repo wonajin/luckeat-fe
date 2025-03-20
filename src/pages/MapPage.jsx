@@ -243,13 +243,14 @@ function MapPage() {
                 >
                   <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
                     <img
-                      src={store.image}
+                      src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
                       alt={store.name}
                       className="w-full h-full object-cover rounded-md"
+                      crossOrigin="anonymous"
                       onError={(e) => {
                         e.target.onerror = null
                         e.target.src =
-                          'https://placehold.co/150?text=이미지없음'
+                          'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'
                       }}
                     />
                   </div>

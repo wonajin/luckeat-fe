@@ -5,11 +5,12 @@ import {
 } from '../utils/apiMessages'
 import { API_BASE_URL, API_ENDPOINTS, getApiUrl } from '../config/apiConfig'
 import { TOKEN_KEYS } from './apiClient'
+import axios from 'axios'
 
 // 회원 가입
 export const register = async (userData) => {
   try {
-    console.log('회원가입 요청 데이터:', userData)
+    console.log('userApi - 회원가입 요청 데이터:', userData)
 
     // 복사본 생성 (원본 데이터 변경 방지)
     const requestData = { ...userData }
@@ -27,12 +28,23 @@ export const register = async (userData) => {
     }
 
     // 프록시를 통한 요청
-    console.log('회원가입 수정된 요청 데이터:', requestData)
+    console.log('userApi - 회원가입 수정된 요청 데이터:', requestData)
     const response = await apiClient.post(API_ENDPOINTS.REGISTER, requestData)
-    console.log('회원가입 요청 성공:', response.data)
-    return handleSuccessResponse(response)
+    console.log('userApi - 회원가입 응답 데이터:', response.data, '상태 코드:', response.status)
+    
+    // 성공 응답 처리 및 메시지 로그
+    const result = handleSuccessResponse(response);
+    console.log('userApi - 회원가입 최종 결과 객체:', result);
+    
+    // 명시적으로 success: true 설정
+    if (response.status === 201) {
+      result.success = true;
+      console.log('userApi - 상태 코드가 201이므로 success를 true로 설정');
+    }
+    
+    return result;
   } catch (error) {
-    console.error('회원가입 오류:', error)
+    console.error('userApi - 회원가입 오류:', error)
 
     // 서버 오류(500)인 경우 더 자세한 메시지 제공
     if (error.response && error.response.status === 500) {

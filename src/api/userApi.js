@@ -68,27 +68,30 @@ export const logout = async () => {
   try {
     // 현재 액세스 토큰 가져오기
     const accessToken = localStorage.getItem('accessToken')
-    console.log('로그아웃 시도: 액세스 토큰 확인', accessToken ? '토큰 있음' : '토큰 없음')
-    
+    console.log(
+      '로그아웃 시도: 액세스 토큰 확인',
+      accessToken ? '토큰 있음' : '토큰 없음',
+    )
+
     // 헤더에 Authorization 토큰 추가
     const config = {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     }
-    
+
     console.log('로그아웃 API 요청 시작: /users/logout')
     // /api/v1/users/logout 엔드포인트로 요청
     const response = await apiClient.post('/users/logout', {}, config)
     console.log('로그아웃 API 응답 수신:', response)
-    
+
     // 로그아웃 성공 시 로컬 스토리지의 모든 토큰 제거
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
     localStorage.removeItem('token') // 이전 토큰도 제거
     console.log('로컬 스토리지 토큰 제거 완료')
-    
+
     return handleSuccessResponse(response)
   } catch (error) {
     // 에러가 발생해도 토큰은 제거
@@ -98,7 +101,7 @@ export const logout = async () => {
     localStorage.removeItem('user')
     localStorage.removeItem('token') // 이전 토큰도 제거
     console.log('오류 발생 시에도 로컬 스토리지 토큰 제거 완료')
-    
+
     return handleErrorResponse(error)
   }
 }

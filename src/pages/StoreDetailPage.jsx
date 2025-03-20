@@ -19,12 +19,22 @@ function StoreDetailPage() {
     const fetchStoreData = async () => {
       try {
         setLoading(true)
+        setError(null)
+        console.log(`가게 상세 정보 요청 - 가게 ID: ${id}`)
+        
         const response = await getStoreById(id)
-        setStore(response.data)
-        setLoading(false)
+        console.log('가게 상세 정보 응답:', response)
+        
+        if (response.success) {
+          setStore(response.data)
+        } else {
+          console.error('가게 정보 불러오기 실패:', response.message)
+          setError(response.message || '가게 정보를 불러오는데 실패했습니다')
+        }
       } catch (err) {
-        console.error('가게 정보 불러오기 실패:', err)
+        console.error('가게 정보 불러오기 중 예외 발생:', err)
         setError('가게 정보를 불러오는데 실패했습니다')
+      } finally {
         setLoading(false)
       }
     }
@@ -32,11 +42,23 @@ function StoreDetailPage() {
     fetchStoreData()
   }, [id])
 
-  //  주소 복사 기능 추가
+  // 주소 복사 기능 추가
   const handleCopyClick = () => {
     if (!store?.address) return
     navigator.clipboard
       .writeText(store.address)
+      .then(() => {
+        setCopySuccess(true)
+        setTimeout(() => setCopySuccess(false), 2000)
+      })
+      .catch((err) => console.error('클립보드 복사 실패:', err))
+  }
+
+  // 전화번호 복사 기능
+  const handlePhoneNumberCopy = () => {
+    if (!store?.contactNumber) return
+    navigator.clipboard
+      .writeText(store.contactNumber)
       .then(() => {
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 2000)
@@ -68,22 +90,29 @@ function StoreDetailPage() {
     )
   }
 
+  // 할인 중인 상품만 필터링
+  const openProducts = store.products?.filter(product => product.isOpen) || []
+  const closedProducts = store.products?.filter(product => !product.isOpen) || []
+
   return (
     <div className="flex flex-col h-full">
-      <Header title={store.name} />
+      <Header title={store.storeName} />
 
       <div className="flex-1 overflow-y-auto scroll-container">
         {/* 가게 이미지 */}
         <img
-          src={defaultImage}
-          alt={store.name}
+          src={store.storeImg || defaultImage}
+          alt={store.storeName}
           className="w-full h-48 object-cover"
           crossOrigin="anonymous"
+          onError={(e) => {
+            e.target.src = defaultImage
+          }}
         />
 
         {/* 가게 이름 */}
         <h2 className="text-xl font-bold text-center mt-2 mb-4">
-          {store.name}
+          {store.storeName}
         </h2>
 
         {/* 탭 메뉴 */}
@@ -100,7 +129,7 @@ function StoreDetailPage() {
             >
               {tab === 'products' && '상품 정보'}
               {tab === 'storeInfo' && '가게 정보'}
-              {tab === 'reviews' && `리뷰 (${store.reviews.length})`}
+              {tab === 'reviews' && '리뷰'}
             </button>
           ))}
         </div>
@@ -108,39 +137,82 @@ function StoreDetailPage() {
         {/* 상품 정보 탭 */}
         {activeTab === 'products' && (
           <div className="p-4">
+            {/* 판매 중인 상품 */}
             <h3 className="font-bold mb-2">
-              마감 할인 {store.products.length}개
+              판매중인 상품 {openProducts.length}개
             </h3>
-            {store.products.map((product) => (
+            {openProducts.map((product) => (
               <div
                 key={product.id}
                 className="border rounded-lg p-3 mb-4 relative flex"
               >
                 <div className="flex-1">
-                  <h4 className="font-bold">{product.name}</h4>
+                  <h4 className="font-bold">{product.productName}</h4>
                   <p className="text-sm line-through text-gray-400">
                     {product.originalPrice.toLocaleString()}원
                   </p>
                   <p className="text-gray-700 font-bold">
-                    {product.discountPrice.toLocaleString()}원 (
-                    {product.discountRate})
+                    {product.discountedPrice.toLocaleString()}원
+                    <span className="text-red-500 ml-1">
+                      ({Math.floor((1 - product.discountedPrice / product.originalPrice) * 100)}%)
+                    </span>
                   </p>
                 </div>
                 <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center relative">
                   <img
-                    src={defaultImage}
-                    alt={product.name}
+                    src={product.productImg ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}` : defaultImage}
+                    alt={product.productName}
                     className="w-full h-full object-cover rounded-md"
                     crossOrigin="anonymous"
+                    onError={(e) => {
+                      e.target.src = defaultImage
+                    }}
                   />
-                  {product.isSoldOut && (
-                    <div className="absolute inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
-                      <span className="text-xl font-bold text-white">품절</span>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
+
+            {/* 판매 종료 상품 */}
+            {closedProducts.length > 0 && (
+              <>
+                <h3 className="font-bold mb-2 mt-6">
+                  판매 종료 상품 {closedProducts.length}개
+                </h3>
+                {closedProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="border rounded-lg p-3 mb-4 relative flex"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-bold">{product.productName}</h4>
+                      <p className="text-sm line-through text-gray-400">
+                        {product.originalPrice.toLocaleString()}원
+                      </p>
+                      <p className="text-gray-700 font-bold">
+                        {product.discountedPrice.toLocaleString()}원
+                        <span className="text-red-500 ml-1">
+                          ({Math.floor((1 - product.discountedPrice / product.originalPrice) * 100)}%)
+                        </span>
+                      </p>
+                    </div>
+                    <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center relative">
+                      <img
+                        src={product.productImg ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}` : defaultImage}
+                        alt={product.productName}
+                        className="w-full h-full object-cover rounded-md"
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          e.target.src = defaultImage
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
+                        <span className="text-xl font-bold text-white">품절</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
 
@@ -149,21 +221,18 @@ function StoreDetailPage() {
           <div className="p-4 space-y-4">
             <div className="border-b pb-2">
               <h3 className="font-bold mb-1">기본 정보</h3>
-              <p className="text-gray-600">📍 {store.name}</p>
-              <p className="text-gray-600">📞 {store.phone}</p>
-              <p className="text-gray-600">🏷️ 카테고리: {store.category}</p>
+              <p className="text-gray-600">📍 {store.storeName}</p>
+              <p className="text-gray-600">📞 {store.contactNumber || '연락처 정보 없음'}</p>
+              <p className="text-gray-600">🏷️ 영업시간: 평일 ~{store.weekdayCloseTime || '정보 없음'}</p>
+              <p className="text-gray-600 ml-10">주말 ~{store.weekendCloseTime || '정보 없음'}</p>
+              <p className="text-gray-600">🏪 사업자번호: {store.businessNumber || '정보 없음'}</p>
             </div>
-            {/*  가게 소개 복원 */}
+            
+            {/* 가게 소개 */}
             <div className="border-b pb-2">
               <h3 className="font-bold mb-1">가게 소개</h3>
               <p className="text-gray-600">
-                안녕하세요, {store.name}입니다.
-                <br />
-                저희 가게는 {store.category} 전문점이며,
-                <br />
-                신선한 재료로 최상의 맛을 제공합니다.
-                <br />
-                많은 방문 부탁드립니다!
+                {store.description || '가게 소개 정보가 없습니다.'}
               </p>
             </div>
 
@@ -171,13 +240,13 @@ function StoreDetailPage() {
             <div>
               <h3 className="font-bold mb-1">위치 정보</h3>
               <Map
-                center={{ lat: store.lat, lng: store.lng }}
+                center={{ lat: store.latitude, lng: store.longitude }}
                 style={{ width: '100%', height: '250px' }}
                 level={3}
               >
                 <MapMarker
-                  position={{ lat: store.lat, lng: store.lng }}
-                  title={store.name}
+                  position={{ lat: store.latitude, lng: store.longitude }}
+                  title={store.storeName}
                 />
               </Map>
             </div>
@@ -193,7 +262,7 @@ function StoreDetailPage() {
             {/* 복사 성공 메시지 */}
             {copySuccess && (
               <p className="text-sm text-green-500 text-center mt-1">
-                주소가 복사되었습니다!
+                복사되었습니다!
               </p>
             )}
           </div>
@@ -202,29 +271,30 @@ function StoreDetailPage() {
         {/* 리뷰 탭 */}
         {activeTab === 'reviews' && (
           <div className="p-4">
-            <h3 className="font-bold text-xl text-center mb-2">
-              리뷰 평균 별점
+            <h3 className="font-bold text-xl text-center mb-4">
+              리뷰
             </h3>
-            <p className="text-4xl font-bold text-center">
-              {store.reviews.length
-                ? (
+            
+            {store.reviews && store.reviews.length > 0 ? (
+              <div>
+                <p className="text-4xl font-bold text-center mb-6">
+                  {(
                     store.reviews.reduce(
                       (sum, review) => sum + review.rating,
                       0,
                     ) / store.reviews.length
-                  ).toFixed(1)
-                : '0.0'}
-              <span className="text-xl text-gray-500">/5</span>
-            </p>
-
-            {store.reviews.length > 0 ? (
-              store.reviews.map((review) => (
-                <div key={review.id} className="border rounded-lg p-3 mb-4">
-                  <p className="font-bold">{review.userName}</p>
-                  <p className="text-gray-600">{review.content}</p>
-                  <p className="text-xs text-gray-400 mt-2">{review.date}</p>
-                </div>
-              ))
+                  ).toFixed(1)}
+                  <span className="text-xl text-gray-500">/5</span>
+                </p>
+                
+                {store.reviews.map((review) => (
+                  <div key={review.id} className="border rounded-lg p-3 mb-4">
+                    <p className="font-bold">{review.userName}</p>
+                    <p className="text-gray-600">{review.content}</p>
+                    <p className="text-xs text-gray-400 mt-2">{review.date}</p>
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-center py-8 text-gray-500">
                 아직 리뷰가 없습니다.
@@ -250,8 +320,8 @@ function StoreDetailPage() {
           <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
             <h3 className="font-bold text-lg text-center mb-4">가게 연락처</h3>
             <div className="flex items-center justify-between border rounded-lg p-3 mb-4">
-              <span className="text-lg">{store.phone}</span>
-              <button onClick={handleCopyClick} className="text-blue-500">
+              <span className="text-lg">{store.contactNumber || '연락처 정보 없음'}</span>
+              <button onClick={handlePhoneNumberCopy} className="text-blue-500">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5"

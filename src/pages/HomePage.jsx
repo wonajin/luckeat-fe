@@ -202,6 +202,20 @@ function HomePage() {
     setSelectedCategory(category)
   }
 
+  // HomePage.jsx 파일에서 가게 카드 클릭 핸들러 추가
+  const handleStoreClick = (store) => {
+    console.log('가게 선택:', store)
+    const storeId = store.id || store.storeId
+    
+    if (!storeId) {
+      console.error('가게 ID가 없습니다:', store)
+      return
+    }
+    
+    console.log(`가게 상세 페이지로 이동: /store/${storeId}`)
+    navigate(`/store/${storeId}`)
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
@@ -379,16 +393,16 @@ function HomePage() {
             <p>로딩 중...</p>
           </div>
         ) : filteredStores && filteredStores.length > 0 ? (
-          filteredStores.map((store) => (
+          filteredStores.map((store, index) => (
             <div
-              key={store.id}
-              className="flex items-center p-3 border rounded-lg mb-3"
-              onClick={() => navigate(`/store/${store.id}`)}
+              key={store.id || store.storeId || index}
+              className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer"
+              onClick={() => handleStoreClick(store)}
             >
               <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
                 <img
                   src={defaultImage}
-                  alt={store.storeName || '가게 이미지'}
+                  alt={store.storeName || store.name || '가게 이미지'}
                   className="w-full h-full object-cover"
                   crossOrigin="anonymous"
                   onError={(e) => {
@@ -397,7 +411,7 @@ function HomePage() {
                 />
               </div>
               <div className="flex-1 ml-3">
-                <h3 className="font-bold">{store.storeName || '이름 없음'}</h3>
+                <h3 className="font-bold">{store.storeName || store.name || '이름 없음'}</h3>
                 <p className="text-sm text-gray-500">
                   {store.address || '주소 정보 없음'}
                 </p>

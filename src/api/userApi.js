@@ -4,6 +4,7 @@ import {
   handleErrorResponse,
 } from '../utils/apiMessages'
 import { API_BASE_URL, API_ENDPOINTS, getApiUrl } from '../config/apiConfig'
+import { TOKEN_KEYS } from './apiClient'
 
 // 회원 가입
 export const register = async (userData) => {
@@ -60,10 +61,16 @@ export const login = async (credentials) => {
     if (response.data) {
       // 토큰 저장
       if (response.data.accessToken) {
-        localStorage.setItem('accessToken', response.data.accessToken)
+        localStorage.setItem(TOKEN_KEYS.ACCESS, response.data.accessToken)
       }
       if (response.data.refreshToken) {
-        localStorage.setItem('refreshToken', response.data.refreshToken)
+        localStorage.setItem(TOKEN_KEYS.REFRESH, response.data.refreshToken)
+      }
+      // 이전 버전 호환을 위한 token 저장
+      if (response.data.accessToken && !response.data.token) {
+        localStorage.setItem(TOKEN_KEYS.LEGACY, response.data.accessToken)
+      } else if (response.data.token) {
+        localStorage.setItem(TOKEN_KEYS.LEGACY, response.data.token)
       }
 
       // 사용자 정보 저장

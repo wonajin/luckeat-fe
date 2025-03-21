@@ -48,7 +48,7 @@ function HomePage() {
         if (showDiscountOnly) {
           params.isDiscountOpen = true
         }
-        
+
         const storesData = await getStores(params)
         console.log('가게 데이터 API 응답:', storesData)
 
@@ -175,30 +175,34 @@ function HomePage() {
       result.sort((a, b) => {
         // 별점 계산: 리뷰가 없으면 0점, 있으면 평균 별점 계산
         const getAverageRating = (store) => {
-          if (!store.reviews || !Array.isArray(store.reviews) || store.reviews.length === 0) {
-            return 0;
+          if (
+            !store.reviews ||
+            !Array.isArray(store.reviews) ||
+            store.reviews.length === 0
+          ) {
+            return 0
           }
-          
+
           // 리뷰의 rating 값을 합산하고 평균 계산
           const totalRating = store.reviews.reduce((sum, review) => {
-            return sum + (review.rating || 0);
-          }, 0);
-          
-          return totalRating / store.reviews.length;
-        };
-        
-        const ratingA = getAverageRating(a);
-        const ratingB = getAverageRating(b);
-        
+            return sum + (review.rating || 0)
+          }, 0)
+
+          return totalRating / store.reviews.length
+        }
+
+        const ratingA = getAverageRating(a)
+        const ratingB = getAverageRating(b)
+
         // 별점이 같으면 리뷰 수가 많은 순으로 정렬
         if (ratingB === ratingA) {
-          const reviewsA = a.reviews ? a.reviews.length : 0;
-          const reviewsB = b.reviews ? b.reviews.length : 0;
-          return reviewsB - reviewsA;
+          const reviewsA = a.reviews ? a.reviews.length : 0
+          const reviewsB = b.reviews ? b.reviews.length : 0
+          return reviewsB - reviewsA
         }
-        
-        return ratingB - ratingA; // 별점 높은 순으로 내림차순 정렬
-      });
+
+        return ratingB - ratingA // 별점 높은 순으로 내림차순 정렬
+      })
     }
 
     console.log('정렬 후 최종 가게 수:', result.length)
@@ -444,7 +448,12 @@ function HomePage() {
                     <span className="mr-1">★</span>
                     <span>
                       {store.reviews && store.reviews.length > 0
-                        ? (store.reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / store.reviews.length).toFixed(1)
+                        ? (
+                            store.reviews.reduce(
+                              (sum, review) => sum + (review.rating || 0),
+                              0,
+                            ) / store.reviews.length
+                          ).toFixed(1)
                         : '0.0'}
                     </span>
                     <span className="text-gray-500 ml-1">

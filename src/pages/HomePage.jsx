@@ -26,50 +26,49 @@ function HomePage() {
 
   // 백엔드에서 데이터 가져오기
   useEffect(() => {
-    fetchData()
-  }, [showDiscountOnly]) // showDiscountOnly 상태가 변경될 때마다 데이터 다시 가져오기
+    const fetchData = async () => {
+      try {
+        setLoading(true)
 
-  const fetchData = async () => {
-    try {
-      setLoading(true)
+        // 카테고리 데이터 가져오기
+        const categoriesData = await getCategories()
+        console.log('카테고리 API 응답:', categoriesData)
 
-      // 카테고리 데이터 가져오기
-      const categoriesData = await getCategories()
-      console.log('카테고리 API 응답:', categoriesData)
+        // 응답 구조 확인 및 로그
+        const categoriesList = Array.isArray(categoriesData)
+          ? categoriesData
+          : categoriesData?.data || []
 
-      // 응답 구조 확인 및 로그
-      const categoriesList = Array.isArray(categoriesData)
-        ? categoriesData
-        : categoriesData?.data || []
+        console.log('처리된 카테고리 목록:', categoriesList)
+        setCategories(categoriesList)
 
-      console.log('처리된 카테고리 목록:', categoriesList)
-      setCategories(categoriesList)
+        // 가게 데이터 가져오기 - 필터 파라미터 적용
+        const params = {}
+        // 할인중인 가게만 보여주기 옵션이 선택된 경우 API 파라미터 추가
+        if (showDiscountOnly) {
+          params.isDiscountOpen = true
+        }
+        
+        const storesData = await getStores(params)
+        console.log('가게 데이터 API 응답:', storesData)
 
-      // API 호출 시 필터링 파라미터 설정
-      const params = {}
-      // 할인중만 버튼이 활성화된 경우에만 파라미터 추가
-      if (showDiscountOnly) {
-        params.isDiscountOpen = true
+        // 데이터 구조 확인 후 적절히 설정
+        const storesList = Array.isArray(storesData)
+          ? storesData
+          : storesData?.data || []
+        console.log('처리된 가게 목록:', storesList)
+
+        setStores(storesList)
+        setFilteredStores(storesList)
+        setLoading(false)
+      } catch (error) {
+        console.error('데이터 로딩 중 오류 발생:', error)
+        setLoading(false)
       }
-
-      // 가게 데이터 가져오기 (필터링 적용)
-      const storesData = await getStores(params)
-      console.log('가게 데이터 API 응답:', storesData)
-
-      // 데이터 구조 확인 후 적절히 설정
-      const storesList = Array.isArray(storesData)
-        ? storesData
-        : storesData?.data || []
-      console.log('처리된 가게 목록:', storesList)
-
-      setStores(storesList)
-      setFilteredStores(storesList)
-      setLoading(false)
-    } catch (error) {
-      console.error('데이터 로딩 중 오류 발생:', error)
-      setLoading(false)
     }
-  }
+
+    fetchData()
+  }, [showDiscountOnly]) // showDiscountOnly 변경 시 데이터 다시 가져오기
 
   // 로딩 및 데이터 상태 디버깅
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
@@ -108,7 +107,7 @@ function HomePage() {
     }
   }, [])
 
-  // 검색어, 카테고리가 변경될 때 가게 목록 필터링 (할인 필터는 API에서 처리)
+  // 검색어, 할인 필터, 카테고리가 변경될 때 가게 목록 필터링
   useEffect(() => {
     if (!stores || stores.length === 0) return
 
@@ -135,7 +134,8 @@ function HomePage() {
       console.log('검색 필터링 후 가게 수:', result.length)
     }
 
-    // 할인 필터링은 API에서 처리하므로 제거
+    // 할인 필터링은 API에서 처리하므로 여기서는 제거
+    // 이미 showDiscountOnly 변경 시 useEffect를 통해 API 요청이 다시 이루어짐
 
     // 정렬 옵션 적용
     if (sortOption === '가까운 순') {
@@ -171,11 +171,39 @@ function HomePage() {
         const shareCountB = b.shareCount || 0
         return shareCountB - shareCountA
       })
+    } else if (sortOption === '별점 높은 순') {
+      result.sort((a, b) => {
+        // 별점 계산: 리뷰가 없으면 0점, 있으면 평균 별점 계산
+        const getAverageRating = (store) => {
+          if (!store.reviews || !Array.isArray(store.reviews) || store.reviews.length === 0) {
+            return 0;
+          }
+          
+          // 리뷰의 rating 값을 합산하고 평균 계산
+          const totalRating = store.reviews.reduce((sum, review) => {
+            return sum + (review.rating || 0);
+          }, 0);
+          
+          return totalRating / store.reviews.length;
+        };
+        
+        const ratingA = getAverageRating(a);
+        const ratingB = getAverageRating(b);
+        
+        // 별점이 같으면 리뷰 수가 많은 순으로 정렬
+        if (ratingB === ratingA) {
+          const reviewsA = a.reviews ? a.reviews.length : 0;
+          const reviewsB = b.reviews ? b.reviews.length : 0;
+          return reviewsB - reviewsA;
+        }
+        
+        return ratingB - ratingA; // 별점 높은 순으로 내림차순 정렬
+      });
     }
 
     console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
-  }, [searchQuery, selectedCategory, sortOption, stores])
+  }, [searchQuery, selectedCategory, sortOption, stores]) // showDiscountOnly 제거
 
   console.log('현재 stores 데이터:', stores)
   console.log('현재 filteredStores 데이터:', filteredStores)
@@ -354,6 +382,15 @@ function HomePage() {
                 >
                   공유 많은 순
                 </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '별점 높은 순' ? 'bg-gray-100 font-bold' : ''}`}
+                  onClick={() => {
+                    setSortOption('별점 높은 순')
+                    setShowSortOptions(false)
+                  }}
+                >
+                  별점 높은 순
+                </button>
               </div>
             </div>
           )}
@@ -401,9 +438,24 @@ function HomePage() {
                 <p className="text-sm text-gray-500">
                   {store.address || '주소 정보 없음'}
                 </p>
-                <p className="text-sm font-medium">
-                  공유 {store.shareCount || 0}회
-                </p>
+                <div className="flex items-center">
+                  {/* 별점 표시 */}
+                  <div className="flex items-center text-sm text-yellow-500 mr-2">
+                    <span className="mr-1">★</span>
+                    <span>
+                      {store.reviews && store.reviews.length > 0
+                        ? (store.reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / store.reviews.length).toFixed(1)
+                        : '0.0'}
+                    </span>
+                    <span className="text-gray-500 ml-1">
+                      ({store.reviews ? store.reviews.length : 0})
+                    </span>
+                  </div>
+                  {/* 공유 수 표시 */}
+                  <p className="text-sm font-medium">
+                    공유 {store.shareCount || 0}회
+                  </p>
+                </div>
               </div>
             </div>
           ))

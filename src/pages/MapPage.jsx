@@ -43,8 +43,10 @@ function MapPage() {
         (position) => {
           const { latitude, longitude } = position.coords
           console.log('사용자 위치:', latitude, longitude)
+          // 사용자 위치를 저장하지만, 지도 중심은 제주도 유지
           setUserLocation({ lat: latitude, lng: longitude })
-          setMapCenter({ lat: latitude, lng: longitude })
+          // 제주도 위치로 중심 설정 (위에서 이미 설정했으므로 주석 처리)
+          // setMapCenter({ lat: 33.450705, lng: 126.570677 })
         },
         (error) => {
           console.error('위치 정보를 가져오는데 실패했습니다:', error)
@@ -80,8 +82,14 @@ function MapPage() {
         // 가게 데이터 가져오기
         console.log('가게 정보 불러오는 중...')
         try {
+          // 할인중인 가게만 보여주기 옵션이 선택된 경우 API 파라미터 추가
+          let apiUrl = `${API_BASE_URL}/api/v1/stores`
+          if (showDiscountOnly) {
+            apiUrl += '?isDiscountOpen=true'
+          }
+
           // 직접 axios로 API 호출
-          const response = await axios.get(`${API_BASE_URL}/api/v1/stores`)
+          const response = await axios.get(apiUrl)
           const storesData = response.data
           console.log('가게 데이터:', storesData)
 
@@ -155,9 +163,13 @@ function MapPage() {
                 )
               }
 
-              // lat, lng가 문자열이면 숫자로 변환, null이면 랜덤 위치 생성
+              // lat, lng가 문자열이면 숫자로 변환
               let lat = store.lat ? parseFloat(store.lat) : null
               let lng = store.lng ? parseFloat(store.lng) : null
+
+              // 제주도 구름스퀘어 좌표
+              const JEJU_DEFAULT_LAT = 33.450705
+              const JEJU_DEFAULT_LNG = 126.570677
 
               // 유효하지 않은 좌표인 경우 (null, NaN, 0)
               if (
@@ -167,15 +179,36 @@ function MapPage() {
                 isNaN(lng) ||
                 (lat === 0 && lng === 0)
               ) {
-                // 사용자 위치를 기준으로 랜덤한 위치 생성 (반경 500m 이내)
+                // 제주도 좌표를 기준으로 랜덤한 위치 생성 (반경 500m 이내)
                 console.log(
-                  `매장 ${store.id}(${storeName}): 유효한 좌표 없음, 랜덤 위치 생성`,
+                  `매장 ${store.id}(${storeName}): 유효한 좌표 없음, 제주도 내 랜덤 위치 생성`,
                 )
-                const baseLocation = userLocation || mapCenter
                 const randomLat =
-                  baseLocation.lat + (Math.random() - 0.5) * 0.01 // 약 ±500m
+                  JEJU_DEFAULT_LAT + (Math.random() - 0.5) * 0.01 // 약 ±500m
                 const randomLng =
-                  baseLocation.lng + (Math.random() - 0.5) * 0.01
+                  JEJU_DEFAULT_LNG + (Math.random() - 0.5) * 0.01
+                return {
+                  ...store,
+                  lat: randomLat,
+                  lng: randomLng,
+                  hasRandomLocation: true, // 랜덤 위치 표시
+                  category: category, // 수정된 카테고리 적용
+                }
+              }
+
+              // 위치가 제주도 근처가 아닌 경우 (위도 33도 경도 126도 근처가 아닌 경우)
+              if (
+                Math.abs(lat - JEJU_DEFAULT_LAT) > 0.5 ||
+                Math.abs(lng - JEJU_DEFAULT_LNG) > 0.5
+              ) {
+                console.log(
+                  `매장 ${store.id}(${storeName}): 제주도 밖 좌표 감지, 제주도 내로 보정`,
+                )
+                // 제주도 내 랜덤 위치로 조정
+                const randomLat =
+                  JEJU_DEFAULT_LAT + (Math.random() - 0.5) * 0.01 // 약 ±500m
+                const randomLng =
+                  JEJU_DEFAULT_LNG + (Math.random() - 0.5) * 0.01
                 return {
                   ...store,
                   lat: randomLat,
@@ -231,9 +264,13 @@ function MapPage() {
           } else {
             // API에서 카테고리가 있는 경우 정상 처리
             const storesWithValidLocation = storesData.map((store) => {
-              // lat, lng가 문자열이면 숫자로 변환, null이면 랜덤 위치 생성
+              // lat, lng가 문자열이면 숫자로 변환
               let lat = store.lat ? parseFloat(store.lat) : null
               let lng = store.lng ? parseFloat(store.lng) : null
+
+              // 제주도 구름스퀘어 좌표
+              const JEJU_DEFAULT_LAT = 33.450705
+              const JEJU_DEFAULT_LNG = 126.570677
 
               // 유효하지 않은 좌표인 경우 (null, NaN, 0)
               if (
@@ -243,15 +280,35 @@ function MapPage() {
                 isNaN(lng) ||
                 (lat === 0 && lng === 0)
               ) {
-                // 사용자 위치를 기준으로 랜덤한 위치 생성 (반경 500m 이내)
+                // 제주도 좌표를 기준으로 랜덤한 위치 생성 (반경 500m 이내)
                 console.log(
-                  `매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 랜덤 위치 생성`,
+                  `매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 제주도 내 랜덤 위치 생성`,
                 )
-                const baseLocation = userLocation || mapCenter
                 const randomLat =
-                  baseLocation.lat + (Math.random() - 0.5) * 0.01 // 약 ±500m
+                  JEJU_DEFAULT_LAT + (Math.random() - 0.5) * 0.01 // 약 ±500m
                 const randomLng =
-                  baseLocation.lng + (Math.random() - 0.5) * 0.01
+                  JEJU_DEFAULT_LNG + (Math.random() - 0.5) * 0.01
+                return {
+                  ...store,
+                  lat: randomLat,
+                  lng: randomLng,
+                  hasRandomLocation: true, // 랜덤 위치 표시
+                }
+              }
+
+              // 위치가 제주도 근처가 아닌 경우 (위도 33도 경도 126도 근처가 아닌 경우)
+              if (
+                Math.abs(lat - JEJU_DEFAULT_LAT) > 0.5 ||
+                Math.abs(lng - JEJU_DEFAULT_LNG) > 0.5
+              ) {
+                console.log(
+                  `매장 ${store.id}(${store.name || store.storeName}): 제주도 밖 좌표 감지, 제주도 내로 보정`,
+                )
+                // 제주도 내 랜덤 위치로 조정
+                const randomLat =
+                  JEJU_DEFAULT_LAT + (Math.random() - 0.5) * 0.01 // 약 ±500m
+                const randomLng =
+                  JEJU_DEFAULT_LNG + (Math.random() - 0.5) * 0.01
                 return {
                   ...store,
                   lat: randomLat,
@@ -301,7 +358,7 @@ function MapPage() {
     }
 
     fetchData()
-  }, [userLocation])
+  }, [userLocation, showDiscountOnly])
 
   // 카카오맵 로드 확인
   useEffect(() => {
@@ -359,23 +416,8 @@ function MapPage() {
       console.log('검색 필터링 후 가게 수:', result.length)
     }
 
-    // 할인 필터링
-    if (showDiscountOnly) {
-      result = result.filter((store) => {
-        const hasDiscountProducts =
-          store.products &&
-          Array.isArray(store.products) &&
-          store.products.some(
-            (product) => !product.isSoldOut && product.discountRate > 0,
-          )
-
-        // 원래 조건이 맞지 않으면 discount 필드로 확인
-        return (
-          hasDiscountProducts || (store.discount && store.discount !== '0%')
-        )
-      })
-      console.log('할인 필터링 후 가게 수:', result.length)
-    }
+    // 할인 필터링은 API에서 처리하므로 여기서는 제거
+    // 이미 showDiscountOnly 변경 시 useEffect를 통해 API 요청이 다시 이루어짐
 
     // 카테고리 필터링
     if (selectedCategory && selectedCategory !== '전체') {
@@ -401,7 +443,7 @@ function MapPage() {
     }
 
     setFilteredStores(result)
-  }, [searchQuery, showDiscountOnly, selectedCategory, stores])
+  }, [searchQuery, selectedCategory, stores])
 
   // 마커 클릭 핸들러
   const handleMarkerClick = useCallback(

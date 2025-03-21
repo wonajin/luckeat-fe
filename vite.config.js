@@ -28,7 +28,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['react-kakao-maps-sdk'],
+      //external: ['react-kakao-maps-sdk'],
     },
   },
 })

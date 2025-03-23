@@ -706,6 +706,20 @@ function MapPage() {
                       <p className="text-xs text-gray-500 mt-1 truncate">
                         {store.address || '주소 정보 없음'}
                       </p>
+                      {/* 별점 표시 */}
+                      <div className="flex items-center mt-1">
+                        <div className="flex items-center text-xs text-yellow-500 mr-2">
+                          <span className="mr-1">★</span>
+                          <span>
+                            {store.averageRating
+                              ? store.averageRating.toFixed(1)
+                              : '0.0'}
+                          </span>
+                          <span className="text-gray-500 ml-1">
+                            ({store.reviews ? store.reviews.length : 0})
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))

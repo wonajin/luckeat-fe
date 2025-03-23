@@ -152,6 +152,10 @@ function EditProfilePage() {
         setOriginalNickname(nickname)
         setIsNicknameSame(true)
         showToastMessage('닉네임이 수정되었습니다.')
+        // 수정 완료 시 홈화면으로 이동
+        setTimeout(() => {
+          navigate('/')
+        }, 1500)
       } else {
         if (result.message.includes('중복')) {
           setNicknameError('중복된 닉네임입니다.')
@@ -207,6 +211,10 @@ function EditProfilePage() {
         setConfirmPassword('')
         setPasswordError('')
         setPasswordsNotMatch(false)
+        // 수정 완료 시 홈화면으로 이동
+        setTimeout(() => {
+          navigate('/')
+        }, 1500)
       } else {
         if (
           result.message.includes('현재 비밀번호') ||
@@ -248,7 +256,7 @@ function EditProfilePage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-50">
       <Header title="회원정보 수정" onBack={() => navigate('/mypage')} />
 
       <div className="flex-1 overflow-y-auto p-4">
@@ -261,8 +269,11 @@ function EditProfilePage() {
             type="email"
             value={user?.email || ''}
             disabled
-            className="w-full p-3 bg-gray-200 rounded border border-gray-300 text-gray-500"
+            className="w-full p-3 bg-gray-300 rounded-lg border border-gray-300 text-gray-500 font-medium"
           />
+          <p className="text-gray-500 text-xs mt-1">
+            * 이메일은 수정할 수 없습니다.
+          </p>
         </div>
 
         {/* 닉네임 수정 */}
@@ -272,7 +283,7 @@ function EditProfilePage() {
             type="text"
             value={nickname}
             onChange={handleNicknameChange}
-            className="w-full p-3 bg-gray-200 rounded border border-gray-300"
+            className="w-full p-3 bg-gray-100 rounded-lg border border-gray-300"
           />
           {isNicknameSame && (
             <p className="text-gray-500 text-sm mt-1">
@@ -283,15 +294,15 @@ function EditProfilePage() {
             <p className="text-red-500 text-sm mt-1">* {nicknameError}</p>
           )}
 
-          <div className="mt-2">
+          <div className="mt-3 flex justify-center">
             <button
               onClick={handleNicknameSubmit}
               disabled={isLoading || isNicknameSame || !!nicknameError}
-              className={`px-4 py-2 ${
+              className={`px-4 py-2 rounded-lg w-full max-w-xs ${
                 isLoading || isNicknameSame || !!nicknameError
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-[#F7B32B] hover:bg-[#E09D18]'
-              } text-white font-medium rounded-md transition-colors`}
+              } text-white font-medium transition-colors`}
             >
               {isLoading ? '처리 중...' : '닉네임 수정'}
             </button>
@@ -299,7 +310,8 @@ function EditProfilePage() {
         </div>
 
         {/* 비밀번호 수정 */}
-        <div className="mb-6">
+        <div className="mb-8 border-t pt-4">
+          <h2 className="text-lg font-bold mb-3">비밀번호 수정</h2>
           <label className="block text-sm font-medium mb-1">
             현재 비밀번호
           </label>
@@ -308,7 +320,7 @@ function EditProfilePage() {
             value={currentPassword}
             onChange={handleCurrentPasswordChange}
             placeholder="현재 비밀번호를 입력해주세요."
-            className="w-full p-3 bg-gray-200 rounded border border-gray-300 mb-2"
+            className="w-full p-3 bg-gray-100 rounded-lg border border-gray-300 mb-2"
           />
           {currentPasswordError && (
             <p className="text-red-500 text-sm mb-2">
@@ -322,7 +334,7 @@ function EditProfilePage() {
             value={newPassword}
             onChange={handlePasswordChange}
             placeholder="새로운 비밀번호를 입력해주세요."
-            className="w-full p-3 bg-gray-200 rounded border border-gray-300 mb-2"
+            className="w-full p-3 bg-gray-100 rounded-lg border border-gray-300 mb-2"
           />
           {passwordError && (
             <p className="text-red-500 text-sm mb-2">* {passwordError}</p>
@@ -336,7 +348,7 @@ function EditProfilePage() {
             value={confirmPassword}
             onChange={handleConfirmPasswordChange}
             placeholder="비밀번호를 다시 한번 입력해주세요."
-            className="w-full p-3 bg-gray-200 rounded border border-gray-300"
+            className="w-full p-3 bg-gray-100 rounded-lg border border-gray-300"
           />
           {passwordsNotMatch && (
             <p className="text-red-500 text-sm mt-1">
@@ -344,7 +356,7 @@ function EditProfilePage() {
             </p>
           )}
 
-          <div className="mt-2">
+          <div className="mt-3 flex justify-center">
             <button
               onClick={handlePasswordSubmit}
               disabled={
@@ -355,7 +367,7 @@ function EditProfilePage() {
                 passwordsNotMatch ||
                 !!passwordError
               }
-              className={`px-4 py-2 ${
+              className={`px-4 py-2 rounded-lg w-full max-w-xs ${
                 isLoading ||
                 !currentPassword ||
                 !newPassword ||
@@ -364,7 +376,7 @@ function EditProfilePage() {
                 !!passwordError
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-[#F7B32B] hover:bg-[#E09D18]'
-              } text-white font-medium rounded-md transition-colors`}
+              } text-white font-medium transition-colors`}
             >
               {isLoading ? '처리 중...' : '비밀번호 수정'}
             </button>
@@ -372,10 +384,10 @@ function EditProfilePage() {
         </div>
 
         {/* 탈퇴하기 버튼 */}
-        <div className="text-right mt-8 border-t pt-4">
+        <div className="mt-8 border-t pt-4 flex justify-center">
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="text-red-500 hover:underline"
+            className="text-red-500 hover:text-red-700 font-medium hover:underline"
             disabled={isLoading}
           >
             탈퇴하기
@@ -385,38 +397,38 @@ function EditProfilePage() {
 
       {/* 토스트 메시지 */}
       {showToast && (
-        <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-md shadow-lg">
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg shadow-lg z-50">
           {toastMessage}
         </div>
       )}
 
       {/* 회원 탈퇴 확인 모달 */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-4/5 max-w-md">
-            <p className="text-xl font-bold text-center mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-lg shadow-lg w-4/5 max-w-sm">
+            <h3 className="text-xl font-bold text-center mb-4">
               회원을 탈퇴하시겠습니까?
-            </p>
-            <p className="text-sm text-gray-600 text-center mb-4">
+            </h3>
+            <p className="text-sm text-gray-600 text-center mb-6">
               탈퇴 시 계정과 관련된 모든 정보가 삭제되며, 이 작업은 되돌릴 수
               없습니다.
             </p>
             <div className="flex justify-center space-x-4">
               <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isLoading}
+                className="px-6 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300"
+              >
+                취소
+              </button>
+              <button
                 onClick={handleDeleteAccount}
                 disabled={isLoading}
                 className={`px-6 py-2 ${
                   isLoading ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'
-                } text-white font-medium rounded-md transition-colors`}
+                } text-white font-medium rounded-lg transition-colors`}
               >
                 {isLoading ? '처리 중...' : '탈퇴하기'}
-              </button>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={isLoading}
-                className="px-6 py-2 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300"
-              >
-                취소
               </button>
             </div>
           </div>

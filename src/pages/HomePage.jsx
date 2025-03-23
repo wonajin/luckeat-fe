@@ -153,16 +153,8 @@ function HomePage() {
       })
     } else if (sortOption === '리뷰 많은 순') {
       result.sort((a, b) => {
-        const reviewsA = a.reviews
-          ? Array.isArray(a.reviews)
-            ? a.reviews.length
-            : 0
-          : 0
-        const reviewsB = b.reviews
-          ? Array.isArray(b.reviews)
-            ? b.reviews.length
-            : 0
-          : 0
+        const reviewsA = a.reviewCount || 0
+        const reviewsB = b.reviewCount || 0
         return reviewsB - reviewsA
       })
     } else if (sortOption === '공유 많은 순') {
@@ -179,16 +171,8 @@ function HomePage() {
 
         // 별점이 같으면 리뷰 수가 많은 순으로 정렬
         if (ratingB === ratingA) {
-          const reviewsA = a.reviews
-            ? Array.isArray(a.reviews)
-              ? a.reviews.length
-              : 0
-            : 0
-          const reviewsB = b.reviews
-            ? Array.isArray(b.reviews)
-              ? b.reviews.length
-              : 0
-            : 0
+          const reviewsA = a.reviewCount || 0
+          const reviewsB = b.reviewCount || 0
           return reviewsB - reviewsA
         }
 
@@ -443,7 +427,7 @@ function HomePage() {
                         : '0.0'}
                     </span>
                     <span className="text-gray-500 ml-1">
-                      ({store.reviews ? store.reviews.length : 0})
+                      ({store.reviewCount || 0})
                     </span>
                   </div>
                   {/* 공유 수 표시 */}

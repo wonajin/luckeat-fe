@@ -173,31 +173,22 @@ function HomePage() {
       })
     } else if (sortOption === '별점 높은 순') {
       result.sort((a, b) => {
-        // 별점 계산: 리뷰가 없으면 0점, 있으면 평균 별점 계산
-        const getAverageRating = (store) => {
-          if (
-            !store.reviews ||
-            !Array.isArray(store.reviews) ||
-            store.reviews.length === 0
-          ) {
-            return 0
-          }
-
-          // 리뷰의 rating 값을 합산하고 평균 계산
-          const totalRating = store.reviews.reduce((sum, review) => {
-            return sum + (review.rating || 0)
-          }, 0)
-
-          return totalRating / store.reviews.length
-        }
-
-        const ratingA = getAverageRating(a)
-        const ratingB = getAverageRating(b)
+        // API에서 받아온 averageRating 사용
+        const ratingA = a.averageRating || 0
+        const ratingB = b.averageRating || 0
 
         // 별점이 같으면 리뷰 수가 많은 순으로 정렬
         if (ratingB === ratingA) {
-          const reviewsA = a.reviews ? a.reviews.length : 0
-          const reviewsB = b.reviews ? b.reviews.length : 0
+          const reviewsA = a.reviews
+            ? Array.isArray(a.reviews)
+              ? a.reviews.length
+              : 0
+            : 0
+          const reviewsB = b.reviews
+            ? Array.isArray(b.reviews)
+              ? b.reviews.length
+              : 0
+            : 0
           return reviewsB - reviewsA
         }
 
@@ -447,13 +438,8 @@ function HomePage() {
                   <div className="flex items-center text-sm text-yellow-500 mr-2">
                     <span className="mr-1">★</span>
                     <span>
-                      {store.reviews && store.reviews.length > 0
-                        ? (
-                            store.reviews.reduce(
-                              (sum, review) => sum + (review.rating || 0),
-                              0,
-                            ) / store.reviews.length
-                          ).toFixed(1)
+                      {store.averageRating
+                        ? store.averageRating.toFixed(1)
                         : '0.0'}
                     </span>
                     <span className="text-gray-500 ml-1">

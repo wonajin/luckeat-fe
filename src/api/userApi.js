@@ -32,7 +32,7 @@ export const register = async (userData) => {
     console.log('회원가입 API 응답:', response)
     console.log('회원가입 응답 데이터:', response.data)
     console.log('회원가입 응답 상태 코드:', response.status)
-    
+
     const result = handleSuccessResponse(response)
     console.log('회원가입 처리된 결과:', result)
     return result

@@ -86,14 +86,14 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true)
       const response = await userApi.register(userData)
-      console.log('AuthContext signup 응답:', response);
+      console.log('AuthContext signup 응답:', response)
 
       // 성공 여부 확인 방법 개선
       if (response.success || response.statusCode === 201) {
-        return { 
-          success: true, 
+        return {
+          success: true,
           message: response.message || '회원가입에 성공했습니다.',
-          statusCode: response.statusCode || 201 
+          statusCode: response.statusCode || 201,
         }
       }
       return {
@@ -101,7 +101,7 @@ export function AuthProvider({ children }) {
         message: response.message || '회원가입에 실패했습니다.',
       }
     } catch (error) {
-      console.error('회원가입 처리 중 오류:', error);
+      console.error('회원가입 처리 중 오류:', error)
       return {
         success: false,
         message: error.message || '회원가입에 실패했습니다.',

@@ -27,7 +27,10 @@ function CategoryList({ categories = [], selectedCategory, onSelectCategory }) {
   ]
 
   // selectedCategory가 없으면 '전체' 카테고리가 선택된 것으로 처리
-  const isAllSelected = selectedCategory === '' || selectedCategory === null || selectedCategory === undefined;
+  const isAllSelected =
+    selectedCategory === '' ||
+    selectedCategory === null ||
+    selectedCategory === undefined
 
   return (
     <div className="grid grid-cols-4 gap-2 p-4 bg-gray-100">
@@ -35,12 +38,13 @@ function CategoryList({ categories = [], selectedCategory, onSelectCategory }) {
         // 백엔드 API의 카테고리 필드명에 맞게 수정
         const categoryName = category.categoryName
         const icon = categoryIcons[categoryName] || '🍴' // 기본 아이콘
-        
+
         // 선택 상태 확인 - '전체' 카테고리는 selectedCategory가 비어있을 때 선택됨
-        const isSelected = 
-          category.categoryName === '전체' 
+        const isSelected =
+          category.categoryName === '전체'
             ? isAllSelected
-            : selectedCategory === category.id || selectedCategory === String(category.id);
+            : selectedCategory === category.id ||
+              selectedCategory === String(category.id)
 
         return (
           <button

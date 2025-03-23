@@ -71,12 +71,6 @@ export const login = async (credentials) => {
       if (response.data.refreshToken) {
         localStorage.setItem(TOKEN_KEYS.REFRESH, response.data.refreshToken)
       }
-      // 이전 버전 호환을 위한 token 저장
-      if (response.data.accessToken && !response.data.token) {
-        localStorage.setItem(TOKEN_KEYS.LEGACY, response.data.accessToken)
-      } else if (response.data.token) {
-        localStorage.setItem(TOKEN_KEYS.LEGACY, response.data.token)
-      }
 
       // 사용자 정보 저장
       const userData = {
@@ -121,7 +115,6 @@ export const logout = async () => {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
-    localStorage.removeItem('token') // 이전 토큰도 제거
     console.log('로컬 스토리지 토큰 제거 완료')
 
     return handleSuccessResponse(response)
@@ -131,7 +124,6 @@ export const logout = async () => {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
-    localStorage.removeItem('token') // 이전 토큰도 제거
     console.log('오류 발생 시에도 로컬 스토리지 토큰 제거 완료')
 
     return handleErrorResponse(error)

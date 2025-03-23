@@ -6,7 +6,6 @@ import { API_BASE_URL } from '../config/apiConfig'
 export const TOKEN_KEYS = {
   ACCESS: 'accessToken', // 액세스 토큰 키
   REFRESH: 'refreshToken', // 리프레시 토큰 키
-  LEGACY: 'token', // 이전 버전 호환용 토큰 키
 }
 
 // axios 인스턴스 생성

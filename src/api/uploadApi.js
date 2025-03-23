@@ -26,13 +26,13 @@ export const processImageData = async (
     imageFormData.append('image', imageFile)
 
     // 토큰 가져오기
-    const token = localStorage.getItem('token')
+    const accessToken = localStorage.getItem('accessToken')
 
     // fetch를 사용한 이미지 업로드
     const response = await fetch(`${API_BASE_URL}${uploadPath}`, {
       method: 'POST',
       headers: {
-        Authorization: token ? `Bearer ${token}` : '',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
       },
       body: imageFormData,
     })
@@ -66,7 +66,7 @@ export const uploadMultipleImages = async (imageFiles, uploadPath) => {
   }
 
   try {
-    const token = localStorage.getItem('token')
+    const accessToken = localStorage.getItem('accessToken')
     const uploadPromises = imageFiles.map(async (file) => {
       const formData = new FormData()
       formData.append('image', file)
@@ -74,7 +74,7 @@ export const uploadMultipleImages = async (imageFiles, uploadPath) => {
       const response = await fetch(`${API_BASE_URL}${uploadPath}`, {
         method: 'POST',
         headers: {
-          Authorization: token ? `Bearer ${token}` : '',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
         },
         body: formData,
       })

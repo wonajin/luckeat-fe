@@ -29,8 +29,13 @@ export const register = async (userData) => {
     // 프록시를 통한 요청
     console.log('회원가입 수정된 요청 데이터:', requestData)
     const response = await apiClient.post(API_ENDPOINTS.REGISTER, requestData)
-    console.log('회원가입 요청 성공:', response.data)
-    return handleSuccessResponse(response)
+    console.log('회원가입 API 응답:', response)
+    console.log('회원가입 응답 데이터:', response.data)
+    console.log('회원가입 응답 상태 코드:', response.status)
+    
+    const result = handleSuccessResponse(response)
+    console.log('회원가입 처리된 결과:', result)
+    return result
   } catch (error) {
     console.error('회원가입 오류:', error)
 

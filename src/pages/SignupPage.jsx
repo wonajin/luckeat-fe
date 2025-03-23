@@ -63,25 +63,15 @@ function SignupPage() {
 
       // 회원가입 요청
       const result = await signup(userData)
-      console.log('회원가입 응답 결과:', result)
+      console.log('회원가입 응답 결과 상세:', result)
 
-      // 응답 상태 코드 확인 (API 명세에 따르면 201이 성공)
-      if (result && result.statusCode === 201) {
-        console.log('회원가입 성공 (상태 코드 201), 성공 팝업 표시')
-        setShowSuccessPopup(true) // 성공 시 팝업 표시
-      }
-      // result.success 값으로도 확인 (양쪽에서 이중 체크)
-      else if (result && result.success) {
-        console.log('회원가입 성공 (success=true), 성공 팝업 표시')
-        setShowSuccessPopup(true) // 성공 시 팝업 표시
-      }
-      // "회원가입 성공" 메시지 확인 (세 번째 체크)
-      else if (result && result.message === '회원가입 성공') {
-        console.log('회원가입 성공 (메시지 확인), 성공 팝업 표시')
+      // 성공 여부 확인 - success 또는 statusCode로 확인
+      if (result && (result.success || result.statusCode === 201)) {
+        console.log('회원가입 성공, 성공 팝업 표시')
         setShowSuccessPopup(true) // 성공 시 팝업 표시
       } else {
         // 실패 처리
-        console.log('회원가입 실패:', result)
+        console.log('회원가입 실패 상세:', result)
         setError(
           (result && result.message) ||
             '회원가입에 실패했습니다. 다시 시도해주세요.',
@@ -98,12 +88,14 @@ function SignupPage() {
   // 로그인 페이지로 이동
   const goToLogin = () => {
     console.log('로그인 페이지로 이동')
+    setShowSuccessPopup(false) // 팝업 닫기
     navigate('/login')
   }
 
   // 홈 화면으로 이동
   const goToHome = () => {
     console.log('홈 화면으로 이동')
+    setShowSuccessPopup(false) // 팝업 닫기
     navigate('/')
   }
 

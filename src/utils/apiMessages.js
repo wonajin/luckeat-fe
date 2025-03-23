@@ -114,10 +114,24 @@ export const getMessageByStatusCode = (statusCode, message = null) => {
  * @returns {Object} 성공 정보를 담은 객체
  */
 export const handleSuccessResponse = (response) => {
+  let message = null
+
+  // 응답 데이터에 메시지가 있으면 사용
+  if (response.data && response.data.message) {
+    message = response.data.message
+  }
+  // 없으면 상태 코드에 따라 기본 메시지 사용
+  else if (response.status === 201) {
+    message = SUCCESS_MESSAGES.REGISTER_SUCCESS
+  } else if (response.status === 200) {
+    message = '요청이 성공적으로 처리되었습니다.'
+  }
+
   return {
     success: true,
     data: response.data,
-    message: response.data.message || getMessageByStatusCode(response.status),
+    statusCode: response.status,
+    message: message,
   }
 }
 

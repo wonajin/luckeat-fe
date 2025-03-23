@@ -26,20 +26,27 @@ function CategoryList({ categories = [], selectedCategory, onSelectCategory }) {
     ...(categories || []),
   ]
 
+  // selectedCategory가 없으면 '전체' 카테고리가 선택된 것으로 처리
+  const isAllSelected = selectedCategory === '' || selectedCategory === null || selectedCategory === undefined;
+
   return (
     <div className="grid grid-cols-4 gap-2 p-4 bg-gray-100">
       {allCategories.map((category) => {
         // 백엔드 API의 카테고리 필드명에 맞게 수정
         const categoryName = category.categoryName
         const icon = categoryIcons[categoryName] || '🍴' // 기본 아이콘
+        
+        // 선택 상태 확인 - '전체' 카테고리는 selectedCategory가 비어있을 때 선택됨
+        const isSelected = 
+          category.categoryName === '전체' 
+            ? isAllSelected
+            : selectedCategory === category.id || selectedCategory === String(category.id);
 
         return (
           <button
             key={category.id}
             className={`flex flex-col items-center ${
-              selectedCategory === String(category.id)
-                ? 'text-yellow-500'
-                : 'text-gray-700'
+              isSelected ? 'text-yellow-500' : 'text-gray-700'
             }`}
             onClick={() =>
               onSelectCategory(categoryName === '전체' ? '' : category.id)
@@ -47,9 +54,7 @@ function CategoryList({ categories = [], selectedCategory, onSelectCategory }) {
           >
             <div
               className={`w-14 h-14 rounded-full flex items-center justify-center mb-1 ${
-                selectedCategory === String(category.id)
-                  ? 'bg-yellow-100'
-                  : 'bg-gray-200'
+                isSelected ? 'bg-yellow-100' : 'bg-gray-200'
               }`}
             >
               <span className="text-2xl">{icon}</span>

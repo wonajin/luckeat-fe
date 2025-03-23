@@ -212,7 +212,7 @@ function HomePage() {
   // 카테고리 핸들러
   const handleCategorySelect = (category) => {
     console.log('카테고리 선택:', category)
-    setSelectedCategory(category)
+    setSelectedCategory(category === selectedCategory ? '' : category)
   }
 
   // HomePage.jsx 파일에서 가게 카드 클릭 핸들러 추가
@@ -306,7 +306,7 @@ function HomePage() {
         <CategoryList
           categories={categories}
           selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
+          onSelectCategory={handleCategorySelect}
         />
       </div>
 

@@ -70,10 +70,8 @@ export const getStoreById = async (storeId) => {
   try {
     console.log(`가게 상세 정보 요청: 가게 ID ${storeId}`)
 
-    // 현재 액세스 토큰 확인 (여러 키 시도)
-    const accessToken =
-      localStorage.getItem(TOKEN_KEYS.ACCESS) ||
-      localStorage.getItem(TOKEN_KEYS.LEGACY)
+    // 현재 액세스 토큰 확인
+    const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS)
     console.log('요청 시 토큰 확인:', accessToken ? '토큰 있음' : '토큰 없음')
 
     const response = await apiClient.get(`/stores/${storeId}`)

@@ -38,18 +38,20 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          NODE_ENV: ${{ env.ENVIRONMENT }}
           VITE_KAKAO_API_KEY: ${{ secrets.VITE_KAKAO_API_KEY }}
 
       - name: List build directory
         run: |
           echo "Checking build output directories..."
           ls -la
-          if [ -d "build" ]; then
-            echo "Found build directory"
-            ls -la build
-          elif [ -d "dist" ]; then
+          if [ -d "dist" ]; then
             echo "Found dist directory"
             ls -la dist
+            if [ -d "dist/${{ env.ENVIRONMENT }}" ]; then
+              echo "Found dist/${{ env.ENVIRONMENT }} directory"
+              ls -la dist/${{ env.ENVIRONMENT }}
+            fi
           else
             echo "No standard build directory found. Checking other possibilities..."
             find . -type d -maxdepth 2 | grep -v "node_modules" | grep -v ".git"
@@ -70,22 +72,11 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          if [ -d "build" ]; then
-            echo "Deploying from build directory to ${{ env.ENVIRONMENT }} environment..."
-            if [[ "${{ env.ENVIRONMENT }}" == "production" ]]; then
-              aws s3 sync ./build s3://luckeat-front/production --exclude "images/*" --exclude "store/*"
-            else
-              aws s3 sync ./build s3://luckeat-front/development --exclude "images/*" --exclude "store/*"
-            fi
-          elif [ -d "dist" ]; then
-            echo "Deploying from dist directory to ${{ env.ENVIRONMENT }} environment..."
-            if [[ "${{ env.ENVIRONMENT }}" == "production" ]]; then
-              aws s3 sync ./dist s3://luckeat-front/production --exclude "images/*" --exclude "store/*"
-            else
-              aws s3 sync ./dist s3://luckeat-front/development --exclude "images/*" --exclude "store/*"
-            fi
+          if [ -d "dist/${{ env.ENVIRONMENT }}" ]; then
+            echo "Deploying from dist/${{ env.ENVIRONMENT }} directory to ${{ env.ENVIRONMENT }} environment..."
+            aws s3 sync ./dist/${{ env.ENVIRONMENT }} s3://luckeat-front/${{ env.ENVIRONMENT }} --exclude "images/*" --exclude "store/*"
           else
-            echo "No build directory found. Please check your build configuration."
+            echo "No dist/${{ env.ENVIRONMENT }} directory found. Please check your build configuration."
             exit 1
           fi
           echo "Deployment to ${{ env.ENVIRONMENT }} completed successfully"

@@ -1,5 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
+
+// 환경 변수에 따라 개발/프로덕션 모드 구분
+const mode =
+  process.env.NODE_ENV === 'production' ? 'production' : 'development'
 
 export default defineConfig({
   plugins: [react()],
@@ -27,8 +32,17 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: `dist/${mode}`,
+    emptyOutDir: true,
     rollupOptions: {
-      //external: ['react-kakao-maps-sdk'],
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+      output: {
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]',
+      },
     },
   },
 })

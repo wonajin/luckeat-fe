@@ -1,5 +1,5 @@
 // API 설정 파일
-const API_BASE_URL = 'https://3.34.255.222:8080/api/v1'
+const API_BASE_URL = '/api/v1'
 const API_DIRECT_URL = 'https://3.34.255.222:8080'
 
 // API 엔드포인트

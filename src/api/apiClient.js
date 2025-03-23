@@ -1,6 +1,8 @@
 import axios from 'axios'
 import { handleErrorResponse, ERROR_MESSAGES } from '../utils/apiMessages'
-import { API_BASE_URL } from '../config/apiConfig'
+
+// API 접두사 설정
+const API_PREFIX = '/api/v1'
 
 // 토큰 관련 상수
 export const TOKEN_KEYS = {
@@ -10,7 +12,6 @@ export const TOKEN_KEYS = {
 
 // axios 인스턴스 생성
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
@@ -22,6 +23,15 @@ const apiClient = axios.create({
 // 요청 인터셉터 설정
 apiClient.interceptors.request.use(
   (config) => {
+    // API 접두사 추가
+    if (
+      config.url &&
+      !config.url.startsWith('/api/v1') &&
+      !config.url.startsWith('http')
+    ) {
+      config.url = `${API_PREFIX}${config.url}`
+    }
+
     // 로컬 스토리지에서 토큰 가져오기
     const token = localStorage.getItem('accessToken')
     if (token) {

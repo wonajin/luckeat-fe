@@ -13,7 +13,7 @@ export const registerProduct = async (storeId, productData, productImage) => {
     )
 
     const response = await apiClient.post(
-      `/stores/${storeId}/products`,
+      `/v1/stores/${storeId}/products`,
       processedData,
     )
     return response.data
@@ -25,7 +25,7 @@ export const registerProduct = async (storeId, productData, productImage) => {
 // 상품 리스트 조회
 export const getProducts = async (storeId) => {
   try {
-    const response = await apiClient.get(`/stores/${storeId}/products`)
+    const response = await apiClient.get(`/v1/stores/${storeId}/products`)
     return response.data
   } catch (error) {
     throw error
@@ -36,7 +36,7 @@ export const getProducts = async (storeId) => {
 export const getProductById = async (storeId, productId) => {
   try {
     const response = await apiClient.get(
-      `/stores/${storeId}/products/${productId}`,
+      `/v1/stores/${storeId}/products/${productId}`,
     )
     return response.data
   } catch (error) {
@@ -61,7 +61,7 @@ export const updateProduct = async (
     )
 
     const response = await apiClient.put(
-      `/stores/${storeId}/products/${productId}`,
+      `/v1/stores/${storeId}/products/${productId}`,
       processedData,
     )
     return response.data
@@ -74,7 +74,7 @@ export const updateProduct = async (
 export const updateProductStatus = async (storeId, productId, isOpen) => {
   try {
     const response = await apiClient.patch(
-      `/stores/${storeId}/products/${productId}`,
+      `/v1/stores/${storeId}/products/${productId}`,
       { is_open: isOpen },
     )
     return response.data
@@ -87,7 +87,7 @@ export const updateProductStatus = async (storeId, productId, isOpen) => {
 export const deleteProduct = async (storeId, productId) => {
   try {
     const response = await apiClient.delete(
-      `/stores/${storeId}/products/${productId}`,
+      `/v1/stores/${storeId}/products/${productId}`,
     )
     return response.data
   } catch (error) {

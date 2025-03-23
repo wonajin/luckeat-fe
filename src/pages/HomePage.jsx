@@ -174,18 +174,26 @@ function HomePage() {
     } else if (sortOption === '별점 높은 순') {
       result.sort((a, b) => {
         // API에서 받아온 averageRating 사용
-        const ratingA = a.averageRating || 0;
-        const ratingB = b.averageRating || 0;
+        const ratingA = a.averageRating || 0
+        const ratingB = b.averageRating || 0
 
         // 별점이 같으면 리뷰 수가 많은 순으로 정렬
         if (ratingB === ratingA) {
-          const reviewsA = a.reviews ? (Array.isArray(a.reviews) ? a.reviews.length : 0) : 0;
-          const reviewsB = b.reviews ? (Array.isArray(b.reviews) ? b.reviews.length : 0) : 0;
-          return reviewsB - reviewsA;
+          const reviewsA = a.reviews
+            ? Array.isArray(a.reviews)
+              ? a.reviews.length
+              : 0
+            : 0
+          const reviewsB = b.reviews
+            ? Array.isArray(b.reviews)
+              ? b.reviews.length
+              : 0
+            : 0
+          return reviewsB - reviewsA
         }
 
-        return ratingB - ratingA; // 별점 높은 순으로 내림차순 정렬
-      });
+        return ratingB - ratingA // 별점 높은 순으로 내림차순 정렬
+      })
     }
 
     console.log('정렬 후 최종 가게 수:', result.length)

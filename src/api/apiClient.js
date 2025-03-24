@@ -29,11 +29,18 @@ apiClient.interceptors.request.use(
       !config.url.startsWith('http') &&
       !config.url.startsWith('https')
     ) {
-      // 이미 /api로 시작하는 경우 중복 추가 방지
+      // API 경로 처리 개선
       if (config.url.startsWith('/api')) {
+        // '/api'로 시작하면 도메인만 추가
         config.url = `https://luckeat.net${config.url}`
+        
+        // '/api/v1'이 아닌 경우 '/api' 다음에 '/v1' 추가
+        if (!config.url.includes('/api/v1/')) {
+          config.url = config.url.replace('/api/', '/api/v1/')
+        }
       } else {
-        config.url = `https://luckeat.net${API_PREFIX}${config.url}`
+        // 그 외의 경우 도메인과 API 접두사 추가
+        config.url = `https://luckeat.net/api/v1${config.url}`
       }
     }
 

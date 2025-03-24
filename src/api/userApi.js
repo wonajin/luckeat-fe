@@ -56,12 +56,14 @@ export const register = async (userData) => {
 export const login = async (credentials) => {
   try {
     console.log('로그인 요청 데이터:', credentials)
-    console.log('로그인 요청 URL:', API_ENDPOINTS.LOGIN)
-    console.log('로그인 요청 전체 URL:', `${API_BASE_URL}${API_ENDPOINTS.LOGIN}`)
+    
+    // 절대 URL로 로그인 요청 경로 설정
+    const loginUrl = 'https://luckeat.net/api/v1/users/login'
+    console.log('로그인 요청 전체 URL:', loginUrl)
 
-    // 프록시를 통한 요청
+    // 프록시를 통한 요청 - 절대 URL 사용
     console.log('로그인 요청 시작...')
-    const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
+    const response = await apiClient.post(loginUrl, credentials)
     console.log('로그인 성공:', response.data)
 
     // 로그인 성공 시 사용자 정보 및 토큰 저장
@@ -87,10 +89,19 @@ export const login = async (credentials) => {
     return handleSuccessResponse(response)
   } catch (error) {
     console.error('로그인 오류:', error)
-    console.error('로그인 오류 응답:', error.response ? error.response.data : '응답 없음')
-    console.error('로그인 오류 상태:', error.response ? error.response.status : '상태 코드 없음')
-    console.error('로그인 요청 URL:', error.config ? error.config.url : '요청 URL 없음')
-    
+    console.error(
+      '로그인 오류 응답:',
+      error.response ? error.response.data : '응답 없음',
+    )
+    console.error(
+      '로그인 오류 상태:',
+      error.response ? error.response.status : '상태 코드 없음',
+    )
+    console.error(
+      '로그인 요청 URL:',
+      error.config ? error.config.url : '요청 URL 없음',
+    )
+
     return handleErrorResponse(error)
   }
 }

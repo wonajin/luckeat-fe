@@ -1,20 +1,30 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [sessionMessage, setSessionMessage] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // 리다이렉션된 경우 메시지 표시
+  useEffect(() => {
+    if (location.state?.message) {
+      setSessionMessage(location.state.message)
+    }
+  }, [location.state])
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setError('')
+    setSessionMessage('')
 
     // 간단한 유효성 검사
     if (!email || !password) {
@@ -46,6 +56,13 @@ function LoginPage() {
       <Header title="로그인" />
 
       <div className="flex-1 p-4">
+        {/* 세션 만료 메시지 */}
+        {sessionMessage && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+            <p>{sessionMessage}</p>
+          </div>
+        )}
+
         {/* 로그인 폼 */}
         <form onSubmit={handleLogin} className="space-y-6 mt-8">
           {/* 이메일 입력 */}

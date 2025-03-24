@@ -106,9 +106,9 @@ export const logout = async () => {
       },
     }
 
-    console.log('로그아웃 API 요청 시작: /users/logout')
+    console.log('로그아웃 API 요청 시작: /v1/users/logout')
     // /api/v1/users/logout 엔드포인트로 요청
-    const response = await apiClient.post('/users/logout', {}, config)
+    const response = await apiClient.post('/v1/users/logout', {}, config)
     console.log('로그아웃 API 응답 수신:', response)
 
     // 로그아웃 성공 시 로컬 스토리지의 모든 토큰 제거
@@ -133,7 +133,7 @@ export const logout = async () => {
 // 이메일 중복 확인
 export const checkEmailDuplicate = async (email) => {
   try {
-    const response = await apiClient.get(`/users/emailValid?email=${email}`)
+    const response = await apiClient.get(`/v1/users/emailValid?email=${email}`)
     return handleSuccessResponse(response)
   } catch (error) {
     return handleErrorResponse(error)
@@ -144,7 +144,7 @@ export const checkEmailDuplicate = async (email) => {
 export const checkNicknameDuplicate = async (nickname) => {
   try {
     const response = await apiClient.get(
-      `/users/nicknameVaild?nickname=${nickname}`,
+      `/v1/users/nicknameVaild?nickname=${nickname}`,
     )
     return handleSuccessResponse(response)
   } catch (error) {
@@ -177,7 +177,7 @@ export const updateNickname = async (nickname) => {
 // 비밀번호 수정
 export const updatePassword = async (passwordData) => {
   try {
-    const response = await apiClient.patch('/users/password', passwordData)
+    const response = await apiClient.patch('/v1/users/password', passwordData)
     return handleSuccessResponse(response)
   } catch (error) {
     return handleErrorResponse(error)
@@ -187,7 +187,7 @@ export const updatePassword = async (passwordData) => {
 // 회원 탈퇴
 export const deleteAccount = async () => {
   try {
-    const response = await apiClient.delete('/users')
+    const response = await apiClient.delete('/v1/users')
     return handleSuccessResponse(response)
   } catch (error) {
     return handleErrorResponse(error)

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { handleErrorResponse, ERROR_MESSAGES } from '../utils/apiMessages'
 
 // API 접두사 설정
-const API_PREFIX = '/api/v1'
+const API_PREFIX = '/api'
 
 // 토큰 관련 상수
 export const TOKEN_KEYS = {
@@ -26,7 +26,7 @@ apiClient.interceptors.request.use(
     // API 접두사 추가
     if (
       config.url &&
-      !config.url.startsWith('/api/v1') &&
+      !config.url.startsWith('/api') &&
       !config.url.startsWith('http')
     ) {
       config.url = `${API_PREFIX}${config.url}`

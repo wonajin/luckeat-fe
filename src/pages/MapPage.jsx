@@ -34,7 +34,7 @@ function MapPage() {
   const storeItemRefs = useRef({})
 
   // API 기본 URL 직접 설정
-  const API_BASE_URL = 'http://3.34.255.222:8080'
+  const API_BASE_URL = 'https://luckeat.net'
 
   // 사용자 위치 가져오기
   useEffect(() => {

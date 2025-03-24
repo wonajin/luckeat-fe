@@ -1,6 +1,6 @@
 // API 설정 파일
-const API_BASE_URL = '/api/v1'
-const API_DIRECT_URL = 'http://3.34.255.222:8080'
+const API_BASE_URL = 'https://luckeat.net/api/v1'
+const API_DIRECT_URL = 'https://luckeat.net'
 
 // API 엔드포인트
 const API_ENDPOINTS = {
@@ -31,7 +31,7 @@ const API_ENDPOINTS = {
 const getApiUrl = (endpoint) => `${API_BASE_URL}${endpoint}`
 
 // 직접 API URL 생성 함수 (프록시 우회)
-const getDirectApiUrl = (endpoint) => `${API_DIRECT_URL}${endpoint}`
+const getDirectApiUrl = (endpoint) => `${API_DIRECT_URL}/api/v1${endpoint}`
 
 export {
   API_BASE_URL,

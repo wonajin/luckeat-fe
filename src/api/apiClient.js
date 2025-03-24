@@ -23,13 +23,23 @@ const apiClient = axios.create({
 // 요청 인터셉터 설정
 apiClient.interceptors.request.use(
   (config) => {
-    // API 접두사 추가
+    // URL이 상대경로인 경우 기본 도메인 추가
     if (
       config.url &&
-      !config.url.startsWith('/api') &&
-      !config.url.startsWith('http')
+      !config.url.startsWith('http') &&
+      !config.url.startsWith('https')
     ) {
-      config.url = `${API_PREFIX}${config.url}`
+      // URL 통합 처리
+      if (config.url.startsWith('/v1/')) {
+        // /v1/로 시작하는 경우 - /api를 추가하고 도메인 추가
+        config.url = `https://luckeat.net/api${config.url}`
+      } else if (config.url.startsWith('/api/')) {
+        // /api/로 시작하는 경우 - 그대로 도메인만 추가
+        config.url = `https://luckeat.net${config.url}`
+      } else {
+        // 그 외 - 모든 API 엔드포인트는 /api/v1/로 시작하도록 설정
+        config.url = `https://luckeat.net/api/v1${config.url.startsWith('/') ? '' : '/'}${config.url}`
+      }
     }
 
     // 로컬 스토리지에서 토큰 가져오기

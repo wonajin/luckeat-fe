@@ -12,9 +12,9 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://3.34.255.222:8080',
+        target: 'https://luckeat.net',
         changeOrigin: true,
-        secure: false,
+        secure: true,
         ws: true,
         // rewrite: (path) => path.replace(/^\/api/, ''),
         configure: (proxy, _options) => {

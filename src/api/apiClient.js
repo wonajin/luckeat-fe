@@ -26,10 +26,15 @@ apiClient.interceptors.request.use(
     // API 접두사 추가
     if (
       config.url &&
-      !config.url.startsWith('/api') &&
-      !config.url.startsWith('http')
+      !config.url.startsWith('http') &&
+      !config.url.startsWith('https')
     ) {
-      config.url = `${API_PREFIX}${config.url}`
+      // 이미 /api로 시작하는 경우 중복 추가 방지
+      if (config.url.startsWith('/api')) {
+        config.url = `https://luckeat.net${config.url}`
+      } else {
+        config.url = `https://luckeat.net${API_PREFIX}${config.url}`
+      }
     }
 
     // 로컬 스토리지에서 토큰 가져오기

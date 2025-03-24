@@ -56,6 +56,8 @@ export const register = async (userData) => {
 export const login = async (credentials) => {
   try {
     console.log('로그인 요청 데이터:', credentials)
+    console.log('로그인 요청 URL:', API_ENDPOINTS.LOGIN)
+    console.log('로그인 요청 전체 URL:', `${API_BASE_URL}${API_ENDPOINTS.LOGIN}`)
 
     // 프록시를 통한 요청
     console.log('로그인 요청 시작...')
@@ -85,6 +87,10 @@ export const login = async (credentials) => {
     return handleSuccessResponse(response)
   } catch (error) {
     console.error('로그인 오류:', error)
+    console.error('로그인 오류 응답:', error.response ? error.response.data : '응답 없음')
+    console.error('로그인 오류 상태:', error.response ? error.response.status : '상태 코드 없음')
+    console.error('로그인 요청 URL:', error.config ? error.config.url : '요청 URL 없음')
+    
     return handleErrorResponse(error)
   }
 }

@@ -49,21 +49,33 @@ function HomePage() {
           params.isDiscountOpen = true
         }
 
-        const storesData = await getStores(params)
-        console.log('가게 데이터 API 응답:', storesData)
+        // API 호출 시 오류 처리 추가
+        try {
+          const storesData = await getStores(params)
+          console.log('가게 데이터 API 응답:', storesData)
 
-        // 데이터 구조 확인 후 적절히 설정
-        const storesList = Array.isArray(storesData)
-          ? storesData
-          : storesData?.data || []
-        console.log('처리된 가게 목록:', storesList)
+          // 데이터 구조 확인 후 적절히 설정
+          const storesList = Array.isArray(storesData)
+            ? storesData
+            : storesData?.data || []
+          console.log('처리된 가게 목록:', storesList)
 
-        setStores(storesList)
-        setFilteredStores(storesList)
+          setStores(storesList)
+          setFilteredStores(storesList)
+        } catch (storeError) {
+          console.error('가게 데이터 로딩 중 오류:', storeError)
+          // 오류가 발생해도 빈 배열로 설정하여 UI가 깨지지 않도록 함
+          setStores([])
+          setFilteredStores([])
+        }
+        
         setLoading(false)
       } catch (error) {
         console.error('데이터 로딩 중 오류 발생:', error)
         setLoading(false)
+        // 오류 발생 시 빈 배열로 초기화
+        setStores([])
+        setFilteredStores([])
       }
     }
 

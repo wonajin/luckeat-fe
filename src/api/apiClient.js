@@ -29,18 +29,25 @@ apiClient.interceptors.request.use(
       !config.url.startsWith('http') &&
       !config.url.startsWith('https')
     ) {
-      // API 경로 처리 개선
-      if (config.url.startsWith('/api')) {
-        // '/api'로 시작하면 도메인만 추가
-        config.url = `https://luckeat.net${config.url}`
-        
-        // '/api/v1'이 아닌 경우 '/api' 다음에 '/v1' 추가
-        if (!config.url.includes('/api/v1/')) {
-          config.url = config.url.replace('/api/', '/api/v1/')
-        }
-      } else {
-        // 그 외의 경우 도메인과 API 접두사 추가
-        config.url = `https://luckeat.net/api/v1${config.url}`
+      // URL이 절대 경로가 아닌 경우 처리
+      
+      // v1이 중복으로 포함되지 않도록 확인
+      let processedUrl = config.url;
+      
+      // '/v1/'으로 시작하는 URL 처리
+      if (processedUrl.startsWith('/v1/')) {
+        // /v1/이 이미 포함된 URL - 도메인만 추가
+        config.url = `https://luckeat.net/api${processedUrl}`;
+      } 
+      // '/api/'로 시작하는 URL 처리
+      else if (processedUrl.startsWith('/api/')) {
+        // 그대로 사용
+        config.url = `https://luckeat.net${processedUrl}`;
+      }
+      // 그 외 URL 처리 (v1이 없는 경우)
+      else {
+        // 경로 앞에 /api를 추가
+        config.url = `https://luckeat.net/api${processedUrl.startsWith('/') ? '' : '/'}${processedUrl}`;
       }
     }
 

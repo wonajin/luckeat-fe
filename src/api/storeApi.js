@@ -15,7 +15,7 @@ export const registerStore = async (storeData, storeImage) => {
     )
 
     // 가게 등록 API 호출
-    const response = await apiClient.post('/v1/stores', processedData)
+    const response = await apiClient.post('/stores', processedData)
     return response.data
   } catch (error) {
     throw error
@@ -28,11 +28,11 @@ export const getStores = async (params = {}) => {
     console.log('getStores 호출 - 파라미터:', params)
 
     // isDiscountOpen 파라미터가 있는지 확인
-    let url = '/v1/stores'
+    let url = '/stores'
 
     // 파라미터에 isDiscountOpen가 있을 때만 URL에 직접 추가
     if (params.isDiscountOpen === true) {
-      url = `/v1/stores?isDiscountOpen=true`
+      url = `/stores?isDiscountOpen=true`
       // 다른 파라미터는 그대로 유지하되 isDiscountOpen는 제거
       const { isDiscountOpen, ...otherParams } = params
       params = otherParams
@@ -74,7 +74,7 @@ export const getStoreById = async (storeId) => {
     const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS)
     console.log('요청 시 토큰 확인:', accessToken ? '토큰 있음' : '토큰 없음')
 
-    const response = await apiClient.get(`/v1/stores/${storeId}`)
+    const response = await apiClient.get(`/stores/${storeId}`)
     console.log('가게 상세 정보 응답:', response.data)
 
     // 응답 데이터 확인 및 변환
@@ -124,7 +124,7 @@ export const updateStore = async (storeId, storeData, storeImage) => {
       '/store-images',
     )
 
-    const response = await apiClient.put(`/v1/stores/${storeId}`, processedData)
+    const response = await apiClient.put(`/stores/${storeId}`, processedData)
     return response.data
   } catch (error) {
     throw error
@@ -134,7 +134,7 @@ export const updateStore = async (storeId, storeData, storeImage) => {
 // 가게 공유수 증가
 export const increaseStoreShare = async (storeId) => {
   try {
-    const response = await apiClient.post(`/v1/stores/${storeId}/share`)
+    const response = await apiClient.post(`/stores/${storeId}/share`)
     return response.data
   } catch (error) {
     throw error
@@ -144,7 +144,7 @@ export const increaseStoreShare = async (storeId) => {
 // 가게 삭제
 export const deleteStore = async (storeId) => {
   try {
-    const response = await apiClient.delete(`/v1/stores/${storeId}`)
+    const response = await apiClient.delete(`/stores/${storeId}`)
     return response.data
   } catch (error) {
     throw error

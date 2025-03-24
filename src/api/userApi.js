@@ -57,13 +57,13 @@ export const login = async (credentials) => {
   try {
     console.log('로그인 요청 데이터:', credentials)
     
-    // 절대 URL로 로그인 요청 경로 설정
-    const loginUrl = 'https://luckeat.net/api/v1/users/login'
-    console.log('로그인 요청 전체 URL:', loginUrl)
+    // API_ENDPOINTS 사용
+    console.log('로그인 요청 URL:', API_ENDPOINTS.LOGIN)
+    console.log('로그인 요청 전체 URL:', getApiUrl(API_ENDPOINTS.LOGIN))
 
-    // 프록시를 통한 요청 - 절대 URL 사용
+    // 프록시를 통한 요청
     console.log('로그인 요청 시작...')
-    const response = await apiClient.post(loginUrl, credentials)
+    const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
     console.log('로그인 성공:', response.data)
 
     // 로그인 성공 시 사용자 정보 및 토큰 저장
@@ -123,9 +123,9 @@ export const logout = async () => {
       },
     }
 
-    console.log('로그아웃 API 요청 시작: /v1/users/logout')
-    // /api/v1/users/logout 엔드포인트로 요청
-    const response = await apiClient.post('/v1/users/logout', {}, config)
+    console.log('로그아웃 API 요청 시작:', API_ENDPOINTS.LOGOUT)
+    // API_ENDPOINTS 사용
+    const response = await apiClient.post(API_ENDPOINTS.LOGOUT, {}, config)
     console.log('로그아웃 API 응답 수신:', response)
 
     // 로그아웃 성공 시 로컬 스토리지의 모든 토큰 제거
@@ -150,7 +150,7 @@ export const logout = async () => {
 // 이메일 중복 확인
 export const checkEmailDuplicate = async (email) => {
   try {
-    const response = await apiClient.get(`/v1/users/emailValid?email=${email}`)
+    const response = await apiClient.get(`/users/emailValid?email=${email}`)
     return handleSuccessResponse(response)
   } catch (error) {
     return handleErrorResponse(error)
@@ -161,7 +161,7 @@ export const checkEmailDuplicate = async (email) => {
 export const checkNicknameDuplicate = async (nickname) => {
   try {
     const response = await apiClient.get(
-      `/v1/users/nicknameVaild?nickname=${nickname}`,
+      `/users/nicknameVaild?nickname=${nickname}`,
     )
     return handleSuccessResponse(response)
   } catch (error) {
@@ -194,7 +194,7 @@ export const updateNickname = async (nickname) => {
 // 비밀번호 수정
 export const updatePassword = async (passwordData) => {
   try {
-    const response = await apiClient.patch('/v1/users/password', passwordData)
+    const response = await apiClient.patch('/users/password', passwordData)
     return handleSuccessResponse(response)
   } catch (error) {
     return handleErrorResponse(error)
@@ -204,7 +204,7 @@ export const updatePassword = async (passwordData) => {
 // 회원 탈퇴
 export const deleteAccount = async () => {
   try {
-    const response = await apiClient.delete('/v1/users')
+    const response = await apiClient.delete('/users')
     return handleSuccessResponse(response)
   } catch (error) {
     return handleErrorResponse(error)

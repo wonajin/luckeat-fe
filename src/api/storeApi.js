@@ -41,8 +41,11 @@ export const getStores = async (params = {}) => {
     console.log('API 요청 URL:', url)
     console.log('API 요청 파라미터(수정됨):', params)
 
+    // 토큰 있는지 확인 (디버깅용)
+    const hasToken = localStorage.getItem('accessToken') !== null
+    console.log('인증 토큰 상태:', hasToken ? '토큰 있음' : '토큰 없음')
+
     // API_BASE_URL에 이미 슬래시가 포함되어 있으므로 'stores'만 사용
-    // 또는 API_ENDPOINTS.STORES 사용 권장
     const response = await apiClient.get(url, {
       params,
     })
@@ -61,7 +64,31 @@ export const getStores = async (params = {}) => {
     return response.data
   } catch (error) {
     console.error('가게 목록 조회 오류:', error)
-    throw error
+
+    // 오류 응답 구조화
+    let errorMessage = '가게 목록을 불러오는데 실패했습니다.'
+
+    if (error.response) {
+      // 서버에서 응답이 왔지만 오류 상태 코드인 경우
+      const { status } = error.response
+      console.error(`HTTP 오류 (${status}):`, error.response.data)
+
+      if (status === 401) {
+        errorMessage =
+          '인증이 필요합니다. 로그인 상태가 아니거나 토큰이 만료되었습니다.'
+        console.log('인증 오류 발생: 로그인 없이 계속 진행합니다.')
+        // 비로그인 상태에서도 계속 진행할 수 있도록 빈 배열 반환
+        return []
+      }
+    } else if (error.request) {
+      // 요청이 전송되었지만 응답이 없는 경우
+      console.error('네트워크 오류: 서버에 연결할 수 없습니다.')
+      errorMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.'
+    }
+
+    // 오류를 던지는 대신 빈 배열 반환
+    console.error(errorMessage)
+    return []
   }
 }
 

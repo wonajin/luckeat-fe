@@ -15,7 +15,31 @@ import StoreDetailPage from './pages/StoreDetailPage'
 import EditProfilePage from './pages/EditProfilePage'
 import ReviewManagementPage from './pages/ReviewManagementPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
+
+// 오류 발생 시 보여줄 폴백 컴포넌트
+const FallbackComponent = () => {
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="w-[390px] h-[775px] bg-white flex flex-col border border-gray-200 rounded-lg overflow-hidden relative p-6">
+        <h2 className="text-2xl font-bold text-red-500 mb-4">
+          앗! 문제가 발생했습니다.
+        </h2>
+        <p className="mb-6">
+          죄송합니다. 예상치 못한 오류가 발생했습니다. 페이지를 새로고침하거나
+          나중에 다시 시도해보세요.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          페이지 새로고침
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // 토큰 유효성 검사 래퍼 컴포넌트
 function AuthWrapper({ children }) {
@@ -69,15 +93,17 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-          <div className="w-[390px] h-[775px] bg-white flex flex-col border border-gray-200 rounded-lg overflow-hidden relative">
-            <AppRoutes />
+      <Sentry.ErrorBoundary fallback={<FallbackComponent />}>
+        <Router>
+          <div className="flex justify-center items-center min-h-screen bg-gray-100">
+            <div className="w-[390px] h-[775px] bg-white flex flex-col border border-gray-200 rounded-lg overflow-hidden relative">
+              <AppRoutes />
+            </div>
           </div>
-        </div>
-      </Router>
+        </Router>
+      </Sentry.ErrorBoundary>
     </AuthProvider>
   )
 }
 
-export default App
+export default Sentry.withProfiler(App)

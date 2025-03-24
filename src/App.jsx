@@ -1,4 +1,10 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom'
 import { useEffect } from 'react'
 import HomePage from './pages/HomePage'
 import MapPage from './pages/MapPage'
@@ -13,30 +19,33 @@ import { hasValidAccessToken } from './utils/jwtUtils'
 
 // 토큰 유효성 검사 래퍼 컴포넌트
 function AuthWrapper({ children }) {
-  const { checkCurrentAuthStatus } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { checkCurrentAuthStatus } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     // 현재 경로가 인증이 필요하지 않은 경로인지 확인
-    const publicPaths = ['/login', '/signup'];
-    const isPublicPath = publicPaths.includes(location.pathname);
+    const publicPaths = ['/login', '/signup']
+    const isPublicPath = publicPaths.includes(location.pathname)
 
     // 인증이 필요한 경로에서만 토큰 유효성 검사
     if (!isPublicPath) {
-      const isValid = checkCurrentAuthStatus();
-      
+      const isValid = checkCurrentAuthStatus()
+
       // 유효하지 않은 토큰을 가진 경우 로그인 페이지로 리다이렉션
       if (!isValid && location.pathname !== '/login') {
-        navigate('/login', { 
+        navigate('/login', {
           replace: true,
-          state: { from: location.pathname, message: '로그인이 필요하거나 세션이 만료되었습니다.' } 
-        });
+          state: {
+            from: location.pathname,
+            message: '로그인이 필요하거나 세션이 만료되었습니다.',
+          },
+        })
       }
     }
-  }, [location.pathname, checkCurrentAuthStatus, navigate, location]);
+  }, [location.pathname, checkCurrentAuthStatus, navigate, location])
 
-  return children;
+  return children
 }
 
 function AppRoutes() {
@@ -54,7 +63,7 @@ function AppRoutes() {
         <Route path="/edit-profile" element={<EditProfilePage />} />
       </Routes>
     </AuthWrapper>
-  );
+  )
 }
 
 function App() {

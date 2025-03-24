@@ -58,7 +58,10 @@ function LoginPage() {
       <div className="flex-1 p-4">
         {/* 세션 만료 메시지 */}
         {sessionMessage && (
-          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+          <div
+            className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4"
+            role="alert"
+          >
             <p>{sessionMessage}</p>
           </div>
         )}

@@ -255,20 +255,20 @@ export function AuthProvider({ children }) {
   // 현재 인증 상태를 확인하는 함수
   const checkCurrentAuthStatus = () => {
     // 액세스 토큰 유효성 검사
-    const isValid = hasValidAccessToken();
-    
+    const isValid = hasValidAccessToken()
+
     // 유효하지 않은 경우 로그아웃 처리
     if (!isValid && isLoggedIn) {
-      setUser(null);
-      setIsLoggedIn(false);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      return false;
+      setUser(null)
+      setIsLoggedIn(false)
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      return false
     }
-    
-    return isValid;
-  };
+
+    return isValid
+  }
 
   return (
     <AuthContext.Provider

@@ -16,7 +16,15 @@ function HomePage() {
   const [stores, setStores] = useState([])
   const [categories, setCategories] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
-  const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    // 세션 스토리지에서 저장된 카테고리 상태를 불러옴
+    const savedCategory = sessionStorage.getItem('selectedCategory')
+    // 문자열로 저장된 숫자 ID를 적절히 변환
+    if (savedCategory === '') return ''
+    if (savedCategory === null || savedCategory === undefined) return ''
+    // 숫자 형태의 문자열을 반환
+    return savedCategory
+  })
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
   const [sortOption, setSortOption] = useState('가까운 순')
   const [showSortOptions, setShowSortOptions] = useState(false)
@@ -130,8 +138,12 @@ function HomePage() {
     // 카테고리 필터링 - 백엔드 API 응답 구조에 맞게 수정
     if (selectedCategory) {
       result = result.filter((store) => {
-        // categoryId를 비교 (API 응답 구조에 맞게 수정)
-        return store.categoryId === selectedCategory
+        // categoryId를 비교 (string과 number 모두 처리)
+        return (
+          store.categoryId === selectedCategory ||
+          store.categoryId === Number(selectedCategory) ||
+          String(store.categoryId) === selectedCategory
+        )
       })
       console.log('카테고리 필터링 후 가게 수:', result.length)
     }
@@ -208,7 +220,10 @@ function HomePage() {
   // 카테고리 핸들러
   const handleCategorySelect = (category) => {
     console.log('카테고리 선택:', category)
-    setSelectedCategory(category === selectedCategory ? '' : category)
+    const newCategoryValue = category === selectedCategory ? '' : category
+    setSelectedCategory(newCategoryValue)
+    // 선택된 카테고리 상태를 세션 스토리지에 저장 (문자열로 통일)
+    sessionStorage.setItem('selectedCategory', String(newCategoryValue))
   }
 
   // HomePage.jsx 파일에서 가게 카드 클릭 핸들러 추가

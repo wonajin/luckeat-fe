@@ -56,7 +56,7 @@ export const register = async (userData) => {
 export const login = async (credentials) => {
   try {
     console.log('로그인 요청 데이터:', credentials)
-    
+
     // API_ENDPOINTS 사용
     console.log('로그인 요청 URL:', API_ENDPOINTS.LOGIN)
     console.log('로그인 요청 전체 URL:', getApiUrl(API_ENDPOINTS.LOGIN))

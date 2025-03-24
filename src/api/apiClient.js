@@ -23,31 +23,22 @@ const apiClient = axios.create({
 // 요청 인터셉터 설정
 apiClient.interceptors.request.use(
   (config) => {
-    // API 접두사 추가
+    // URL이 상대경로인 경우 기본 도메인 추가
     if (
       config.url &&
       !config.url.startsWith('http') &&
       !config.url.startsWith('https')
     ) {
-      // URL이 절대 경로가 아닌 경우 처리
-      
-      // v1이 중복으로 포함되지 않도록 확인
-      let processedUrl = config.url;
-      
-      // '/v1/'으로 시작하는 URL 처리
-      if (processedUrl.startsWith('/v1/')) {
-        // /v1/이 이미 포함된 URL - 도메인만 추가
-        config.url = `https://luckeat.net/api${processedUrl}`;
-      } 
-      // '/api/'로 시작하는 URL 처리
-      else if (processedUrl.startsWith('/api/')) {
-        // 그대로 사용
-        config.url = `https://luckeat.net${processedUrl}`;
-      }
-      // 그 외 URL 처리 (v1이 없는 경우)
-      else {
-        // 경로 앞에 /api를 추가
-        config.url = `https://luckeat.net/api${processedUrl.startsWith('/') ? '' : '/'}${processedUrl}`;
+      // URL 통합 처리
+      if (config.url.startsWith('/v1/')) {
+        // /v1/로 시작하는 경우 - /api를 추가하고 도메인 추가
+        config.url = `https://luckeat.net/api${config.url}`
+      } else if (config.url.startsWith('/api/')) {
+        // /api/로 시작하는 경우 - 그대로 도메인만 추가
+        config.url = `https://luckeat.net${config.url}`
+      } else {
+        // 그 외 - 모든 API 엔드포인트는 /api/v1/로 시작하도록 설정
+        config.url = `https://luckeat.net/api/v1${config.url.startsWith('/') ? '' : '/'}${config.url}`
       }
     }
 

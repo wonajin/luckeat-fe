@@ -13,7 +13,7 @@ function HomePage() {
   const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-  const [locationFilter, setLocationFilter] = useState('내 주변')
+  const [locationFilter, setLocationFilter] = useState('')
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
@@ -270,7 +270,7 @@ function HomePage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto" ref={storeListRef} onScroll={handleScroll}>
+      <div className="flex-1 overflow-y-auto pb-16" ref={storeListRef} onScroll={handleScroll}>
         <div className="px-4 py-2 border-b">
           <div className="relative">
             <input
@@ -399,15 +399,17 @@ function HomePage() {
                 onClick={() => handleLocationSelect(option.name)}
                 className={`flex flex-col items-center justify-center ${
                   locationFilter === option.name 
-                  ? 'text-yellow-600' 
-                  : 'text-gray-600'
+                    ? 'text-yellow-600' 
+                    : 'text-gray-600'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
-                  locationFilter === option.name 
-                  ? 'bg-yellow-100 border-2 border-yellow-400' 
-                  : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
+                <div 
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
+                    locationFilter === option.name
+                      ? 'bg-yellow-100 border-2 border-yellow-400' 
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
                   <span className="text-lg">{option.icon}</span>
                 </div>
                 <span className="text-xs font-medium">{option.name}</span>
@@ -497,7 +499,7 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {locationFilter === '내 주변' ? '내 주변' : locationFilter} 마감 할인 ({filteredStores.length})
+              {locationFilter === '내 주변' ? '내 주변' : locationFilter || '전체'} 마감 할인 ({filteredStores.length})
             </h2>
           </div>
 
@@ -580,7 +582,7 @@ function HomePage() {
         )}
       </div>
 
-      <div className="w-full fixed bottom-0 z-30">
+      <div className="w-full bg-white border-t">
         <Navigation />
       </div>
     </div>

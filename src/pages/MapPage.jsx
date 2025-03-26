@@ -8,6 +8,8 @@ import MapController from '../components/map/MapController'
 import { getStores } from '../api/storeApi'
 import { getCategories } from '../api/categoryApi'
 import defaultImage from '../assets/images/luckeat-default.png'
+import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
+import myLocationMarker from '../assets/images/my_locatoin_maker.png'
 import axios from 'axios'
 
 function MapPage() {
@@ -32,6 +34,10 @@ function MapPage() {
 
   // 선택된 가게 아이템의 ref들을 저장
   const storeItemRefs = useRef({})
+
+  // 추가된 상태들
+  const [storeListExpanded, setStoreListExpanded] = useState(false)
+  const mapContainerRef = useRef(null)
 
   // API 기본 URL 직접 설정
   const API_BASE_URL = 'https://luckeat.net'
@@ -510,47 +516,37 @@ function MapPage() {
     return iconMap[categoryName] || '🍽️'
   }
 
+  // 위치 이동 핸들러 추가
+  const handleMoveToCurrentLocation = () => {
+    if (userLocation) {
+      setMapCenter(userLocation)
+      setMapLevel(3)
+    } else {
+      alert('현재 위치 정보를 불러올 수 없습니다. 위치 접근 권한을 확인해주세요.')
+    }
+  }
+
+  // 지도 클릭 핸들러 추가
+  const handleMapClick = () => {
+    if (storeListExpanded) {
+      setStoreListExpanded(false)
+    }
+  }
+
+  // 가게 목록 스크롤 핸들러 추가
+  const handleStoreListScroll = (e) => {
+    if (!storeListExpanded) {
+      setStoreListExpanded(true)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
       <Header title="지도" />
 
-      {/* 카테고리 */}
-      <div className="border-b overflow-x-auto whitespace-nowrap">
-        <div className="inline-flex p-2">
-          {categories.map((category) => {
-            const categoryName =
-              category.name || category.categoryName || '카테고리'
-            return (
-              <button
-                key={category.id}
-                className={`flex flex-col items-center px-3 ${
-                  selectedCategory === categoryName
-                    ? 'text-blue-500'
-                    : 'text-gray-700'
-                }`}
-                onClick={() => setSelectedCategory(categoryName)}
-              >
-                <div
-                  className={`w-14 h-14 rounded-full flex items-center justify-center mb-1 ${
-                    selectedCategory === categoryName
-                      ? 'bg-blue-100'
-                      : 'bg-gray-200'
-                  }`}
-                >
-                  <span className="text-2xl">
-                    {getCategoryIcon(categoryName)}
-                  </span>
-                </div>
-                <span className="text-xs">{categoryName}</span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
       {/* 검색바 */}
-      <div className="px-4 py-2">
+      <div className="px-4 py-2 border-b">
         <div className="relative">
           <input
             type="text"
@@ -567,8 +563,10 @@ function MapPage() {
 
       {/* 지도 영역 */}
       <div
+        ref={mapContainerRef}
         className="flex-1 relative bg-gray-100 overflow-hidden"
         style={{ minHeight: '400px' }}
+        onClick={handleMapClick}
       >
         {/* 로딩 표시 */}
         {loading && (
@@ -606,6 +604,7 @@ function MapPage() {
             level={mapLevel}
             style={{ width: '100%', height: '100%' }}
             ref={mapRef}
+            onClick={handleMapClick}
           >
             {/* 현재 위치 마커 */}
             {userLocation && (
@@ -640,7 +639,7 @@ function MapPage() {
           <button
             className={`px-4 py-2 rounded-full text-sm flex items-center gap-2 ${
               showDiscountOnly
-                ? 'bg-blue-500 text-white'
+                ? 'bg-red-500 text-white'
                 : 'bg-white text-gray-700 border'
             }`}
             onClick={() => setShowDiscountOnly(!showDiscountOnly)}
@@ -650,14 +649,31 @@ function MapPage() {
           </button>
         </div>
 
+        {/* 내 위치로 이동 버튼 추가 */}
+        <div className="absolute bottom-4 right-4 z-10" style={{ bottom: storeListExpanded ? '60%' : '33%' }}>
+          <button
+            className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center"
+            onClick={handleMoveToCurrentLocation}
+          >
+            <img src={myLocationMarker} alt="내 위치" className="w-6 h-6" />
+          </button>
+        </div>
+
         {/* 확대/축소 버튼 */}
         <MapController onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
 
         {/* 가게 목록 */}
         <div
           ref={storeListRef}
-          className="absolute bottom-0 left-0 right-0 h-1/3 bg-white rounded-t-2xl shadow-lg overflow-y-auto z-10 scroll-container"
+          className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg overflow-y-auto z-10 transition-all duration-300 ${
+            storeListExpanded ? 'h-3/5' : 'h-1/3'
+          }`}
+          onScroll={handleStoreListScroll}
         >
+          <div className="sticky top-0 w-full flex justify-center pt-2 pb-1 bg-white">
+            <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+          </div>
+
           <div className="p-4">
             <h3 className="font-bold mb-2">
               주변 가게 ({filteredStores.length})
@@ -670,20 +686,20 @@ function MapPage() {
                     ref={(el) => (storeItemRefs.current[store.id] = el)}
                     className={`flex items-center p-2 border rounded-lg cursor-pointer transition-all duration-200 ${
                       selectedStoreId === store.id
-                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        ? 'border-red-500 bg-red-50 shadow-md'
                         : 'border-gray-200 hover:bg-gray-50'
                     }`}
                     onClick={() => handleMarkerClick(store)}
                   >
                     <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
                       <img
-                        src={store.imageUrl || defaultImage}
+                        src={store.imageUrl || storeDefaultImage}
                         alt={store.name || store.storeName}
                         className="w-full h-full object-cover rounded-md"
                         crossOrigin="anonymous"
                         onError={(e) => {
                           e.target.onerror = null
-                          e.target.src = defaultImage
+                          e.target.src = storeDefaultImage
                         }}
                       />
                     </div>
@@ -693,7 +709,7 @@ function MapPage() {
                       </h4>
                       <div className="flex items-center flex-wrap gap-1 mt-1">
                         {store.category && (
-                          <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                          <span className="inline-block px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
                             {store.category}
                           </span>
                         )}

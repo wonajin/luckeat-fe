@@ -2,6 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
+  }
+  
+  body {
+    @apply bg-bread-light text-jeju-stone-dark;
+  }
+  
+  h1, h2, h3 {
+    @apply font-noto font-bold;
+  }
+}
+
+@layer components {
+  .jeju-card {
+    @apply bg-white rounded-xl shadow-soft border border-gray-100 transition-all hover:shadow-hover;
+  }
+  
+  .jeju-btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  }
+  
+  .jeju-btn-primary {
+    @apply jeju-btn bg-jeju-blue text-white hover:bg-jeju-blue-dark;
+  }
+  
+  .jeju-btn-secondary {
+    @apply jeju-btn bg-jeju-orange text-white hover:bg-jeju-orange-dark;
+  }
+  
+  .jeju-btn-outline {
+    @apply jeju-btn border border-jeju-blue text-jeju-blue hover:bg-jeju-blue-light;
+  }
+
+  .jeju-input {
+    @apply border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-jeju-blue-light focus:border-jeju-blue;
+  }
+
+  .jeju-title {
+    @apply text-2xl font-display text-jeju-stone-dark;
+  }
+  
+  .jeju-subtitle {
+    @apply text-lg font-noto font-medium text-jeju-stone;
+  }
+}
+
+/* 스크롤 숨김 */
 .scroll-container {
   -ms-overflow-style: none; /* IE, Edge */
   scrollbar-width: none; /* Firefox */

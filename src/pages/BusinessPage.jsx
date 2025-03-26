@@ -31,6 +31,8 @@ function BusinessPage() {
         const storeResponse = await getMyStore()
         if (storeResponse.success) {
           setStoreData(storeResponse.data)
+          console.log('가게 정보:', storeResponse.data)
+          console.log('가게 ID 속성:', Object.keys(storeResponse.data))
         }
       } catch (error) {
         console.error('데이터 로딩 중 오류:', error)
@@ -109,9 +111,10 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-                    onClick={() => navigate('/edit-product')}
+                    onClick={() => storeData && navigate(`/store/${storeData.id}/products`)}
+                    disabled={!storeData}
                   >
-                    <span>상품 정보 수정</span>
+                    <span>상품 정보</span>
                     <span className="text-gray-400">→</span>
                   </button>
                 </div>
@@ -121,7 +124,7 @@ function BusinessPage() {
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => navigate('/edit-store')}
                   >
-                    <span>가게 정보 수정</span>
+                    <span>가게 정보</span>
                     <span className="text-gray-400">→</span>
                   </button>
                 </div>

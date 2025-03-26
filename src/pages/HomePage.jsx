@@ -6,7 +6,10 @@ import Header from '../components/layout/Header'
 import { getStores } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
 import homepageImage from '../assets/images/Homepage_1.png'
+import homepageImage2 from '../assets/images/Homepagr_2.png'
+import homepageImage3 from '../assets/images/Hompage_2.jpg'
 import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
+import SearchBar from '../components/Search/SearchBar'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -28,23 +31,17 @@ function HomePage() {
   const cardNews = [
     {
       id: 1,
-      title: '제주도 빵을',
-      description: '사랑하는 모임',
       image: homepageImage,
       link: '/intro',
     },
     {
       id: 2,
-      title: '제주도 한정 메뉴',
-      description: '제주도에서만 맛볼 수 있는 특별한 빵',
-      image: homepageImage,
+      image: homepageImage2,
       link: '/jeju-special',
     },
     {
       id: 3,
-      title: '제빵사와 함께하기',
-      description: '당신의 빵집을 널리 알려보세요',
-      image: homepageImage,
+      image: homepageImage3,
       link: '/partner',
     },
   ]
@@ -272,31 +269,10 @@ function HomePage() {
 
       <div className="flex-1 overflow-hidden pb-16" ref={storeListRef} onScroll={handleScroll}>
         <div className="px-4 py-2 border-b">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="가게 이름, 메뉴 검색"
-              className="w-full py-2 px-4 pr-10 border border-gray-300 rounded-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
-          </div>
+          <SearchBar 
+            initialValue={searchQuery}
+            onSearch={setSearchQuery}
+          />
         </div>
 
         <div
@@ -316,7 +292,7 @@ function HomePage() {
                   alt={card.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-40 p-5 flex flex-col justify-center items-center">
+                <div className="absolute inset-0 p-5 flex flex-col justify-center items-center">
                   <h1 className="text-white text-3xl font-bold text-center mb-2">
                     {card.title}
                   </h1>

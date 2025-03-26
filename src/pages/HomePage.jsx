@@ -248,7 +248,7 @@ function HomePage() {
           className="text-2xl font-bold text-yellow-500"
           onClick={() => navigate(0)}
         >
-          Luckeat
+          제빵사
         </h1>
         <div className="absolute right-4 text-sm">
           {isLoggedIn ? (

@@ -19,7 +19,7 @@ function Header({ title }) {
         className="text-2xl font-bold text-yellow-500 w-full text-center"
         onClick={() => navigate('/')}
       >
-        Luckeat
+        제빵사
       </h1>
     </header>
   )

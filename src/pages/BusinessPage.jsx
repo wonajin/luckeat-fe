@@ -4,17 +4,20 @@ import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
 import { useAuth } from '../context/AuthContext'
 import { getUserInfo } from '../api/userApi'
+import { getMyStore } from '../api/storeApi'
+import StoreCard from '../components/store/StoreCard'
 
 function BusinessPage() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [userData, setUserData] = useState(null)
+  const [storeData, setStoreData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
-  // 사용자 정보 가져오기
+  // 사용자 정보와 가게 정보 가져오기
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
 
@@ -23,15 +26,21 @@ function BusinessPage() {
         if (userResponse.success) {
           setUserData(userResponse.data)
         }
+
+        // 가게 정보 가져오기
+        const storeResponse = await getMyStore()
+        if (storeResponse.success) {
+          setStoreData(storeResponse.data)
+        }
       } catch (error) {
-        console.error('사용자 데이터 로딩 중 오류:', error)
+        console.error('데이터 로딩 중 오류:', error)
       } finally {
         setLoading(false)
       }
     }
 
     if (user) {
-      fetchUserData()
+      fetchData()
     }
   }, [user])
 
@@ -67,10 +76,34 @@ function BusinessPage() {
           <>
             {/* 사업자 페이지 제목 */}
             <div className="p-6 text-center">
-              <h1 className="text-3xl font-bold text-gray-800">사업자 페이지</h1>
+              <h1 className="text-3xl font-bold text-gray-800">
+                사업자 페이지
+              </h1>
             </div>
             
-            <div className="mt-12">
+            {/* 가게 정보 카드 */}
+            {storeData ? (
+              <div className="px-4 mb-6">
+                <h2 className="text-xl font-bold text-gray-700 mb-3">
+                  내 가게 정보
+                </h2>
+                <StoreCard store={storeData} />
+              </div>
+            ) : (
+              <div className="px-4 py-6 mb-6 bg-gray-100 rounded-lg mx-4 text-center">
+                <p className="text-gray-600 mb-3">
+                  등록된 가게 정보가 없습니다.
+                </p>
+                <button
+                  className="py-2 px-4 bg-[#F7B32B] hover:bg-[#E09D18] text-white font-bold rounded transition-colors"
+                  onClick={() => navigate('/register-store')}
+                >
+                  가게 등록하기
+                </button>
+              </div>
+            )}
+            
+            <div className="mt-6">
               {/* 메뉴 목록 */}
               <div className="p-4 space-y-4">
                 <div className="border-b pb-2">

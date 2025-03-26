@@ -46,7 +46,7 @@ function StoreCard({ store }) {
         
         {/* 가게 상세 페이지로 이동 버튼 */}
         <Link 
-          to={`/stores/${store.storeId}`}
+          to={`/store/${store.id || store.storeId}`}
           className="block w-full mt-3 py-2 bg-[#F7B32B] hover:bg-[#E09D18] text-white text-center font-bold rounded transition-colors"
         >
           가게 상세 보기

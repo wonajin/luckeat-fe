@@ -15,6 +15,7 @@ import StoreDetailPage from './pages/StoreDetailPage'
 import EditProfilePage from './pages/EditProfilePage'
 import ReviewManagementPage from './pages/ReviewManagementPage'
 import BusinessPage from './pages/BusinessPage'
+import ProductManagementPage from './pages/ProductManagementPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
@@ -87,6 +88,7 @@ function AppRoutes() {
         <Route path="/store/:id" element={<StoreDetailPage />} />
         <Route path="/reviews" element={<ReviewManagementPage />} />
         <Route path="/edit-profile" element={<EditProfilePage />} />
+        <Route path="/store/:storeId/products" element={<ProductManagementPage />} />
       </Routes>
     </AuthWrapper>
   )

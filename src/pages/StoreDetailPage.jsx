@@ -60,7 +60,7 @@ function StoreDetailPage() {
     if (!window.kakao?.maps) {
       console.log('카카오맵 API가 로드되지 않았습니다. 다시 로드합니다.')
       // 카카오맵 스크립트 로드
-      const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY || '96761e24d69d924788b80ab81f743e10'
+      const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY 
       const script = document.createElement('script')
       script.async = true
       script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_API_KEY}&autoload=false`

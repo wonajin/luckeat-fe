@@ -11,6 +11,7 @@ import defaultImage from '../assets/images/luckeat-default.png'
 import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import myLocationMarker from '../assets/images/my_locatoin_maker.png'
 import axios from 'axios'
+import SearchBar from '../components/Search/SearchBar'
 
 function MapPage() {
   const navigate = useNavigate()
@@ -545,20 +546,16 @@ function MapPage() {
       {/* 헤더 */}
       <Header title="지도" />
 
-      {/* 검색바 */}
-      <div className="px-4 py-2 border-b">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="가게 이름 또는 주소 검색"
-            className="w-full p-2 pl-10 pr-4 border rounded-lg"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            🔍
-          </span>
-        </div>
+      {/* 검색 영역 */}
+      <div className="p-4 border-b">
+        <SearchBar 
+          placeholder="가게 또는 메뉴 검색" 
+          initialValue={searchQuery} 
+          onSearch={(query) => {
+            setSearchQuery(query);
+            handleSearch(query);
+          }}
+        />
       </div>
 
       {/* 지도 영역 */}

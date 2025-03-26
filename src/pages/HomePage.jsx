@@ -270,7 +270,7 @@ function HomePage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-16" ref={storeListRef} onScroll={handleScroll}>
+      <div className="flex-1 overflow-hidden pb-16" ref={storeListRef} onScroll={handleScroll}>
         <div className="px-4 py-2 border-b">
           <div className="relative">
             <input
@@ -585,6 +585,18 @@ function HomePage() {
       <div className="w-full bg-white border-t">
         <Navigation />
       </div>
+
+      <style jsx>{`
+        /* 스크롤바 숨기기 위한 스타일 */
+        .flex-1 {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+          overflow-y: auto;
+        }
+        .flex-1::-webkit-scrollbar {
+          display: none; /* Chrome, Safari, Opera */
+        }
+      `}</style>
     </div>
   )
 }

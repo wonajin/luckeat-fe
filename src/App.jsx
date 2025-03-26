@@ -22,8 +22,8 @@ import { hasValidAccessToken } from './utils/jwtUtils'
 // 오류 발생 시 보여줄 폴백 컴포넌트
 const FallbackComponent = () => {
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-[390px] h-[775px] bg-white flex flex-col border border-gray-200 rounded-lg overflow-hidden relative p-6">
+    <div className="flex justify-center items-center min-h-screen bg-bread-light">
+      <div className="w-[390px] h-[775px] bg-white flex flex-col border border-gray-200 rounded-2xl overflow-hidden relative p-6 shadow-soft">
         <h2 className="text-2xl font-bold text-red-500 mb-4">
           앗! 문제가 발생했습니다.
         </h2>
@@ -33,7 +33,7 @@ const FallbackComponent = () => {
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          className="jeju-btn jeju-btn-primary"
         >
           페이지 새로고침
         </button>
@@ -97,8 +97,8 @@ function App() {
     <AuthProvider>
       <Sentry.ErrorBoundary fallback={<FallbackComponent />}>
         <Router>
-          <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <div className="w-[390px] h-[775px] bg-white flex flex-col border border-gray-200 rounded-lg overflow-hidden relative">
+          <div className="flex justify-center items-center min-h-screen bg-bread-light">
+            <div className="w-[390px] h-[775px] bg-white flex flex-col  overflow-hidden relative shadow-hover border border-jeju-stone-light">
               <AppRoutes />
             </div>
           </div>

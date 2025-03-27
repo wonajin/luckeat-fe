@@ -10,6 +10,7 @@ import homepageImage2 from '../assets/images/Homepagr_2.png'
 import homepageImage3 from '../assets/images/Hompage_2.jpg'
 import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import SearchBar from '../components/Search/SearchBar'
+import ScrollTopButton from '../components/common/ScrollTopButton'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -108,9 +109,7 @@ function HomePage() {
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
 
   const handleScroll = () => {
-    if (storeListRef.current) {
-      setShowScrollTopButton(storeListRef.current.scrollTop > 300)
-    }
+    // 스크롤 이벤트는 유지하되 맨 위로 버튼 관련 코드 제거
   }
 
   const scrollToTop = () => {
@@ -533,30 +532,9 @@ function HomePage() {
             </div>
           )}
         </div>
-
-        {showScrollTopButton && (
-          <button
-            onClick={scrollToTop}
-            className="fixed bottom-24 left-1/2 transform -translate-x-1/2 translate-x-28 bg-yellow-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-10 hover:bg-yellow-600 scroll-container"
-            aria-label="맨 위로 스크롤"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 10l7-7m0 0l7 7m-7-7v18"
-              />
-            </svg>
-          </button>
-        )}
       </div>
+
+      <ScrollTopButton />
 
       <div className="w-full bg-white border-t">
         <Navigation />

@@ -13,6 +13,20 @@
     <!-- Pretendard 폰트 (CDN) -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
 
+    <!-- 스크롤바 숨기기 스타일 -->
+    <style>
+      /* 모든 스크롤바 숨기기 */
+      ::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        display: none;
+      }
+      * {
+        -ms-overflow-style: none;  /* IE 및 Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+    </style>
+
     <!-- Google tag (gtag.js) -->
     <script
       async

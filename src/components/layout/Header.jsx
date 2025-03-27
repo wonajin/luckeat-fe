@@ -6,7 +6,7 @@ function Header({ title }) {
   const isMainPage = location.pathname === '/' || location.pathname === '/home'
 
   return (
-    <header className="px-4 py-3 border-b flex items-center relative">
+    <header className="px-4 py-3 border-b border-gray-100 flex items-center relative bg-white shadow-sm">
       {!isMainPage && (
         <button
           onClick={() => navigate(-1)}
@@ -19,7 +19,7 @@ function Header({ title }) {
         className="text-2xl font-bold text-yellow-500 w-full text-center"
         onClick={() => navigate('/')}
       >
-        {title || 'Luckeat'}
+        제빵사
       </h1>
     </header>
   )

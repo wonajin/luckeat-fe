@@ -1,10 +1,17 @@
 import axios from 'axios'
 import { handleErrorResponse, ERROR_MESSAGES } from '../utils/apiMessages'
-import { API_BASE_URL } from '../config/apiConfig'
+
+// API 접두사 설정
+const API_PREFIX = '/api'
+
+// 토큰 관련 상수
+export const TOKEN_KEYS = {
+  ACCESS: 'accessToken', // 액세스 토큰 키
+  REFRESH: 'refreshToken', // 리프레시 토큰 키
+}
 
 // axios 인스턴스 생성
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
@@ -16,11 +23,31 @@ const apiClient = axios.create({
 // 요청 인터셉터 설정
 apiClient.interceptors.request.use(
   (config) => {
+    // URL이 상대경로인 경우 기본 도메인 추가
+    if (
+      config.url &&
+      !config.url.startsWith('http') &&
+      !config.url.startsWith('https')
+    ) {
+      // URL 통합 처리
+      if (config.url.startsWith('/v1/')) {
+        // /v1/로 시작하는 경우 - /api를 추가하고 도메인 추가
+        config.url = `${process.env.NODE_ENV === 'development' ? 'https://dxa66rf338pjr.cloudfront.net' : 'https://dxa66rf338pjr.cloudfront.net'}/api${config.url}`
+      } else if (config.url.startsWith('/api/')) {
+        // /api/로 시작하는 경우 - 그대로 도메인만 추가
+        config.url = `${process.env.NODE_ENV === 'development' ? 'https://dxa66rf338pjr.cloudfront.net' : 'https://dxa66rf338pjr.cloudfront.net'}${config.url}`
+      } else {
+        // 그 외 - 모든 API 엔드포인트는 /api/v1/로 시작하도록 설정
+        config.url = `${process.env.NODE_ENV === 'development' ? 'https://dxa66rf338pjr.cloudfront.net' : 'https://dxa66rf338pjr.cloudfront.net'}/api/v1${config.url.startsWith('/') ? '' : '/'}${config.url}`
+      }
+    }
+
     // 로컬 스토리지에서 토큰 가져오기
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('accessToken')
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
+
     console.log('요청 전송:', config.method.toUpperCase(), config.url)
     console.log('요청 헤더:', JSON.stringify(config.headers, null, 2))
     if (config.data) {
@@ -64,8 +91,8 @@ apiClient.interceptors.response.use(
         // 토큰 만료인 경우
         if (errorMessage === ERROR_MESSAGES.TOKEN_EXPIRED) {
           // 토큰 제거 및 로그인 페이지로 리다이렉션
-          localStorage.removeItem('accessToken')
-          localStorage.removeItem('refreshToken')
+          localStorage.removeItem(TOKEN_KEYS.ACCESS)
+          localStorage.removeItem(TOKEN_KEYS.REFRESH)
           localStorage.removeItem('user')
           window.location.href = '/login'
         }

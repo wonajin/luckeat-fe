@@ -1,9 +1,10 @@
-name: Deploy to S3
+name: 🚀 Deploy to S3
 
 on:
   push:
     branches:
-      - main # 또는 master 등 배포하고 싶은 브랜치 지정
+      - main
+      - dev
 
 jobs:
   deploy:
@@ -11,6 +12,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set environment variables
+        run: |
+          if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            echo "CLOUDFRONT_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_PROD }}" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=development" >> $GITHUB_ENV
+            echo "CLOUDFRONT_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_DEV }}" >> $GITHUB_ENV
+          fi
+          echo "Deploying to $ENVIRONMENT environment"
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -26,18 +38,21 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          NODE_ENV: ${{ env.ENVIRONMENT }}
           VITE_KAKAO_API_KEY: ${{ secrets.VITE_KAKAO_API_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
       - name: List build directory
         run: |
           echo "Checking build output directories..."
           ls -la
-          if [ -d "build" ]; then
-            echo "Found build directory"
-            ls -la build
-          elif [ -d "dist" ]; then
+          if [ -d "dist" ]; then
             echo "Found dist directory"
             ls -la dist
+            if [ -d "dist/${{ env.ENVIRONMENT }}" ]; then
+              echo "Found dist/${{ env.ENVIRONMENT }} directory"
+              ls -la dist/${{ env.ENVIRONMENT }}
+            fi
           else
             echo "No standard build directory found. Checking other possibilities..."
             find . -type d -maxdepth 2 | grep -v "node_modules" | grep -v ".git"
@@ -58,15 +73,17 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          if [ -d "build" ]; then
-            echo "Deploying from build directory..."
-            aws s3 sync ./build s3://luckeat-front --exclude "images/*" --exclude "store/*"
-          elif [ -d "dist" ]; then
-            echo "Deploying from dist directory..."
-            aws s3 sync ./dist s3://luckeat-front --exclude "images/*" --exclude "store/*"
+          if [ -d "dist/${{ env.ENVIRONMENT }}" ]; then
+            echo "Deploying from dist/${{ env.ENVIRONMENT }} directory to ${{ env.ENVIRONMENT }} environment..."
+            aws s3 sync ./dist/${{ env.ENVIRONMENT }} s3://luckeat-front/${{ env.ENVIRONMENT }} --exclude "images/*" --exclude "store/*"
           else
-            echo "No build directory found. Please check your build configuration."
+            echo "No dist/${{ env.ENVIRONMENT }} directory found. Please check your build configuration."
             exit 1
           fi
-          echo "Deployment completed successfully"
-        # 빌드 결과물이 있는 디렉토리(예: ./build 또는 ./dist)와 S3 버킷 이름을 적절히 변경하세요
+          echo "Deployment to ${{ env.ENVIRONMENT }} completed successfully"
+
+      - name: Invalidate CloudFront Cache
+        run: |
+          echo "Invalidating CloudFront distribution cache for ${{ env.ENVIRONMENT }}..."
+          aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_ID }} --paths "/*"
+          echo "CloudFront cache invalidation completed for ${{ env.ENVIRONMENT }}"

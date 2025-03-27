@@ -4,6 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>럭킷(LuckEat)</title>
+
+    <!-- 폰트 추가 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Pretendard 폰트 (CDN) -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+
+    <!-- 스크롤바 숨기기 스타일 -->
+    <style>
+      /* 모든 스크롤바 숨기기 */
+      ::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        display: none;
+      }
+      * {
+        -ms-overflow-style: none;  /* IE 및 Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+    </style>
+
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-7PDEVQX2T7"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+      gtag('js', new Date())
+
+      gtag('config', 'G-7PDEVQX2T7')
+    </script>
   </head>
   <body>
     <div id="root"></div>

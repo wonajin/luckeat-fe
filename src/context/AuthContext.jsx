@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import * as userApi from '../api/userApi'
 import { SUCCESS_MESSAGES } from '../utils/apiMessages'
+import { hasValidAccessToken, isTokenExpired } from '../utils/jwtUtils'
 
 // 인증 컨텍스트 생성
 const AuthContext = createContext()
@@ -20,6 +21,19 @@ export function AuthProvider({ children }) {
         const storedUser = localStorage.getItem('user')
 
         if (accessToken && storedUser) {
+          // 토큰 유효성 검사 추가
+          if (isTokenExpired(accessToken)) {
+            // 토큰이 만료된 경우
+            console.log('토큰이 만료되었습니다. 로그아웃 처리합니다.')
+            setUser(null)
+            setIsLoggedIn(false)
+            localStorage.removeItem('accessToken')
+            localStorage.removeItem('refreshToken')
+            localStorage.removeItem('user')
+            setLoading(false)
+            return
+          }
+
           // 저장된 사용자 정보가 있으면 바로 설정
           setUser(JSON.parse(storedUser))
           setIsLoggedIn(true)
@@ -33,7 +47,16 @@ export function AuthProvider({ children }) {
             }
           } catch (error) {
             console.log('사용자 정보 갱신 실패:', error)
-            // 오류가 있더라도 로그인 상태는 유지
+            // API 요청 실패 시 토큰 유효성 다시 확인
+            if (isTokenExpired(accessToken)) {
+              // 토큰이 만료된 경우
+              console.log('API 요청 시 토큰 만료 확인. 로그아웃 처리합니다.')
+              setUser(null)
+              setIsLoggedIn(false)
+              localStorage.removeItem('accessToken')
+              localStorage.removeItem('refreshToken')
+              localStorage.removeItem('user')
+            }
           }
         } else {
           // 토큰이나 사용자 정보가 없는 경우 로그아웃 상태로 설정
@@ -64,7 +87,26 @@ export function AuthProvider({ children }) {
           const userData = JSON.parse(storedUser)
           setUser(userData)
           setIsLoggedIn(true)
-          return { success: true }
+          
+          // 사용자 정보가 제대로 저장되었는지 확인하고, 필요한 정보가 모두 있는지 확인
+          if (!userData.role) {
+            console.warn(
+              '사용자 역할 정보가 없습니다. 사용자 정보 갱신을 시도합니다.',
+            )
+            try {
+              const userInfoResponse = await userApi.getUserInfo()
+              if (userInfoResponse.success) {
+                const updatedUserData = userInfoResponse.data
+                setUser(updatedUserData)
+                localStorage.setItem('user', JSON.stringify(updatedUserData))
+                return { success: true, user: updatedUserData }
+              }
+            } catch (err) {
+              console.error('사용자 정보 갱신 실패:', err)
+            }
+          }
+          
+          return { success: true, user: userData }
         }
       }
       return {
@@ -86,18 +128,22 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true)
       const response = await userApi.register(userData)
+      console.log('AuthContext signup 응답:', response)
 
-      if (
-        response.success &&
-        response.message === SUCCESS_MESSAGES.REGISTER_SUCCESS
-      ) {
-        return { success: true, message: '회원가입에 성공했습니다.' }
+      // 성공 여부 확인 방법 개선
+      if (response.success || response.statusCode === 201) {
+        return {
+          success: true,
+          message: response.message || '회원가입에 성공했습니다.',
+          statusCode: response.statusCode || 201,
+        }
       }
       return {
         success: false,
         message: response.message || '회원가입에 실패했습니다.',
       }
     } catch (error) {
+      console.error('회원가입 처리 중 오류:', error)
       return {
         success: false,
         message: error.message || '회원가입에 실패했습니다.',
@@ -225,6 +271,24 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // 현재 인증 상태를 확인하는 함수
+  const checkCurrentAuthStatus = () => {
+    // 액세스 토큰 유효성 검사
+    const isValid = hasValidAccessToken()
+
+    // 유효하지 않은 경우 로그아웃 처리
+    if (!isValid && isLoggedIn) {
+      setUser(null)
+      setIsLoggedIn(false)
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      return false
+    }
+
+    return isValid
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -237,6 +301,7 @@ export function AuthProvider({ children }) {
         updateNickname,
         updatePassword,
         deleteAccount,
+        checkCurrentAuthStatus,
       }}
     >
       {children}

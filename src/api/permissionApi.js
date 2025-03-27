@@ -1,7 +1,7 @@
 import apiClient from './apiClient'
 
-// 권한 부여
-export const grantPermission = async (permissionData) => {
+// 권한 생성
+export const createPermission = async (permissionData) => {
   try {
     const response = await apiClient.post('/permissions', permissionData)
     return response.data

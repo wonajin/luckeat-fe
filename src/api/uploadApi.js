@@ -1,5 +1,55 @@
 // 기본 API URL
-const API_BASE_URL = '/api/v1'
+const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
+
+/**
+ * 이미지를 업로드하고 URL을 반환합니다.
+ * @param {File} imageFile - 이미지 파일
+ * @param {string} uploadPath - 업로드 경로 (예: '/store-images', '/product-images')
+ * @returns {Promise<string>} 업로드된 이미지 URL
+ */
+export const uploadImage = async (imageFile, uploadPath) => {
+  if (!imageFile) {
+    return null;
+  }
+
+  try {
+    // 이미지 업로드를 위한 FormData 객체 생성
+    const imageFormData = new FormData();
+    imageFormData.append('image', imageFile);
+
+    // 토큰 가져오기
+    const accessToken = localStorage.getItem('accessToken');
+
+    console.log('이미지 업로드 시작:', `${API_BASE_URL}/api/v1${uploadPath}`);
+    console.log('업로드 이미지 정보:', imageFile.name, imageFile.type, imageFile.size);
+
+    // fetch를 사용한 이미지 업로드
+    const response = await fetch(`${API_BASE_URL}/api/v1${uploadPath}`, {
+      method: 'POST',
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: imageFormData,
+    });
+
+    console.log('이미지 업로드 응답 상태:', response.status, response.statusText);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('이미지 업로드 응답 에러:', errorText);
+      throw new Error(`이미지 업로드 실패: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log('이미지 업로드 성공:', result);
+
+    // 업로드된 이미지 URL 반환
+    return result.imageUrl;
+  } catch (error) {
+    console.error('이미지 업로드 중 오류 발생:', error);
+    throw error;
+  }
+};
 
 /**
  * 이미지 데이터를 처리하고 업로드합니다.
@@ -21,32 +71,13 @@ export const processImageData = async (
   }
 
   try {
-    // 이미지 업로드를 위한 FormData 객체 생성
-    const imageFormData = new FormData()
-    imageFormData.append('image', imageFile)
-
-    // 토큰 가져오기
-    const token = localStorage.getItem('token')
-
-    // fetch를 사용한 이미지 업로드
-    const response = await fetch(`${API_BASE_URL}${uploadPath}`, {
-      method: 'POST',
-      headers: {
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-      body: imageFormData,
-    })
-
-    if (!response.ok) {
-      throw new Error(`이미지 업로드 실패: ${response.statusText}`)
-    }
-
-    const result = await response.json()
+    // 이미지 업로드 함수 호출하여 URL 받기
+    const imageUrl = await uploadImage(imageFile, uploadPath);
 
     // 업로드된 이미지 URL을 원본 데이터에 추가
     return {
       ...formData,
-      [imageFieldName]: result.imageUrl,
+      [imageFieldName]: imageUrl,
     }
   } catch (error) {
     console.error('이미지 업로드 중 오류 발생:', error)
@@ -66,28 +97,8 @@ export const uploadMultipleImages = async (imageFiles, uploadPath) => {
   }
 
   try {
-    const token = localStorage.getItem('token')
-    const uploadPromises = imageFiles.map(async (file) => {
-      const formData = new FormData()
-      formData.append('image', file)
-
-      const response = await fetch(`${API_BASE_URL}${uploadPath}`, {
-        method: 'POST',
-        headers: {
-          Authorization: token ? `Bearer ${token}` : '',
-        },
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error(`이미지 업로드 실패: ${response.statusText}`)
-      }
-
-      const result = await response.json()
-      return result.imageUrl
-    })
-
-    return await Promise.all(uploadPromises)
+    const uploadPromises = imageFiles.map(file => uploadImage(file, uploadPath));
+    return await Promise.all(uploadPromises);
   } catch (error) {
     console.error('이미지 업로드 중 오류 발생:', error)
     throw error

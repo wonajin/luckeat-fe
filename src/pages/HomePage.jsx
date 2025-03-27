@@ -1,77 +1,142 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
-import CategoryList from '../components/store/CategoryList'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import { getStores } from '../api/storeApi'
-import { getCategories } from '../api/categoryApi'
+import defaultImage from '../assets/images/luckeat-default.png'
+import homepageImage from '../assets/images/Homepage_1.png'
+import homepageImage2 from '../assets/images/Homepagr_2.png'
+import homepageImage3 from '../assets/images/Hompage_2.jpg'
+import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
+import SearchBar from '../components/Search/SearchBar'
+import ScrollTopButton from '../components/common/ScrollTopButton'
 
 function HomePage() {
   const navigate = useNavigate()
   const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
+  const [locationFilter, setLocationFilter] = useState('')
   const [stores, setStores] = useState([])
-  const [categories, setCategories] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
-  const [selectedCategory, setSelectedCategory] = useState('')
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
   const [sortOption, setSortOption] = useState('가까운 순')
   const [showSortOptions, setShowSortOptions] = useState(false)
   const [loading, setLoading] = useState(true)
   const sortOptionsRef = useRef(null)
   const storeListRef = useRef(null)
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [showArrows, setShowArrows] = useState(false)
+  const [displayedStores, setDisplayedStores] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const storesPerPage = 5
 
-  // 백엔드에서 데이터 가져오기
+  const cardNews = [
+    {
+      id: 1,
+      image: homepageImage,
+      link: '/intro',
+    },
+    {
+      id: 2,
+      image: homepageImage2,
+      link: '/jeju-special',
+    },
+    {
+      id: 3,
+      image: homepageImage3,
+      link: '/partner',
+    },
+  ]
+
+  const locationOptions = [
+    { id: 'nearby', name: '내 주변', icon: '📍' },
+    { id: 'jeju-city', name: '제주시', icon: '🏙️' },
+    { id: 'seogwipo', name: '서귀포', icon: '🌊' },
+    { id: 'aewol', name: '애월', icon: '☕' },
+    { id: 'hamdeok', name: '함덕', icon: '🏖️' },
+  ]
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev === cardNews.length - 1 ? 0 : prev + 1))
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? cardNews.length - 1 : prev - 1))
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
 
-        // 카테고리 데이터 가져오기
-        const categoriesData = await getCategories()
-        console.log('카테고리 데이터:', categoriesData)
-        // 배열이 아닌 경우 대비
-        setCategories(
-          Array.isArray(categoriesData)
-            ? categoriesData
-            : categoriesData?.data || [],
-        )
+        const params = {}
+        if (showDiscountOnly) {
+          params.isDiscountOpen = true
+        }
 
-        // 가게 데이터 가져오기
-        const storesData = await getStores()
-        console.log('가게 데이터:', storesData)
+        if (locationFilter !== '내 주변') {
+          params.location = locationFilter
+        }
 
-        // 데이터 구조 확인 후 적절히 설정
-        const storesList = Array.isArray(storesData)
-          ? storesData
-          : storesData?.data || []
-        console.log('처리된 가게 목록:', storesList)
+        try {
+          const storesData = await getStores(params)
+          console.log('가게 데이터 API 응답:', storesData)
 
-        setStores(storesList)
-        setFilteredStores(storesList)
+          const storesList = Array.isArray(storesData)
+            ? storesData
+            : storesData?.data || []
+          console.log('처리된 가게 목록:', storesList)
+
+          setStores(storesList)
+          setFilteredStores(storesList)
+        } catch (storeError) {
+          console.error('가게 데이터 로딩 중 오류:', storeError)
+          setStores([])
+          setFilteredStores([])
+        }
+
         setLoading(false)
       } catch (error) {
         console.error('데이터 로딩 중 오류 발생:', error)
         setLoading(false)
+        setStores([])
+        setFilteredStores([])
       }
     }
 
     fetchData()
-  }, [])
+  }, [showDiscountOnly, locationFilter])
 
-  // 로딩 및 데이터 상태 디버깅
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
 
-  // 스크롤 위치에 따라 상단으로 이동 버튼 표시 여부 결정
-  const handleScroll = () => {
-    if (storeListRef.current) {
-      setShowScrollTopButton(storeListRef.current.scrollTop > 300)
-    }
-  }
+  const handleScroll = useCallback(() => {
+    if (!storeListRef.current) return
 
-  // 상단으로 스크롤 이동
+    const { scrollTop, scrollHeight, clientHeight } = storeListRef.current
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100
+
+    if (isNearBottom && !loading && displayedStores.length < filteredStores.length) {
+      const nextPage = currentPage + 1
+      const startIndex = (nextPage - 1) * storesPerPage
+      const endIndex = startIndex + storesPerPage
+      const newStores = filteredStores.slice(0, endIndex)
+      
+      setDisplayedStores(newStores)
+      setCurrentPage(nextPage)
+    }
+  }, [currentPage, loading, filteredStores, displayedStores.length])
+
+  // 스크롤 이벤트 리스너 등록
+  useEffect(() => {
+    const scrollContainer = storeListRef.current
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll)
+      return () => scrollContainer.removeEventListener('scroll', handleScroll)
+    }
+  }, [handleScroll])
+
   const scrollToTop = () => {
     if (storeListRef.current) {
       storeListRef.current.scrollTo({
@@ -81,7 +146,6 @@ function HomePage() {
     }
   }
 
-  // 정렬 옵션 외부 클릭 감지
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -98,22 +162,12 @@ function HomePage() {
     }
   }, [])
 
-  // 검색어, 할인 필터, 카테고리가 변경될 때 가게 목록 필터링
   useEffect(() => {
     if (!stores || stores.length === 0) return
 
     let result = [...stores]
+    console.log('필터링 전 가게 수:', result.length)
 
-    // 카테고리 필터링 - API 데이터 구조에 맞게 수정
-    if (selectedCategory) {
-      result = result.filter((store) => {
-        // categoryId 또는 category 필드 검사
-        const storeCategory = store.categoryId || store.category
-        return String(storeCategory) === String(selectedCategory)
-      })
-    }
-
-    // 검색어 필터링 - 필드명 확인 필요
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter((store) => {
@@ -122,51 +176,112 @@ function HomePage() {
       })
     }
 
-    // 할인 필터링
-    if (showDiscountOnly) {
-      // 할인 상품이 있는 가게만 필터링
-      result = result.filter(
-        (store) =>
-          store.products &&
-          store.products.some((product) => !product.isSoldOut),
-      )
+    if (locationFilter && locationFilter !== '내 주변') {
+      result = result.filter((store) => {
+        const address = (store.address || '').toLowerCase()
+        
+        switch(locationFilter) {
+          case '제주시':
+            return address.includes('제주시')
+          case '서귀포':
+            return address.includes('서귀포')
+          case '애월':
+            return address.includes('애월')
+          case '함덕':
+            return address.includes('함덕')
+          default:
+            return true
+        }
+      })
     }
 
-    // 정렬 옵션 적용
     if (sortOption === '가까운 순') {
-      result.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance))
+      result.sort((a, b) => {
+        const distanceA =
+          typeof a.distance === 'string'
+            ? parseFloat(a.distance.replace(/[^0-9.]/g, ''))
+            : parseFloat(a.distance || 0)
+        const distanceB =
+          typeof b.distance === 'string'
+            ? parseFloat(b.distance.replace(/[^0-9.]/g, ''))
+            : parseFloat(b.distance || 0)
+        return distanceA - distanceB
+      })
     } else if (sortOption === '리뷰 많은 순') {
-      result.sort(
-        (a, b) =>
-          (b.reviews ? b.reviews.length : 0) -
-          (a.reviews ? a.reviews.length : 0),
-      )
+      result.sort((a, b) => {
+        const reviewsA = a.reviewCount || 0
+        const reviewsB = b.reviewCount || 0
+        return reviewsB - reviewsA
+      })
     } else if (sortOption === '공유 많은 순') {
-      // 실제 구현에서는 공유 수에 따라 정렬
-      result.sort((a, b) => (b.shareCount || 0) - (a.shareCount || 0))
+      result.sort((a, b) => {
+        const shareCountA = a.shareCount || 0
+        const shareCountB = b.shareCount || 0
+        return shareCountB - shareCountA
+      })
+    } else if (sortOption === '별점 높은 순') {
+      result.sort((a, b) => {
+        const ratingA = a.avgRatingGoogle || 0
+        const ratingB = b.avgRatingGoogle || 0
+
+        if (ratingB === ratingA) {
+          const reviewsA = a.reviewCount || 0
+          const reviewsB = b.reviewCount || 0
+          return reviewsB - reviewsA
+        }
+
+        return ratingB - ratingA
+      })
     }
 
+    console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
-  }, [searchQuery, showDiscountOnly, selectedCategory, sortOption, stores])
+  }, [searchQuery, sortOption, stores, locationFilter])
+
+  // filteredStores가 업데이트될 때마다 표시할 가게 목록 업데이트
+  useEffect(() => {
+    const initialStores = filteredStores.slice(0, storesPerPage)
+    setDisplayedStores(initialStores)
+    setCurrentPage(1)
+  }, [filteredStores])
 
   console.log('현재 stores 데이터:', stores)
   console.log('현재 filteredStores 데이터:', filteredStores)
 
-  // 첫 번째 가게 항목의 구조 확인 (있는 경우)
   if (stores && stores.length > 0) {
     console.log('첫 번째 가게 데이터 구조:', stores[0])
     console.log('첫 번째 가게 키:', Object.keys(stores[0]))
   }
 
+  const handleLocationSelect = (location) => {
+    setLocationFilter(location)
+  }
+
+  const handleStoreClick = (store) => {
+    console.log('가게 선택:', store)
+    const storeId = store.id || store.storeId
+
+    if (!storeId) {
+      console.error('가게 ID가 없습니다:', store)
+      return
+    }
+
+    console.log(`가게 상세 페이지로 이동: /store/${storeId}`)
+    navigate(`/store/${storeId}`)
+  }
+
+  const handleCardClick = (link) => {
+    navigate(link)
+  }
+
   return (
-    <div className="flex flex-col h-full">
-      {/* 헤더 */}
-      <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-20">
+    <div className="flex flex-col h-full relative">
+      <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-30">
         <h1
           className="text-2xl font-bold text-yellow-500"
           onClick={() => navigate(0)}
         >
-          Luckeat
+          제빵사
         </h1>
         <div className="absolute right-4 text-sm">
           {isLoggedIn ? (
@@ -201,48 +316,136 @@ function HomePage() {
         </div>
       </div>
 
-      {/* 검색창 */}
-      <div className="px-4 py-2 border-b">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="가게 이름, 메뉴 검색"
-            className="w-full py-2 px-4 pr-10 border border-gray-300 rounded-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+      <div className="flex-1 overflow-hidden pb-16" ref={storeListRef} onScroll={handleScroll}>
+        <div className="px-4 py-2 border-b">
+          <SearchBar 
+            initialValue={searchQuery}
+            onSearch={setSearchQuery}
           />
-          <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </button>
         </div>
-      </div>
 
-      {/* 카테고리 */}
-      <div className="border-b">
-        <CategoryList
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
-      </div>
+        <div
+          className="relative px-4 py-4 border-b"
+          onMouseEnter={() => setShowArrows(true)}
+          onMouseLeave={() => setShowArrows(false)}
+        >
+          <div className="relative w-full h-48 overflow-hidden rounded-lg">
+            {cardNews.map((card, index) => (
+              <div
+                key={card.id}
+                className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                onClick={() => handleCardClick(card.link)}
+              >
+                <img
+                  src={card.image}
+                  alt={card.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 p-5 flex flex-col justify-center items-center">
+                  <h1 className="text-white text-3xl font-bold text-center mb-2">
+                    {card.title}
+                  </h1>
+                  <p className="text-white text-xl opacity-90 text-center">
+                    {card.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+            
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
+              {cardNews.map((_, index) => (
+                <button
+                  key={index}
+                  className={`w-2 h-2 rounded-full ${
+                    index === currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'
+                  }`}
+                  onClick={() => setCurrentSlide(index)}
+                />
+              ))}
+            </div>
+            
+            {showArrows && (
+              <>
+                <button
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 rounded-full p-2 z-20 text-white hover:bg-opacity-50 transition-all"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    prevSlide()
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <button
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 rounded-full p-2 z-20 text-white hover:bg-opacity-50 transition-all"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    nextSlide()
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
-      {/* 필터링 및 정렬 옵션 */}
-      <div className="px-4 py-2 border-b flex justify-between items-center">
-        <div className="flex items-center">
+        <div className="px-4 py-3 border-b">
+          <h3 className="text-base font-medium mb-2">어디로 가시나요?</h3>
+          <div className="flex justify-between">
+            {locationOptions.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => handleLocationSelect(option.name)}
+                className={`flex flex-col items-center justify-center ${
+                  locationFilter === option.name 
+                    ? 'text-yellow-600' 
+                    : 'text-gray-600'
+                }`}
+              >
+                <div 
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
+                    locationFilter === option.name
+                      ? 'bg-yellow-100 border-2 border-yellow-400' 
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className="text-lg">{option.icon}</span>
+                </div>
+                <span className="text-xs font-medium">{option.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-4 py-2 border-b flex justify-between items-center">
           <button
-            className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center mr-2 ${showDiscountOnly ? 'bg-yellow-100' : 'bg-gray-100'}`}
+            className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center ${showDiscountOnly ? 'bg-yellow-100' : 'bg-gray-100'}`}
             onClick={() => setShowDiscountOnly(!showDiscountOnly)}
           >
             <span className="w-4 h-4 inline-flex items-center justify-center mr-1 bg-yellow-400 text-white rounded-full text-xs">
@@ -250,152 +453,160 @@ function HomePage() {
             </span>
             할인중만
           </button>
+
+          <div className="relative" ref={sortOptionsRef}>
+            <button
+              className="text-sm text-gray-500 flex items-center"
+              onClick={() => setShowSortOptions(!showSortOptions)}
+            >
+              <span>{sortOption}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 ml-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {showSortOptions && (
+              <div className="absolute right-0 mt-1 w-32 bg-white border rounded-lg shadow-lg z-10">
+                <div className="py-1">
+                  <button
+                    className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '가까운 순' ? 'bg-gray-100 font-bold' : ''}`}
+                    onClick={() => {
+                      setSortOption('가까운 순')
+                      setShowSortOptions(false)
+                    }}
+                  >
+                    가까운 순
+                  </button>
+                  <button
+                    className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '리뷰 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
+                    onClick={() => {
+                      setSortOption('리뷰 많은 순')
+                      setShowSortOptions(false)
+                    }}
+                  >
+                    리뷰 많은 순
+                  </button>
+                  <button
+                    className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '공유 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
+                    onClick={() => {
+                      setSortOption('공유 많은 순')
+                      setShowSortOptions(false)
+                    }}
+                  >
+                    공유 많은 순
+                  </button>
+                  <button
+                    className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '별점 높은 순' ? 'bg-gray-100 font-bold' : ''}`}
+                    onClick={() => {
+                      setSortOption('별점 높은 순')
+                      setShowSortOptions(false)
+                    }}
+                  >
+                    별점 높은 순
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* 정렬 옵션 */}
-        <div className="relative" ref={sortOptionsRef}>
-          <button
-            className="text-sm text-gray-500 flex items-center"
-            onClick={() => setShowSortOptions(!showSortOptions)}
-          >
-            <span>{sortOption}</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 ml-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
+        <div className="px-4 pb-28">
+          <div className="py-2">
+            <h2 className="font-bold text-lg">
+              {locationFilter === '내 주변' ? '내 주변' : locationFilter || '전체'} 가게 목록 ({filteredStores.length})
+            </h2>
+          </div>
 
-          {showSortOptions && (
-            <div className="absolute right-0 mt-1 w-32 bg-white border rounded-lg shadow-lg z-10">
-              <div className="py-1">
-                <button
-                  className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '가까운 순' ? 'bg-gray-100 font-bold' : ''}`}
-                  onClick={() => {
-                    setSortOption('가까운 순')
-                    setShowSortOptions(false)
-                  }}
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <p>로딩 중...</p>
+            </div>
+          ) : displayedStores && displayedStores.length > 0 ? (
+            <>
+              {displayedStores.map((store, index) => (
+                <div
+                  key={store.id || store.storeId || index}
+                  className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer"
+                  onClick={() => handleStoreClick(store)}
                 >
-                  가까운 순
-                </button>
-                <button
-                  className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '리뷰 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
-                  onClick={() => {
-                    setSortOption('리뷰 많은 순')
-                    setShowSortOptions(false)
-                  }}
-                >
-                  리뷰 많은 순
-                </button>
-                <button
-                  className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '공유 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
-                  onClick={() => {
-                    setSortOption('공유 많은 순')
-                    setShowSortOptions(false)
-                  }}
-                >
-                  공유 많은 순
-                </button>
-              </div>
+                  <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
+                    <img
+                      src={store.storeImg || storeDefaultImage}
+                      alt={store.storeName || store.name || '가게 이미지'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = storeDefaultImage
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 ml-3">
+                    <h3 className="font-bold">
+                      {store.storeName || store.name || '이름 없음'}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {store.address || '주소 정보 없음'}
+                    </p>
+                    <div className="flex items-center">
+                      <div className="flex items-center text-sm text-yellow-500 mr-2">
+                        <span className="mr-1">★</span>
+                        <span>
+                          {store.avgRatingGoogle
+                            ? store.avgRatingGoogle.toFixed(1)
+                            : '0.0'}
+                        </span>
+                        <span className="text-gray-500 ml-1">
+                          ({store.reviewCount || 0})
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium">
+                        공유 {store.shareCount || 0}회
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {displayedStores.length < filteredStores.length && (
+                <div className="flex justify-center items-center py-4">
+                  <p className="text-gray-500">더 많은 가게 불러오는 중...</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+              <p>표시할 가게가 없습니다.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* 가게 목록 */}
-      <div
-        ref={storeListRef}
-        className="flex-1 overflow-y-auto px-4 pb-20 scroll-container scrollbar-hide"
-        onScroll={handleScroll}
-      >
-        <div className="py-2">
-          <h2 className="font-bold text-lg">
-            내 주변 마감 할인 ({filteredStores.length})
-          </h2>
-          <p>
-            데이터 상태:{' '}
-            {loading
-              ? '로딩 중'
-              : `${Array.isArray(stores) ? '배열' : '배열 아님'}, 길이: ${stores?.length || 0}`}
-          </p>
-        </div>
+      <ScrollTopButton scrollContainerRef={storeListRef} />
 
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <p>로딩 중...</p>
-          </div>
-        ) : filteredStores && filteredStores.length > 0 ? (
-          filteredStores.map((store) => (
-            <div
-              key={store.id}
-              className="flex items-center p-3 border rounded-lg mb-3"
-              onClick={() => navigate(`/store/${store.id}`)}
-            >
-              <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
-                <img
-                  src="https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png"
-                  alt={store.storeName || '가게 이미지'}
-                  className="w-full h-full object-cover"
-                  crossOrigin="anonymous"
-                  onError={(e) => {
-                    e.target.src =
-                      'https://dxflvza4ey8e9.cloudfront.net/store/luckeat-default.png'
-                  }}
-                />
-              </div>
-              <div className="flex-1 ml-3">
-                <h3 className="font-bold">{store.storeName || '이름 없음'}</h3>
-                <p className="text-sm text-gray-500">
-                  {store.address || '주소 정보 없음'}
-                </p>
-                <p className="text-sm font-medium">
-                  공유 {store.shareCount || 0}회
-                </p>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-            <p>표시할 가게가 없습니다.</p>
-          </div>
-        )}
-
-        {/* 맨 위로 스크롤 버튼 */}
-        {showScrollTopButton && (
-          <button
-            onClick={scrollToTop}
-            className="fixed bottom-24 left-1/2 transform -translate-x-1/2 translate-x-28 bg-yellow-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-10 hover:bg-yellow-600 scro ll-container"
-            aria-label="맨 위로 스크롤"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 10l7-7m0 0l7 7m-7-7v18"
-              />
-            </svg>
-          </button>
-        )}
+      <div className="w-full bg-white border-t">
+        <Navigation />
       </div>
 
-      {/* 네비게이션 바 */}
-      <Navigation />
+      <style jsx>{`
+        /* 스크롤바 숨기기 위한 스타일 */
+        .flex-1 {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+          overflow-y: auto;
+        }
+        .flex-1::-webkit-scrollbar {
+          display: none; /* Chrome, Safari, Opera */
+        }
+      `}</style>
     </div>
   )
 }

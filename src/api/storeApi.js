@@ -2,6 +2,7 @@ import apiClient from './apiClient'
 import { processImageData } from './uploadApi'
 import { API_BASE_URL, API_DIRECT_URL } from '../config/apiConfig'
 import { TOKEN_KEYS } from './apiClient'
+import axios from 'axios'
 
 // 가게 등록 (이미지 업로드 지원)
 export const registerStore = async (storeData, storeImage) => {
@@ -140,21 +141,40 @@ export const getStoreById = async (storeId) => {
   }
 }
 
-// 가게 정보 수정 (이미지 업로드 지원)
-export const updateStore = async (storeId, storeData, storeImage) => {
+// 가게 정보 수정
+export const updateStore = async (storeId, storeData) => {
   try {
-    // 이미지 처리
-    const processedData = await processImageData(
-      storeData,
-      storeImage,
-      'storeImg',
-      '/store-images',
-    )
+    // 시간 형식을 HH:mm으로 변환
+    const formatTime = (time) => {
+      if (!time) return '23:00'
+      return time.split(':').slice(0, 2).join(':')
+    }
 
-    const response = await apiClient.put(`/stores/${storeId}`, processedData)
-    return response.data
+    const response = await apiClient.put(`/stores/${storeId}`, {
+      categoryId: storeData.categoryId || 1,
+      storeName: storeData.storeName,
+      storeImg: storeData.storeImg,
+      address: storeData.address,
+      storeUrl: storeData.storeUrl || '',
+      permissionUrl: storeData.permissionUrl || '',
+      latitude: storeData.latitude || 0,
+      longitude: storeData.longitude || 0,
+      contactNumber: storeData.contactNumber,
+      description: storeData.description,
+      businessNumber: storeData.businessNumber,
+      weekdayCloseTime: formatTime(storeData.weekdayCloseTime),
+      weekendCloseTime: formatTime(storeData.weekendCloseTime)
+    })
+    
+    return {
+      success: true,
+      data: response.data
+    }
   } catch (error) {
-    throw error
+    return {
+      success: false,
+      message: error.response?.data?.message || '가게 정보 수정에 실패했습니다.'
+    }
   }
 }
 

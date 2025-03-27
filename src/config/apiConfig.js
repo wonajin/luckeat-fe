@@ -1,6 +1,13 @@
 // API 설정 파일
-const API_BASE_URL = 'https://luckeat.net/api/v1'
-const API_DIRECT_URL = 'https://luckeat.net'
+const isDevelopment = process.env.NODE_ENV === 'development'
+
+const API_BASE_URL = isDevelopment 
+  ? 'https://dxa66rf338pjr.cloudfront.net/api/v1'
+  : 'https://luckeat.net/api/v1'
+
+const API_DIRECT_URL = isDevelopment
+  ? 'https://dxa66rf338pjr.cloudfront.net'
+  : 'https://luckeat.net'
 
 // API 엔드포인트
 const API_ENDPOINTS = {

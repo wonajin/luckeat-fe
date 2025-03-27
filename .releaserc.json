@@ -4,7 +4,7 @@
       "name": "main"
     },
     {
-      "name": "develop",
+      "name": "dev",
       "prerelease": "beta"
     }
   ],

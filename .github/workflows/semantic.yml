@@ -1,10 +1,10 @@
-name: Develop Branch Semantic Release
+name: 🏷️ Frontend Semantic Release
 
 on:
   push:
     branches:
       - main
-      - develop
+      - dev
   workflow_dispatch: # GitHub Actions에서 수동 실행 가능하도록 추가
 
 jobs:

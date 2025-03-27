@@ -12,7 +12,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://luckeat.net',
+        target: 'https://dxa66rf338pjr.cloudfront.net',
         changeOrigin: true,
         secure: true,
         ws: true,

@@ -32,13 +32,13 @@ apiClient.interceptors.request.use(
       // URL 통합 처리
       if (config.url.startsWith('/v1/')) {
         // /v1/로 시작하는 경우 - /api를 추가하고 도메인 추가
-        config.url = `https://luckeat.net/api${config.url}`
+        config.url = `${process.env.NODE_ENV === 'development' ? 'https://dxa66rf338pjr.cloudfront.net' : 'https://luckeat.net'}/api${config.url}`
       } else if (config.url.startsWith('/api/')) {
         // /api/로 시작하는 경우 - 그대로 도메인만 추가
-        config.url = `https://luckeat.net${config.url}`
+        config.url = `${process.env.NODE_ENV === 'development' ? 'https://dxa66rf338pjr.cloudfront.net' : 'https://luckeat.net'}${config.url}`
       } else {
         // 그 외 - 모든 API 엔드포인트는 /api/v1/로 시작하도록 설정
-        config.url = `https://luckeat.net/api/v1${config.url.startsWith('/') ? '' : '/'}${config.url}`
+        config.url = `${process.env.NODE_ENV === 'development' ? 'https://dxa66rf338pjr.cloudfront.net' : 'https://luckeat.net'}/api/v1${config.url.startsWith('/') ? '' : '/'}${config.url}`
       }
     }
 

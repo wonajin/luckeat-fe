@@ -12,10 +12,10 @@ function EditStorePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [formData, setFormData] = useState({
-    categoryId: 1,
     storeName: '',
     storeImg: '',
     address: '',
+    website: '',
     storeUrl: '',
     permissionUrl: '',
     latitude: 0,
@@ -23,8 +23,8 @@ function EditStorePage() {
     contactNumber: '',
     description: '',
     businessNumber: '',
-    weekdayCloseTime: '23:00',
-    weekendCloseTime: '23:00'
+    businessHours: '',
+    reviewSummary: '',
   })
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -37,10 +37,10 @@ function EditStorePage() {
         if (response.success) {
           setStore(response.data)
           setFormData({
-            categoryId: response.data.categoryId || 1,
             storeName: response.data.storeName || '',
             storeImg: response.data.storeImg || '',
             address: response.data.address || '',
+            website: response.data.website || '',
             storeUrl: response.data.storeUrl || '',
             permissionUrl: response.data.permissionUrl || '',
             latitude: response.data.latitude || 0,
@@ -48,8 +48,8 @@ function EditStorePage() {
             contactNumber: response.data.contactNumber || '',
             description: response.data.description || '',
             businessNumber: response.data.businessNumber || '',
-            weekdayCloseTime: response.data.weekdayCloseTime || '23:00',
-            weekendCloseTime: response.data.weekendCloseTime || '23:00'
+            businessHours: response.data.businessHours || '',
+            reviewSummary: response.data.reviewSummary || '',
           })
           setImagePreview(response.data.storeImg || '')
         } else {
@@ -70,9 +70,9 @@ function EditStorePage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
@@ -83,7 +83,9 @@ function EditStorePage() {
     // 파일 유효성 검사
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
     if (!validTypes.includes(file.type)) {
-      alert('지원하지 않는 파일 형식입니다. JPG, JPEG, PNG, WEBP 형식만 가능합니다.')
+      alert(
+        '지원하지 않는 파일 형식입니다. JPG, JPEG, PNG, WEBP 형식만 가능합니다.',
+      )
       return
     }
 
@@ -96,9 +98,9 @@ function EditStorePage() {
     const reader = new FileReader()
     reader.onloadend = () => {
       // base64 데이터는 미리보기용으로만 사용하고, 실제 데이터는 기존 URL 유지
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        storeImg: store?.storeImg || '' // 기존 URL 유지
+        storeImg: store?.storeImg || '',
       }))
       setImagePreview(reader.result)
     }
@@ -118,7 +120,15 @@ function EditStorePage() {
     setLoading(true)
 
     try {
-      const response = await updateStore(store.id, formData)
+      // 리뷰 요약 데이터를 포함한 데이터 전송
+      const dataToSubmit = {
+        ...formData,
+        reviewSummary: store.reviewSummary,
+      }
+
+      // 디버깅을 위해 전송 데이터 로깅
+      console.log('수정 요청 데이터:', dataToSubmit)
+      const response = await updateStore(store.id, dataToSubmit)
       if (response.success) {
         showToastMessage('가게 정보가 성공적으로 수정되었습니다.')
         setTimeout(() => {
@@ -181,7 +191,7 @@ function EditStorePage() {
                 />
               </svg>
               <p className="text-sm text-blue-700">
-                가게 정보는 구글 맵에서 가져오는 데이터입니다. 
+                가게 정보는 구글 맵에서 가져오는 데이터입니다.
                 <br />
                 주소, 영업시간 등 기본 정보 변경이 필요하시다면 구글 맵에서 수정해 주세요.
               </p>
@@ -222,7 +232,9 @@ function EditStorePage() {
                         d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
                       />
                     </svg>
-                    <span className="text-gray-700 font-medium">배경사진 변경</span>
+                    <span className="text-gray-700 font-medium">
+                      배경사진 변경
+                    </span>
                   </label>
                 </div>
               </div>
@@ -277,7 +289,9 @@ function EditStorePage() {
               <div className="p-4 space-y-4">
                 {/* 가게명 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">가게명</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    가게명
+                  </label>
                   <input
                     type="text"
                     value={store?.storeName || '정보 없음'}
@@ -288,7 +302,9 @@ function EditStorePage() {
 
                 {/* 주소 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">주소</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    주소
+                  </label>
                   <input
                     type="text"
                     value={store?.address || '정보 없음'}
@@ -299,7 +315,9 @@ function EditStorePage() {
 
                 {/* 사업자번호 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">사업자번호</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    사업자번호
+                  </label>
                   <input
                     type="text"
                     value={store?.businessNumber || '정보 없음'}
@@ -308,34 +326,42 @@ function EditStorePage() {
                   />
                 </div>
 
+                {/* 리뷰 요약 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    리뷰 요약
+                  </label>
+                  <div className="bg-gray-50 p-4 border rounded-lg text-gray-700">
+                    {store?.reviewSummary ? (
+                      <p className="text-sm leading-relaxed">{store.reviewSummary}</p>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        리뷰 요약 정보가 없습니다.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 {/* 영업시간 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">영업시간</label>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700">평일</span>
-                      <input
-                        type="text"
-                        value={`${store?.weekdayOpenTime || '00:00'} ~ ${store?.weekdayCloseTime || '00:00'}`}
-                        disabled
-                        className="w-48 p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700">주말</span>
-                      <input
-                        type="text"
-                        value={`${store?.weekendOpenTime || '00:00'} ~ ${store?.weekendCloseTime || '00:00'}`}
-                        disabled
-                        className="w-48 p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    영업시간
+                  </label>
+                  <textarea
+                    name="businessHours"
+                    value={store?.businessHours || '정보 없음'}
+                    disabled
+                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
+                    rows="3"
+                    placeholder="영업시간을 입력해주세요"
+                  />
                 </div>
 
                 {/* 가게 소개 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">가게 소개</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    가게 소개
+                  </label>
                   <textarea
                     name="description"
                     value={formData.description}
@@ -349,7 +375,9 @@ function EditStorePage() {
 
                 {/* 연락처 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">연락처</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    연락처
+                  </label>
                   <input
                     type="tel"
                     name="contactNumber"

@@ -149,7 +149,25 @@ function HomePage() {
         const storeName = store.storeName || store.name || ''
         return storeName.toLowerCase().includes(query)
       })
-      console.log('검색 필터링 후 가게 수:', result.length)
+    }
+
+    if (locationFilter && locationFilter !== '내 주변') {
+      result = result.filter((store) => {
+        const address = (store.address || '').toLowerCase()
+        
+        switch(locationFilter) {
+          case '제주시':
+            return address.includes('제주시')
+          case '서귀포':
+            return address.includes('서귀포')
+          case '애월':
+            return address.includes('애월')
+          case '함덕':
+            return address.includes('함덕')
+          default:
+            return true
+        }
+      })
     }
 
     if (sortOption === '가까운 순') {
@@ -178,8 +196,8 @@ function HomePage() {
       })
     } else if (sortOption === '별점 높은 순') {
       result.sort((a, b) => {
-        const ratingA = a.averageRating || 0
-        const ratingB = b.averageRating || 0
+        const ratingA = a.avgRatingGoogle || 0
+        const ratingB = b.avgRatingGoogle || 0
 
         if (ratingB === ratingA) {
           const reviewsA = a.reviewCount || 0
@@ -193,7 +211,7 @@ function HomePage() {
 
     console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
-  }, [searchQuery, sortOption, stores])
+  }, [searchQuery, sortOption, stores, locationFilter])
 
   console.log('현재 stores 데이터:', stores)
   console.log('현재 filteredStores 데이터:', filteredStores)
@@ -474,7 +492,7 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {locationFilter === '내 주변' ? '내 주변' : locationFilter || '전체'} 마감 할인 ({filteredStores.length})
+              {locationFilter === '내 주변' ? '내 주변' : locationFilter || '전체'} 가게 목록 ({filteredStores.length})
             </h2>
           </div>
 
@@ -511,8 +529,8 @@ function HomePage() {
                     <div className="flex items-center text-sm text-yellow-500 mr-2">
                       <span className="mr-1">★</span>
                       <span>
-                        {store.averageRating
-                          ? store.averageRating.toFixed(1)
+                        {store.avgRatingGoogle
+                          ? store.avgRatingGoogle.toFixed(1)
                           : '0.0'}
                       </span>
                       <span className="text-gray-500 ml-1">

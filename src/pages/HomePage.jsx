@@ -225,7 +225,7 @@ function HomePage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-30">
         <h1
           className="text-2xl font-bold text-yellow-500"
@@ -534,7 +534,7 @@ function HomePage() {
         </div>
       </div>
 
-      <ScrollTopButton />
+      <ScrollTopButton scrollContainerRef={storeListRef} />
 
       <div className="w-full bg-white border-t">
         <Navigation />

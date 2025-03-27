@@ -690,7 +690,7 @@ function MapPage() {
                   >
                     <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
                       <img
-                        src={store.imageUrl || storeDefaultImage}
+                        src={store.storeImg ? store.storeImg : (store.imageUrl || storeDefaultImage)}
                         alt={store.name || store.storeName}
                         className="w-full h-full object-cover rounded-md"
                         crossOrigin="anonymous"

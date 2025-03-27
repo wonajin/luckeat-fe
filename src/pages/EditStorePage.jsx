@@ -25,6 +25,9 @@ function EditStorePage() {
     businessNumber: '',
     businessHours: '',
     reviewSummary: '',
+    avgRating: 0,
+    avgRatingGoogle: 0,
+    googlePlaceId: '',
   })
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -50,6 +53,9 @@ function EditStorePage() {
             businessNumber: response.data.businessNumber || '',
             businessHours: response.data.businessHours || '',
             reviewSummary: response.data.reviewSummary || '',
+            avgRating: response.data.avgRating || 0,
+            avgRatingGoogle: response.data.avgRatingGoogle || 0,
+            googlePlaceId: response.data.googlePlaceId || '',
           })
           setImagePreview(response.data.storeImg || '')
         } else {
@@ -120,10 +126,17 @@ function EditStorePage() {
     setLoading(true)
 
     try {
-      // 리뷰 요약 데이터를 포함한 데이터 전송
+      // 수정된 데이터를 서버에 전송
       const dataToSubmit = {
         ...formData,
-        reviewSummary: store.reviewSummary,
+        // 기존 데이터에서 가져와야 하는 값들
+        storeName: store.storeName,
+        address: store.address,
+        businessNumber: store.businessNumber,
+        reviewSummary: store.reviewSummary || '',
+        avgRating: store.avgRating || 0,
+        avgRatingGoogle: store.avgRatingGoogle || 0,
+        googlePlaceId: store.googlePlaceId || '',
       }
 
       // 디버깅을 위해 전송 데이터 로깅

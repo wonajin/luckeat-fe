@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
 import { Map, MapMarker } from 'react-kakao-maps-sdk' //카카오맵 추가
-import { getStoreById, increaseStoreShare } from '../api/storeApi'
+import { getStoreById } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
 import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import ScrollTopButton from '../components/common/ScrollTopButton'
@@ -166,18 +166,6 @@ function StoreDetailPage() {
   // 공유 기능
   const handleShareClick = () => {
     setShowShareModal(true)
-    // 공유 카운트 증가 API 호출
-    try {
-      increaseStoreShare(id)
-        .then(() => {
-          console.log('공유 카운트 증가 성공')
-        })
-        .catch((err) => {
-          console.error('공유 카운트 증가 실패:', err)
-        })
-    } catch (error) {
-      console.error('공유 카운트 증가 중 오류:', error)
-    }
   }
 
   // 공유 링크 복사

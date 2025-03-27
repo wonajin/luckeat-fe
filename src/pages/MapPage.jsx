@@ -41,7 +41,7 @@ function MapPage() {
   const mapContainerRef = useRef(null)
 
   // API 기본 URL 직접 설정
-  const API_BASE_URL = 'https://luckeat.net'
+  const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
 
   // 사용자 위치 가져오기
   useEffect(() => {

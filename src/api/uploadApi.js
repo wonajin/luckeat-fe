@@ -1,5 +1,5 @@
 // 기본 API URL
-const API_BASE_URL = 'https://luckeat.net'
+const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
 
 /**
  * 이미지를 업로드하고 URL을 반환합니다.

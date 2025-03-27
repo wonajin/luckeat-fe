@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
 import { Map, MapMarker } from 'react-kakao-maps-sdk' //카카오맵 추가
-import { getStoreById } from '../api/storeApi'
+import { getStoreById, increaseStoreShare } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
 import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import ScrollTopButton from '../components/common/ScrollTopButton'
@@ -27,6 +27,37 @@ function StoreDetailPage() {
   const storeInfoRef = useRef(null)
   const reviewsRef = useRef(null)
   
+  // Google Maps 이미지 URL인지 확인하는 함수
+  const isGoogleMapsImage = (url) => {
+    return url && url.includes('maps.googleapis.com/maps/api/place/photo');
+  }
+
+  // 이미지 URL을 처리하는 함수
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return defaultImage;
+
+    // 구글 이미지 URL인 경우 CORS 이슈가 있을 수 있으므로 특별히 처리
+    if (isGoogleMapsImage(imageUrl)) {
+      console.log('구글 맵스 이미지 URL 감지:', imageUrl);
+
+      // 가게 이름이 있으면 그에 맞는 일반적인 이미지를 표시
+      // 예: 베이커리 가게인 경우 베이커리 이미지
+      if (store?.storeName?.includes('베이커리') ||
+          store?.storeName?.includes('빵집') ||
+          store?.storeName?.includes('빵') ||
+          store?.storeName?.includes('Baguette') ||
+          store?.storeName?.includes('베이글') ||
+          store?.storeName?.includes('Bakery')) {
+        return bakerDefaultImage;
+      }
+
+      // 그 외의 경우 기본 이미지 사용
+      return defaultImage;
+    }
+
+    return imageUrl;
+  }
+
   useEffect(() => {
     const fetchStoreData = async () => {
       try {
@@ -38,8 +69,36 @@ function StoreDetailPage() {
         console.log('가게 상세 정보 응답:', response)
 
         if (response.success) {
-          setStore(response.data)
-          console.log('지도 정보:', response.data.latitude, response.data.longitude) // 디버깅용
+          const storeData = response.data;
+
+          // 이미지 URL 확인 및 디버깅
+          console.log('가게 이미지 URL:', storeData.storeImg);
+
+          // 이미지 미리 로드 시도
+          if (storeData.storeImg) {
+            const img = new Image();
+            img.onload = () => {
+              console.log('이미지 미리 로드 성공:', storeData.storeImg);
+            };
+            img.onerror = () => {
+              console.error('이미지 미리 로드 실패:', storeData.storeImg);
+              // 이미지 로드 실패 시, 이미지 URL을 null로 설정해서 기본 이미지 표시
+              storeData.storeImg = null;
+            };
+            img.src = storeData.storeImg;
+          }
+
+          // 구글 이미지인지 확인
+          if (isGoogleMapsImage(storeData.storeImg)) {
+            console.log('구글 맵스 이미지 URL 감지됨');
+          }
+
+          // JSON으로 응답 객체 로깅 (민감 정보 제외)
+          const safeStoreData = { ...storeData };
+          console.log('가게 데이터:', JSON.stringify(safeStoreData, null, 2));
+
+          setStore(storeData)
+          console.log('지도 정보:', storeData.latitude, storeData.longitude) // 디버깅용
           // 맵 로드 완료 처리
           setMapLoaded(true)
         } else {
@@ -107,11 +166,23 @@ function StoreDetailPage() {
   // 공유 기능
   const handleShareClick = () => {
     setShowShareModal(true)
+    // 공유 카운트 증가 API 호출
+    try {
+      increaseStoreShare(id)
+        .then(() => {
+          console.log('공유 카운트 증가 성공')
+        })
+        .catch((err) => {
+          console.error('공유 카운트 증가 실패:', err)
+        })
+    } catch (error) {
+      console.error('공유 카운트 증가 중 오류:', error)
+    }
   }
 
   // 공유 링크 복사
   const handleCopyShareLink = () => {
-    const shareUrl = `${window.location.origin}/store/${id}`
+    const shareUrl = store.storeUrl || `${window.location.origin}/store/${id}`
     navigator.clipboard
       .writeText(shareUrl)
       .then(() => {
@@ -191,15 +262,23 @@ function StoreDetailPage() {
         onScroll={handleScroll}
       >
         {/* 가게 이미지 */}
-        <img
-          src={store.storeImg ? store.storeImg : defaultImage}
-          alt={store.storeName}
-          className="w-full h-48 object-cover"
-          crossOrigin="anonymous"
-          onError={(e) => {
-            e.target.src = defaultImage
-          }}
-        />
+        <div className="relative w-full h-48 bg-gray-200 flex items-center justify-center">
+          {(store.storeImg || store.imageUrl) ? (
+            <img
+              src={store.storeImg ? store.storeImg : (store.imageUrl || defaultImage)}
+              alt={store.storeName}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                console.error('이미지 로드 오류:', store.storeImg);
+                e.target.onerror = null; // 무한 루프 방지
+                e.target.src = defaultImage;
+              }}
+            />
+          ) : (
+            <div className="text-4xl text-gray-400">🏪</div>
+          )}
+        </div>
 
         {/* 가게 이름 및 공유 버튼 */}
         <div className="px-4 py-3 flex justify-between items-center">
@@ -229,24 +308,14 @@ function StoreDetailPage() {
         <div className="px-4 pb-2 flex items-center">
           <div className="flex items-center">
             <span className="font-bold text-base">
-              {store.reviews && store.reviews.length > 0
-                ? (
-                    store.reviews.reduce(
-                      (sum, review) => sum + review.rating,
-                      0
-                    ) / store.reviews.length
-                  ).toFixed(1)
-                : "0.0"}
+              {store.avgRatingGoogle?.toFixed(1) || "0.0"}
             </span>
             <div className="flex ml-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <span
                   key={star}
                   className={`text-lg ${
-                    store.reviews && 
-                    store.reviews.length > 0 && 
-                    (store.reviews.reduce((sum, review) => sum + review.rating, 0) / 
-                    store.reviews.length) >= star
+                    (store.avgRatingGoogle || 0) >= star
                       ? 'text-yellow-500'
                       : 'text-gray-300'
                   }`}
@@ -327,24 +396,26 @@ function StoreDetailPage() {
           </div>
 
           {/* 카카오맵으로 보기 및 길찾기 버튼 */}
-          <div className="flex gap-2 mt-2">
-            <a
-              href={`https://map.kakao.com/link/map/${store.storeName},${store.latitude},${store.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 py-2 bg-yellow-500 text-white font-bold rounded-lg text-center"
-            >
-              카카오맵으로 보기
-            </a>
-            <a
-              href={`https://map.kakao.com/link/to/${store.storeName},${store.latitude},${store.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 py-2 bg-blue-500 text-white font-bold rounded-lg text-center"
-            >
-              길찾기
-            </a>
-          </div>
+          {store.latitude && store.longitude && (
+            <div className="flex gap-2 mt-2">
+              <a
+                href={`https://map.kakao.com/link/map/${store.storeName},${store.latitude},${store.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-2 bg-yellow-500 text-white font-bold rounded-lg text-center"
+              >
+                카카오맵으로 보기
+              </a>
+              <a
+                href={`https://map.kakao.com/link/to/${store.storeName},${store.latitude},${store.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-2 bg-blue-500 text-white font-bold rounded-lg text-center"
+              >
+                길찾기
+              </a>
+            </div>
+          )}
         </div>
 
         {/* 상품 정보 섹션 */}
@@ -378,9 +449,7 @@ function StoreDetailPage() {
                 <img
                   src={
                     product.productImg
-                      ? product.productImg.startsWith('http')
-                        ? product.productImg
-                        : `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
+                      ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
                       : bakerDefaultImage
                   }
                   alt={product.productName}
@@ -427,9 +496,7 @@ function StoreDetailPage() {
                     <img
                       src={
                         product.productImg
-                          ? product.productImg.startsWith('http')
-                            ? product.productImg
-                            : `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
+                          ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
                           : bakerDefaultImage
                       }
                       alt={product.productName}
@@ -463,10 +530,14 @@ function StoreDetailPage() {
               📞 {store.contactNumber || '연락처 정보 없음'}
             </p>
             <p className="text-gray-600">
-              🏷️ 영업시간: 평일 ~{store.weekdayCloseTime || '정보 없음'}
+              🌐 {store.website ? (
+                <a href={store.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                  {store.website}
+                </a>
+              ) : '웹사이트 정보 없음'}
             </p>
-            <p className="text-gray-600 ml-10">
-              주말 ~{store.weekendCloseTime || '정보 없음'}
+            <p className="text-gray-600">
+              🏷️ 영업시간: {store.businessHours || '정보 없음'}
             </p>
             <p className="text-gray-600">
               🏪 사업자번호: {store.businessNumber || '정보 없음'}
@@ -481,14 +552,10 @@ function StoreDetailPage() {
                 <h4 className="font-bold text-sm">구글 리뷰 평균 별점</h4>
                 <div className="flex items-center">
                   <span className="text-yellow-500 mr-1">★</span>
-                  <span className="font-medium">4.8</span>
+                  <span className="font-medium">{store.avgRatingGoogle?.toFixed(1) || "0.0"}</span>
                   <span className="text-gray-500 ml-1">/5</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-600">
-                구글리뷰운영업입니다. 에이본 도넛가게는 성남님이 빵베이스고 
-                초코 도넛이 맛있겠다..
-              </p>
             </div>
             
             {/* AI 후기 요약 영역 */}
@@ -505,8 +572,7 @@ function StoreDetailPage() {
                 AI 후기 요약
               </h4>
               <p className="text-xs text-gray-700">
-                이 가게는 빵이 맛있다는 평가가 많으며, 특히 소금빵이 인기가 많습니다. 
-                가격도 합리적이고 직원들도 친절하다는 평가가 많습니다.
+                {store.reviewSummary || '아직 리뷰 요약이 없습니다.'}
               </p>
             </div>
 
@@ -550,15 +616,10 @@ function StoreDetailPage() {
               {/* 럭킷 리뷰 평점 */}
               <div className="mb-4">
                 <p className="text-3xl font-bold text-center mb-2">
-                  {(
-                    store.reviews.reduce(
-                      (sum, review) => sum + review.rating,
-                      0,
-                    ) / store.reviews.length
-                  ).toFixed(1)}
+                  {store.avgRatingGoogle?.toFixed(1) || "0.0"}
                   <span className="text-lg text-gray-500">/5</span>
                 </p>
-                <p className="text-center text-sm text-gray-600 mb-2">럭킷 사용자 평점</p>
+                <p className="text-center text-sm text-gray-600 mb-2">구글 평점</p>
                 
                
               </div>
@@ -676,7 +737,7 @@ function StoreDetailPage() {
             <div className="flex items-center justify-between border rounded-lg p-3 mb-4">
               <input
                 type="text"
-                value={`${window.location.origin}/store/${id}`}
+                value={store.storeUrl || `${window.location.origin}/store/${id}`}
                 className="flex-1 pr-2 text-sm truncate"
                 readOnly
               />

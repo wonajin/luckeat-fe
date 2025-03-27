@@ -1,8 +1,15 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 function Navigation() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useAuth()
+  
+  // 사용자의 역할에 따라 프로필 페이지 경로 결정
+  const getProfilePath = () => {
+    return user?.role === 'SELLER' ? '/business' : '/mypage'
+  }
 
   return (
     <nav className="mt-auto border-t border-gray-100 bg-white shadow-inner">
@@ -51,11 +58,11 @@ function Navigation() {
         <li>
           <button
             className={`flex flex-col items-center justify-center w-16 h-14 rounded-lg transition-colors ${
-              location.pathname === '/mypage' 
+              (location.pathname === '/mypage' || location.pathname === '/business')
                 ? 'text-jeju-orange' 
                 : 'text-jeju-stone'
             }`}
-            onClick={() => navigate('/mypage')}
+            onClick={() => navigate(getProfilePath())}
             aria-label="내 정보로 이동"
           >
             <svg

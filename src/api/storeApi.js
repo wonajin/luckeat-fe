@@ -157,6 +157,10 @@ export const updateStore = async (storeId, storeData) => {
       description: storeData.description,
       businessNumber: storeData.businessNumber,
       businessHours: storeData.businessHours || '',
+      reviewSummary: storeData.reviewSummary || '',
+      avgRating: storeData.avgRating || 0,
+      avgRatingGoogle: storeData.avgRatingGoogle || 0,
+      googlePlaceId: storeData.googlePlaceId || '',
     })
     
     return {

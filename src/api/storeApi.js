@@ -144,17 +144,11 @@ export const getStoreById = async (storeId) => {
 // 가게 정보 수정
 export const updateStore = async (storeId, storeData) => {
   try {
-    // 시간 형식을 HH:mm으로 변환
-    const formatTime = (time) => {
-      if (!time) return '23:00'
-      return time.split(':').slice(0, 2).join(':')
-    }
-
-    const response = await apiClient.put(`/stores/${storeId}`, {
-      categoryId: storeData.categoryId || 1,
+    const response = await apiClient.put(`/api/v1/stores/${storeId}`, {
       storeName: storeData.storeName,
       storeImg: storeData.storeImg,
       address: storeData.address,
+      website: storeData.website || '',
       storeUrl: storeData.storeUrl || '',
       permissionUrl: storeData.permissionUrl || '',
       latitude: storeData.latitude || 0,
@@ -162,18 +156,17 @@ export const updateStore = async (storeId, storeData) => {
       contactNumber: storeData.contactNumber,
       description: storeData.description,
       businessNumber: storeData.businessNumber,
-      weekdayCloseTime: formatTime(storeData.weekdayCloseTime),
-      weekendCloseTime: formatTime(storeData.weekendCloseTime)
+      businessHours: storeData.businessHours || '',
     })
     
     return {
       success: true,
-      data: response.data
+      data: response.data,
     }
   } catch (error) {
     return {
       success: false,
-      message: error.response?.data?.message || '가게 정보 수정에 실패했습니다.'
+      message: error.response?.data?.message || '가게 정보 수정에 실패했습니다.',
     }
   }
 }
@@ -202,15 +195,12 @@ export const deleteStore = async (storeId) => {
 export const getMyStore = async () => {
   try {
     console.log('내 가게 정보 요청')
-    const response = await apiClient.get('/stores/my')
+    const response = await apiClient.get('/api/v1/stores/my')
     console.log('내 가게 정보 응답:', response.data)
-
-    // 응답 데이터 확인 및 변환
-    const storeData = response.data?.data || response.data
 
     return {
       success: true,
-      data: storeData,
+      data: response.data,
     }
   } catch (error) {
     console.error('내 가게 정보 조회 오류:', error)

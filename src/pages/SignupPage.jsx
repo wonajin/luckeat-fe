@@ -282,6 +282,7 @@ function SignupPage() {
           </button>
         </div>
       </div>
+      
 
       {/* 회원가입 성공 팝업 - renderSuccessPopup 함수 사용 */}
       {renderSuccessPopup()}

@@ -28,6 +28,9 @@ function HomePage() {
   const storeListRef = useRef(null)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showArrows, setShowArrows] = useState(false)
+  const [displayedStores, setDisplayedStores] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const storesPerPage = 5
 
   const cardNews = [
     {
@@ -108,9 +111,31 @@ function HomePage() {
 
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
 
-  const handleScroll = () => {
-    // 스크롤 이벤트는 유지하되 맨 위로 버튼 관련 코드 제거
-  }
+  const handleScroll = useCallback(() => {
+    if (!storeListRef.current) return
+
+    const { scrollTop, scrollHeight, clientHeight } = storeListRef.current
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100
+
+    if (isNearBottom && !loading && displayedStores.length < filteredStores.length) {
+      const nextPage = currentPage + 1
+      const startIndex = (nextPage - 1) * storesPerPage
+      const endIndex = startIndex + storesPerPage
+      const newStores = filteredStores.slice(0, endIndex)
+      
+      setDisplayedStores(newStores)
+      setCurrentPage(nextPage)
+    }
+  }, [currentPage, loading, filteredStores, displayedStores.length])
+
+  // 스크롤 이벤트 리스너 등록
+  useEffect(() => {
+    const scrollContainer = storeListRef.current
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll)
+      return () => scrollContainer.removeEventListener('scroll', handleScroll)
+    }
+  }, [handleScroll])
 
   const scrollToTop = () => {
     if (storeListRef.current) {
@@ -212,6 +237,13 @@ function HomePage() {
     console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
   }, [searchQuery, sortOption, stores, locationFilter])
+
+  // filteredStores가 업데이트될 때마다 표시할 가게 목록 업데이트
+  useEffect(() => {
+    const initialStores = filteredStores.slice(0, storesPerPage)
+    setDisplayedStores(initialStores)
+    setCurrentPage(1)
+  }, [filteredStores])
 
   console.log('현재 stores 데이터:', stores)
   console.log('현재 filteredStores 데이터:', filteredStores)
@@ -500,50 +532,56 @@ function HomePage() {
             <div className="flex justify-center items-center py-8">
               <p>로딩 중...</p>
             </div>
-          ) : filteredStores && filteredStores.length > 0 ? (
-            filteredStores.map((store, index) => (
-              <div
-                key={store.id || store.storeId || index}
-                className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer"
-                onClick={() => handleStoreClick(store)}
-              >
-                <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
-                  <img
-                    src={store.storeImg ? store.storeImg : storeDefaultImage}
-                    alt={store.storeName || store.name || '가게 이미지'}
-                    className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
-                    onError={(e) => {
-                      e.target.src = storeDefaultImage
-                    }}
-                  />
-                </div>
-                <div className="flex-1 ml-3">
-                  <h3 className="font-bold">
-                    {store.storeName || store.name || '이름 없음'}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {store.address || '주소 정보 없음'}
-                  </p>
-                  <div className="flex items-center">
-                    <div className="flex items-center text-sm text-yellow-500 mr-2">
-                      <span className="mr-1">★</span>
-                      <span>
-                        {store.avgRatingGoogle
-                          ? store.avgRatingGoogle.toFixed(1)
-                          : '0.0'}
-                      </span>
-                      <span className="text-gray-500 ml-1">
-                        ({store.reviewCount || 0})
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium">
-                      공유 {store.shareCount || 0}회
+          ) : displayedStores && displayedStores.length > 0 ? (
+            <>
+              {displayedStores.map((store, index) => (
+                <div
+                  key={store.id || store.storeId || index}
+                  className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer"
+                  onClick={() => handleStoreClick(store)}
+                >
+                  <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
+                    <img
+                      src={store.storeImg || storeDefaultImage}
+                      alt={store.storeName || store.name || '가게 이미지'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = storeDefaultImage
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 ml-3">
+                    <h3 className="font-bold">
+                      {store.storeName || store.name || '이름 없음'}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {store.address || '주소 정보 없음'}
                     </p>
+                    <div className="flex items-center">
+                      <div className="flex items-center text-sm text-yellow-500 mr-2">
+                        <span className="mr-1">★</span>
+                        <span>
+                          {store.avgRatingGoogle
+                            ? store.avgRatingGoogle.toFixed(1)
+                            : '0.0'}
+                        </span>
+                        <span className="text-gray-500 ml-1">
+                          ({store.reviewCount || 0})
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium">
+                        공유 {store.shareCount || 0}회
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+              {displayedStores.length < filteredStores.length && (
+                <div className="flex justify-center items-center py-4">
+                  <p className="text-gray-500">더 많은 가게 불러오는 중...</p>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-gray-500">
               <p>표시할 가게가 없습니다.</p>

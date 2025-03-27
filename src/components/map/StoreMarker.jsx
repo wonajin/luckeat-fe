@@ -34,9 +34,9 @@ function StoreMarker({ store, isSelected, onClick }) {
         <CustomOverlayMap
           position={{ lat: store.lat, lng: store.lng }}
           yAnchor={1.2}
-          zIndex={20}
+          zIndex={999}
         >
-          <div className="bg-white p-3 rounded-lg shadow-lg border max-w-xs relative">
+          <div className="bg-white p-3 rounded-lg shadow-lg border max-w-xs relative" onClick={(e) => e.stopPropagation()}>
             {/* 화살표 */}
             <div
               className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
@@ -52,38 +52,23 @@ function StoreMarker({ store, isSelected, onClick }) {
             <div className="flex items-start gap-3">
               <div className="w-16 h-16 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                 <img
-                  src={store.storeImg ? store.storeImg : (store.imageUrl || storeDefaultImage)}
+                  src={storeDefaultImage}
                   alt={store.name || store.storeName}
                   className="w-full h-full object-cover"
-                  crossOrigin="anonymous"
-                  onError={(e) => {
-                    e.target.onerror = null
-                    e.target.src = storeDefaultImage
-                  }}
                 />
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-sm truncate">
                   {store.name || store.storeName}
                 </h4>
-                <div
-                  className="text-xs mt-1 px-2 py-1 rounded inline-block"
-                  style={{ backgroundColor: '#E3F2FD', color: '#1E88E5' }}
-                >
-                  {store.category || '기타'}
-                </div>
                 <p className="text-xs text-gray-500 mt-1 truncate">
                   {store.address || '주소 정보 없음'}
                 </p>
-                {store.discount && (
-                  <div className="mt-1 bg-yellow-100 px-2 py-1 rounded text-xs font-medium text-yellow-800 inline-block">
-                    {store.discount} 할인
+                {/* 위치 정보가 추정된 경우 표시 */}
+                {store.hasRandomLocation && (
+                  <div className="mt-1 bg-red-100 px-2 py-1 rounded text-xs font-medium text-red-800 inline-block">
+                    위치 추정
                   </div>
-                )}
-                {store.products && store.products.length > 0 && (
-                  <p className="text-xs text-gray-700 mt-1">
-                    상품 {store.products.length}개
-                  </p>
                 )}
                 <button
                   className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded transition-colors"

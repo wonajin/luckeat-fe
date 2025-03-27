@@ -20,9 +20,9 @@ function MapPage() {
   const [filteredStores, setFilteredStores] = useState([])
   const [selectedStoreId, setSelectedStoreId] = useState(null)
   const [mapCenter, setMapCenter] = useState({
-    lat: 33.450705,
-    lng: 126.570677,
-  }) // 기본 위치(제주도 구름스퀘어)
+    lat: 37.5665, // 서울 시청 기본값 (현재 위치가 가져와지기 전까지 임시 사용)
+    lng: 126.9780,
+  })
   const [mapLevel, setMapLevel] = useState(3)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -36,10 +36,8 @@ function MapPage() {
   // 추가된 상태들
   const [storeListExpanded, setStoreListExpanded] = useState(false)
   const mapContainerRef = useRef(null)
-  // 스크롤 위치 저장
-  const [showScrollTop, setShowScrollTop] = useState(false)
 
-  // API 기본 URL 개발 환경으로 변경
+  // API 기본 URL 직접 설정
   const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
 
   // 사용자 위치 가져오기
@@ -49,8 +47,9 @@ function MapPage() {
         (position) => {
           const { latitude, longitude } = position.coords
           console.log('사용자 위치:', latitude, longitude)
-          // 사용자 위치를 저장하지만, 지도 중심은 제주도 유지
+          // 사용자 위치를 저장하고 지도 중심으로 설정
           setUserLocation({ lat: latitude, lng: longitude })
+          setMapCenter({ lat: latitude, lng: longitude })
         },
         (error) => {
           console.error('위치 정보를 가져오는데 실패했습니다:', error)
@@ -93,7 +92,7 @@ function MapPage() {
             // latitude, longitude 필드가 우선 (백엔드 실제 주소 좌표)
             let lat = store.latitude ? parseFloat(store.latitude) : null
             let lng = store.longitude ? parseFloat(store.longitude) : null
-            
+
             // latitude, longitude가 없으면 lat, lng 필드 확인
             if (!lat || isNaN(lat)) {
               lat = store.lat ? parseFloat(store.lat) : null
@@ -102,9 +101,9 @@ function MapPage() {
               lng = store.lng ? parseFloat(store.lng) : null
             }
 
-            // 제주도 구름스퀘어 좌표
-            const JEJU_DEFAULT_LAT = 33.450705
-            const JEJU_DEFAULT_LNG = 126.570677
+            // 랜덤 위치 생성 준비 - 사용자 위치 중심 (또는 서울 시청)
+            const centerLat = userLocation ? userLocation.lat : 37.5665
+            const centerLng = userLocation ? userLocation.lng : 126.9780
 
             // 유효하지 않은 좌표인 경우 (null, NaN, 0)
             if (
@@ -114,12 +113,12 @@ function MapPage() {
               isNaN(lng) ||
               (lat === 0 && lng === 0)
             ) {
-              // 제주도 좌표를 기준으로 랜덤한 위치 생성 (반경 500m 이내)
+              // 현재 위치 중심으로 랜덤한 위치 생성 (반경 500m 이내)
               console.log(
-                `매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 제주도 내 랜덤 위치 생성`,
+                `매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 현재 위치 주변 랜덤 위치 생성`,
               )
-              const randomLat = JEJU_DEFAULT_LAT + (Math.random() - 0.5) * 0.01 // 약 ±500m
-              const randomLng = JEJU_DEFAULT_LNG + (Math.random() - 0.5) * 0.01
+              const randomLat = centerLat + (Math.random() - 0.5) * 0.01 // 약 ±500m
+              const randomLng = centerLng + (Math.random() - 0.5) * 0.01
               return {
                 ...store,
                 lat: randomLat,
@@ -169,9 +168,9 @@ function MapPage() {
                 lng = store.lng ? parseFloat(store.lng) : null
               }
               
-              // 제주도 좌표
-              const JEJU_DEFAULT_LAT = 33.450705
-              const JEJU_DEFAULT_LNG = 126.570677
+              // 랜덤 위치 생성 준비 - 사용자 위치 중심
+              const centerLat = userLocation ? userLocation.lat : 37.5665
+              const centerLng = userLocation ? userLocation.lng : 126.9780
               
               // 유효하지 않은 좌표 처리
               if (
@@ -181,8 +180,8 @@ function MapPage() {
                 isNaN(lng) ||
                 (lat === 0 && lng === 0)
               ) {
-                const randomLat = JEJU_DEFAULT_LAT + (Math.random() - 0.5) * 0.01
-                const randomLng = JEJU_DEFAULT_LNG + (Math.random() - 0.5) * 0.01
+                const randomLat = centerLat + (Math.random() - 0.5) * 0.01
+                const randomLng = centerLng + (Math.random() - 0.5) * 0.01
                 return {
                   ...store,
                   lat: randomLat,
@@ -240,7 +239,7 @@ function MapPage() {
         script.onerror = (error) => {
           console.error('카카오맵 로드 실패:', error)
           alert(
-            '지도 로딩에 실패했습니다. 카카오 개발자 센터에서 현재 도메인이 등록되어 있는지 확인해주세요.',
+            '지도 로딩에 실패했습니다. 카카오 개발자 센터에서 현재 도메인이 등록되어 있는지 확인해주세요.'
           )
         }
 
@@ -283,14 +282,29 @@ function MapPage() {
     (store) => {
       console.log('마커 클릭:', store.id, store.name || store.storeName)
 
-      // 선택된 가게 ID 설정
+      // 선택된 가게 ID 설정 (토글 방식)
       setSelectedStoreId(selectedStoreId === store.id ? null : store.id)
 
       // 선택된 가게로 지도 중심 이동
       if (selectedStoreId !== store.id) {
         setMapCenter({ lat: store.lat, lng: store.lng })
-        // 마커 클릭 시 가게 목록이 보이도록 설정 (축소되지 않게)
-        setStoreListExpanded(true)
+        
+        // 가게 목록 축소 (오버레이가 더 잘 보이도록)
+        setStoreListExpanded(false)
+        
+        // 지도 레벨 조정 (더 가깝게 보이도록)
+        setMapLevel(3)
+      }
+
+      // 선택된 가게로 목록 스크롤
+      if (storeItemRefs.current[store.id] && storeListRef.current) {
+        // 약간의 지연을 두고 스크롤 (UI 업데이트 후에 실행되도록)
+        setTimeout(() => {
+          storeItemRefs.current[store.id].scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          })
+        }, 100)
       }
     },
     [selectedStoreId],
@@ -322,15 +336,25 @@ function MapPage() {
       setMapLevel(3)
     } else {
       alert(
-        '현재 위치 정보를 불러올 수 없습니다. 위치 접근 권한을 확인해주세요.',
+        '현재 위치 정보를 불러올 수 없습니다. 위치 접근 권한을 확인해주세요.'
       )
     }
   }
 
   // 지도 클릭 핸들러 추가
   const handleMapClick = () => {
-    // 지도 클릭 시 선택된 가게 ID를 초기화하지만 목록은 축소하지 않음
+    if (storeListExpanded) {
+      setStoreListExpanded(false)
+    }
+    // 선택된 가게 ID 초기화
     setSelectedStoreId(null)
+  }
+
+  // 가게 목록 스크롤 핸들러 추가
+  const handleStoreListScroll = (e) => {
+    if (!storeListExpanded) {
+      setStoreListExpanded(true)
+    }
   }
 
   // 검색 핸들러
@@ -339,17 +363,6 @@ function MapPage() {
     setSearchQuery(query)
     // 검색어 변경 후에는 매장 목록 확장
     setStoreListExpanded(true)
-  }
-
-  // 가게 목록 스크롤 핸들러 추가
-  const handleStoreListScroll = (e) => {
-    // 스크롤을 조금이라도 내리면 목록 확장
-    if (e.target.scrollTop > 10) {
-      setStoreListExpanded(true)
-    }
-    
-    // 스크롤 위치에 따라 스크롤탑 버튼 표시
-    setShowScrollTop(e.target.scrollTop > 300)
   }
 
   return (
@@ -362,10 +375,7 @@ function MapPage() {
         <SearchBar
           placeholder="가게 또는 메뉴 검색"
           initialValue={searchQuery}
-          onSearch={(query) => {
-            setSearchQuery(query)
-            handleSearch(query)
-          }}
+          onSearch={handleSearch}
         />
       </div>
 
@@ -433,8 +443,6 @@ function MapPage() {
                 store={store}
                 isSelected={selectedStoreId === store.id}
                 onClick={() => handleMarkerClick(store)}
-                onDetail={() => handleStoreDetail(store.id)}
-                useBlueMarker={true}
               />
             ))}
           </Map>
@@ -482,10 +490,6 @@ function MapPage() {
             storeListExpanded ? 'h-3/5' : 'h-1/3'
           }`}
           onScroll={handleStoreListScroll}
-          style={{
-            msOverflowStyle: 'none',
-            scrollbarWidth: 'none',
-          }}
         >
           <div className="sticky top-0 w-full flex justify-center pt-2 pb-1 bg-white">
             <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
@@ -495,14 +499,7 @@ function MapPage() {
             <h3 className="font-bold mb-2">
               주변 가게 ({filteredStores.length})
             </h3>
-            <div
-              className="space-y-3"
-              style={{
-                maxHeight: storeListExpanded 
-                  ? 'calc(60vh - 80px)' 
-                  : 'calc(33vh - 80px)',
-              }}
-            >
+            <div className="space-y-3">
               {filteredStores.length > 0 ? (
                 filteredStores.map((store) => (
                   <div
@@ -517,18 +514,9 @@ function MapPage() {
                   >
                     <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
                       <img
-                        src={
-                          store.storeImg && !store.storeImg.includes('maps.googleapis.com')
-                            ? store.storeImg
-                            : store.imageUrl || storeDefaultImage
-                        }
+                        src={storeDefaultImage}
                         alt={store.name || store.storeName}
                         className="w-full h-full object-cover rounded-md"
-                        crossOrigin="anonymous"
-                        onError={(e) => {
-                          e.target.onerror = null
-                          e.target.src = storeDefaultImage
-                        }}
                       />
                     </div>
                     <div className="flex-1">
@@ -589,15 +577,6 @@ function MapPage() {
               )}
             </div>
           </div>
-
-          {/* 스크롤바 스타일 */}
-          <style>
-            {`
-              div::-webkit-scrollbar {
-                display: none;
-              }
-            `}
-          </style>
         </div>
       </div>
 

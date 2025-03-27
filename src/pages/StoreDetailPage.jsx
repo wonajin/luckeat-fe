@@ -5,6 +5,7 @@ import Header from '../components/layout/Header'
 import { Map, MapMarker } from 'react-kakao-maps-sdk' //카카오맵 추가
 import { getStoreById } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
+import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 
 function StoreDetailPage() {
   const { id } = useParams()
@@ -388,13 +389,13 @@ function StoreDetailPage() {
                   src={
                     product.productImg
                       ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
-                      : defaultImage
+                      : bakerDefaultImage
                   }
                   alt={product.productName}
                   className="w-full h-full object-cover rounded-md"
                   crossOrigin="anonymous"
                   onError={(e) => {
-                    e.target.src = defaultImage
+                    e.target.src = bakerDefaultImage
                   }}
                 />
               </div>
@@ -435,13 +436,13 @@ function StoreDetailPage() {
                       src={
                         product.productImg
                           ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
-                          : defaultImage
+                          : bakerDefaultImage
                       }
                       alt={product.productName}
                       className="w-full h-full object-cover rounded-md"
                       crossOrigin="anonymous"
                       onError={(e) => {
-                        e.target.src = defaultImage
+                        e.target.src = bakerDefaultImage
                       }}
                     />
                     <div className="absolute inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
@@ -456,10 +457,13 @@ function StoreDetailPage() {
           )}
         </div>
 
+        {/* 구분선 추가 - 상품정보와 기본정보 사이 */}
+        <div className="border-t border-gray-200 mx-4 my-3"></div>
+
         {/* 가게 정보 섹션 */}
         <div ref={storeInfoRef} id="storeInfo-section" className="p-3 space-y-3">
-          <div className="border-b pb-2">
-            <h3 className="font-bold mb-1">기본 정보</h3>
+          <div className="border-b pb-3">
+            <h3 className="font-bold mb-2 text-lg">기본 정보</h3>
             <p className="text-gray-600">📍 {store.storeName}</p>
             <p className="text-gray-600">
               📞 {store.contactNumber || '연락처 정보 없음'}
@@ -473,6 +477,45 @@ function StoreDetailPage() {
             <p className="text-gray-600">
               🏪 사업자번호: {store.businessNumber || '정보 없음'}
             </p>
+
+            {/* 공간 추가 */}
+            <div className="mt-6"></div>
+
+            {/* 구글 리뷰 평균 별점 */}
+            <div className="bg-gray-100 rounded-lg p-3 mb-2">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-bold text-sm">구글 리뷰 평균 별점</h4>
+                <div className="flex items-center">
+                  <span className="text-yellow-500 mr-1">★</span>
+                  <span className="font-medium">4.8</span>
+                  <span className="text-gray-500 ml-1">/5</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600">
+                구글리뷰운영업입니다. 에이본 도넛가게는 성남님이 빵베이스고 
+                초코 도넛이 맛있겠다..
+              </p>
+            </div>
+            
+            {/* AI 후기 요약 영역 */}
+            <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-100">
+              <h4 className="font-bold mb-1 flex items-center text-sm">
+                <svg 
+                  className="w-4 h-4 mr-1 text-blue-500" 
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path>
+                </svg>
+                AI 후기 요약
+              </h4>
+              <p className="text-xs text-gray-700">
+                이 가게는 빵이 맛있다는 평가가 많으며, 특히 소금빵이 인기가 많습니다. 
+                가격도 합리적이고 직원들도 친절하다는 평가가 많습니다.
+              </p>
+            </div>
+
           </div>
 
           {/* 가게 소개 */}
@@ -501,56 +544,34 @@ function StoreDetailPage() {
           </button>
         </div>
 
+        {/* 구분선 추가 - 연락하기 버튼과 리뷰 섹션 사이 */}
+        <div className="border-t border-gray-200 mx-4 my-3"></div>
+
         {/* 리뷰 섹션 */}
         <div ref={reviewsRef} id="reviews-section" className="p-3 space-y-3">
-          <h3 className="font-bold mb-2">리뷰</h3>
+          <h3 className="font-bold mb-2 text-lg">리뷰</h3>
           
           {store.reviews && store.reviews.length > 0 ? (
             <div>
-              <p className="text-3xl font-bold text-center mb-2">
-                {(
-                  store.reviews.reduce(
-                    (sum, review) => sum + review.rating,
-                    0,
-                  ) / store.reviews.length
-                ).toFixed(1)}
-                <span className="text-lg text-gray-500">/5</span>
-              </p>
-              
-              {/* 구글 리뷰 평균 별점 */}
-              <div className="bg-gray-100 rounded-lg p-3 mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-bold text-sm">구글 리뷰 평균 별점</h4>
-                  <div className="flex items-center">
-                    <span className="text-yellow-500 mr-1">★</span>
-                    <span className="font-medium">4.8</span>
-                    <span className="text-gray-500 ml-1">/5</span>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-600">
-                  구글리뷰운영업입니다. 에이본 도넛가게는 성남님이 빵베이스고 
-                  초코 도넛이 맛있겠다..
+              {/* 럭킷 리뷰 평점 */}
+              <div className="mb-4">
+                <p className="text-3xl font-bold text-center mb-2">
+                  {(
+                    store.reviews.reduce(
+                      (sum, review) => sum + review.rating,
+                      0,
+                    ) / store.reviews.length
+                  ).toFixed(1)}
+                  <span className="text-lg text-gray-500">/5</span>
                 </p>
+                <p className="text-center text-sm text-gray-600 mb-2">럭킷 사용자 평점</p>
+                
+               
               </div>
               
-              {/* AI 후기 요약 영역 */}
-              <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-100">
-                <h4 className="font-bold mb-1 flex items-center text-sm">
-                  <svg 
-                    className="w-4 h-4 mr-1 text-blue-500" 
-                    fill="currentColor" 
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path>
-                  </svg>
-                  AI 후기 요약
-                </h4>
-                <p className="text-xs text-gray-700">
-                  "이 가게는 맛있는 도넛으로 유명하며, 특히 신선한 재료를 사용한 도넛이 호평을 받고 있습니다. 대부분의 고객들은 친절한 서비스와 깨끗한 매장 환경에 만족하고 있으며, 특히 초코 도넛과 플레인 도넛을 추천하는 리뷰가 많습니다. 다만 일부 고객은 주말에 인기 메뉴가 일찍 품절되는 점을 아쉬워하였습니다."
-                </p>
-              </div>
-
+              {/* 구분선 */}
+              <div className="border-t border-gray-200 my-4"></div>
+              
               {store.reviews.map((review) => (
                 <div
                   key={review.reviewId}

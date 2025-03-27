@@ -5,6 +5,7 @@ import Header from '../components/layout/Header'
 import { useAuth } from '../context/AuthContext'
 import { getUserInfo } from '../api/userApi'
 import { getMyReviews } from '../api/reviewApi'
+import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 
 function MyPage() {
   const navigate = useNavigate()
@@ -78,14 +79,14 @@ function MyPage() {
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
                   <img
-                    src="https://via.placeholder.com/100?text=Profile"
+                    src={bakerDefaultImage}
                     alt="프로필"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-bold">
-                    {displayUser.nickname || '사용자'}님, 반갑습니다
+                    {displayUser.nickname || '사용자'}님, 반갑수다~
                   </h3>
                   <p className="text-sm text-gray-500">
                     {displayUser.email || '이메일 정보가 없습니다'}

@@ -87,7 +87,26 @@ export function AuthProvider({ children }) {
           const userData = JSON.parse(storedUser)
           setUser(userData)
           setIsLoggedIn(true)
-          return { success: true }
+          
+          // 사용자 정보가 제대로 저장되었는지 확인하고, 필요한 정보가 모두 있는지 확인
+          if (!userData.role) {
+            console.warn(
+              '사용자 역할 정보가 없습니다. 사용자 정보 갱신을 시도합니다.',
+            )
+            try {
+              const userInfoResponse = await userApi.getUserInfo()
+              if (userInfoResponse.success) {
+                const updatedUserData = userInfoResponse.data
+                setUser(updatedUserData)
+                localStorage.setItem('user', JSON.stringify(updatedUserData))
+                return { success: true, user: updatedUserData }
+              }
+            } catch (err) {
+              console.error('사용자 정보 갱신 실패:', err)
+            }
+          }
+          
+          return { success: true, user: userData }
         }
       }
       return {

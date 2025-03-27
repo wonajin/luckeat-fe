@@ -39,8 +39,12 @@ function LoginPage() {
       const result = await login({ email, password })
 
       if (result.success) {
-        // 로그인 성공 시 메인 페이지로 리다이렉션
-        navigate('/')
+        // 로그인 성공 시 사용자 역할에 따라 리다이렉션
+        if (result.user && result.user.role === 'SELLER') {
+          navigate('/business')
+        } else {
+          navigate('/')
+        }
       } else {
         setError(result.message || '로그인에 실패했습니다.')
       }
@@ -97,9 +101,7 @@ function LoginPage() {
 
             {/* 비밀번호 입력 */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                비밀번호
-              </label>
+              <label className="block text-sm font-medium mb-1">비밀번호</label>
               <input
                 type="password"
                 id="password"

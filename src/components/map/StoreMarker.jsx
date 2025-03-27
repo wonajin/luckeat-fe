@@ -52,7 +52,7 @@ function StoreMarker({ store, isSelected, onClick }) {
             <div className="flex items-start gap-3">
               <div className="w-16 h-16 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                 <img
-                  src={store.imageUrl || storeDefaultImage}
+                  src={store.storeImg ? store.storeImg : (store.imageUrl || storeDefaultImage)}
                   alt={store.name || store.storeName}
                   className="w-full h-full object-cover"
                   crossOrigin="anonymous"

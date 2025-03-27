@@ -491,7 +491,7 @@ function HomePage() {
               >
                 <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
                   <img
-                    src={storeDefaultImage}
+                    src={store.storeImg ? store.storeImg : storeDefaultImage}
                     alt={store.storeName || store.name || '가게 이미지'}
                     className="w-full h-full object-cover"
                     crossOrigin="anonymous"

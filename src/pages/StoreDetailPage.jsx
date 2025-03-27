@@ -192,7 +192,7 @@ function StoreDetailPage() {
       >
         {/* 가게 이미지 */}
         <img
-          src={store.storeImg || defaultImage}
+          src={store.storeImg ? store.storeImg : defaultImage}
           alt={store.storeName}
           className="w-full h-48 object-cover"
           crossOrigin="anonymous"
@@ -378,7 +378,9 @@ function StoreDetailPage() {
                 <img
                   src={
                     product.productImg
-                      ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
+                      ? product.productImg.startsWith('http')
+                        ? product.productImg
+                        : `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
                       : bakerDefaultImage
                   }
                   alt={product.productName}
@@ -425,7 +427,9 @@ function StoreDetailPage() {
                     <img
                       src={
                         product.productImg
-                          ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
+                          ? product.productImg.startsWith('http')
+                            ? product.productImg
+                            : `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
                           : bakerDefaultImage
                       }
                       alt={product.productName}

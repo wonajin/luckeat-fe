@@ -182,7 +182,7 @@ function StoreDetailPage() {
     store.products?.filter((product) => !product.isOpen) || []
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       <Header title={store.storeName} />
 
       <div 
@@ -618,10 +618,10 @@ function StoreDetailPage() {
             </p>
           )}
         </div>
-
-        {/* ScrollTopButton 컴포넌트 추가 */}
-        <ScrollTopButton />
       </div>
+
+      {/* 맨 위로 버튼 - div 외부에 배치하여 항상 보이도록 */}
+      <ScrollTopButton scrollContainerRef={mainContainerRef} />
 
       {/* 전화번호 팝업 */}
       {showPhonePopup && (

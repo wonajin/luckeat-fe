@@ -41,6 +41,7 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: ${{ env.ENVIRONMENT }}
+          VITE_MODE: ${{ env.ENVIRONMENT }}
           VITE_KAKAO_API_KEY: ${{ secrets.VITE_KAKAO_API_KEY }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           VITE_API_URL: ${{ env.VITE_API_URL }}

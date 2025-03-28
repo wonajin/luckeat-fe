@@ -1,5 +1,4 @@
-// 기본 API URL
-const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
+import { API_BASE_URL, API_DIRECT_URL } from '../config/apiConfig'
 
 /**
  * 이미지를 업로드하고 URL을 반환합니다.
@@ -20,11 +19,11 @@ export const uploadImage = async (imageFile, uploadPath) => {
     // 토큰 가져오기
     const accessToken = localStorage.getItem('accessToken');
 
-    console.log('이미지 업로드 시작:', `${API_BASE_URL}/api/v1${uploadPath}`);
+    console.log('이미지 업로드 시작:', `${API_DIRECT_URL}/api/v1${uploadPath}`);
     console.log('업로드 이미지 정보:', imageFile.name, imageFile.type, imageFile.size);
 
     // fetch를 사용한 이미지 업로드
-    const response = await fetch(`${API_BASE_URL}/api/v1${uploadPath}`, {
+    const response = await fetch(`${API_DIRECT_URL}/api/v1${uploadPath}`, {
       method: 'POST',
       headers: {
         Authorization: accessToken ? `Bearer ${accessToken}` : '',

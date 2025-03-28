@@ -18,9 +18,11 @@ jobs:
           if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
             echo "ENVIRONMENT=production" >> $GITHUB_ENV
             echo "CLOUDFRONT_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_PROD }}" >> $GITHUB_ENV
+            echo "VITE_API_URL=${{ secrets.VITE_API_URL_PROD }}" >> $GITHUB_ENV
           else
             echo "ENVIRONMENT=development" >> $GITHUB_ENV
             echo "CLOUDFRONT_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_DEV }}" >> $GITHUB_ENV
+            echo "VITE_API_URL=${{ secrets.VITE_API_URL_DEV }}" >> $GITHUB_ENV
           fi
           echo "Deploying to $ENVIRONMENT environment"
 
@@ -41,6 +43,7 @@ jobs:
           NODE_ENV: ${{ env.ENVIRONMENT }}
           VITE_KAKAO_API_KEY: ${{ secrets.VITE_KAKAO_API_KEY }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_API_URL: ${{ env.VITE_API_URL }}
 
       - name: List build directory
         run: |

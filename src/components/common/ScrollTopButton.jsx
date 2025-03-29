@@ -32,7 +32,7 @@ function ScrollTopButton({ scrollContainerRef }) {
     <div
       className="fixed left-1/2 transform translate-x-[220%] z-[9999]"
       style={{
-        bottom: '110px', // 네비게이션 바 위 여백
+        bottom: '80px', // 더 작아진 네비게이션 바에 맞게 조정
       }}
     >
       <button

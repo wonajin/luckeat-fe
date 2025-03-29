@@ -40,24 +40,49 @@ function MapPage() {
   // API 기본 URL 직접 설정
   const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
 
-  // 사용자 위치 가져오기
-  useEffect(() => {
+  // 사용자 위치 가져오기 함수
+  const getUserLocation = () => {
+    console.log('지도 - 사용자 위치 가져오기 시도')
+    return new Promise((resolve, reject) => {
     if (navigator.geolocation) {
+        const options = {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+        
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords
-          console.log('사용자 위치:', latitude, longitude)
-          // 사용자 위치를 저장하고 지도 중심으로 설정
-          setUserLocation({ lat: latitude, lng: longitude })
-          setMapCenter({ lat: latitude, lng: longitude })
+            const location = { lat: latitude, lng: longitude }
+            console.log('지도 - 사용자 위치:', location)
+            setUserLocation(location)
+            setMapCenter(location)
+            resolve(location)
         },
         (error) => {
-          console.error('위치 정보를 가져오는데 실패했습니다:', error)
-        }
+            console.error('지도 - 위치 정보를 가져오는데 실패했습니다:', error)
+            reject(error)
+        },
+          options
       )
     } else {
-      console.error('이 브라우저에서는 위치 정보를 지원하지 않습니다.')
-    }
+        const error = new Error('이 브라우저에서는 위치 정보를 지원하지 않습니다.')
+        console.error('지도 - ' + error.message)
+        reject(error)
+      }
+    })
+  }
+
+  // 사용자 위치 가져오기
+  useEffect(() => {
+    getUserLocation().catch((error) => {
+      console.warn('지도 - 위치 정보 가져오기 실패, 기본 위치 사용:', error)
+      // 위치 정보 가져오기 실패 시 기본 위치 사용 (서울 시청)
+      const defaultLocation = { lat: 37.5665, lng: 126.978 }
+      setUserLocation(defaultLocation) // 기본 위치도 userLocation에 저장
+      setMapCenter(defaultLocation)
+    })
   }, [])
 
   // 백엔드에서 데이터 가져오기
@@ -105,44 +130,44 @@ function MapPage() {
             const centerLat = userLocation ? userLocation.lat : 37.5665
             const centerLng = userLocation ? userLocation.lng : 126.978
 
-            // 유효하지 않은 좌표인 경우 (null, NaN, 0)
-            if (
-              !lat ||
-              isNaN(lat) ||
-              !lng ||
-              isNaN(lng) ||
-              (lat === 0 && lng === 0)
-            ) {
+              // 유효하지 않은 좌표인 경우 (null, NaN, 0)
+              if (
+                !lat ||
+                isNaN(lat) ||
+                !lng ||
+                isNaN(lng) ||
+                (lat === 0 && lng === 0)
+              ) {
               // 현재 위치 중심으로 랜덤한 위치 생성 (반경 500m 이내)
-              console.log(
+                console.log(
                 `매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 현재 위치 주변 랜덤 위치 생성`
               )
               const randomLat = centerLat + (Math.random() - 0.5) * 0.01 // 약 ±500m
               const randomLng = centerLng + (Math.random() - 0.5) * 0.01
+                return {
+                  ...store,
+                  lat: randomLat,
+                  lng: randomLng,
+                hasRandomLocation: true // 랜덤 위치 표시
+                }
+              }
+
+              console.log(
+              `매장 ${store.id}(${store.name || store.storeName}): 좌표 확인 - 위도 ${lat}, 경도 ${lng}`
+              )
               return {
                 ...store,
-                lat: randomLat,
-                lng: randomLng,
-                hasRandomLocation: true // 랜덤 위치 표시
-              }
-            }
-
-            console.log(
-              `매장 ${store.id}(${store.name || store.storeName}): 좌표 확인 - 위도 ${lat}, 경도 ${lng}`
-            )
-            return {
-              ...store,
-              lat: lat,
-              lng: lng,
+                lat: lat,
+                lng: lng,
               hasRandomLocation: false
             }
           })
 
-          console.log(
+            console.log(
             `총 ${storesWithValidLocation.length}개 매장 정보 로드 완료`
-          )
-          setStores(storesWithValidLocation)
-          setFilteredStores(storesWithValidLocation)
+            )
+            setStores(storesWithValidLocation)
+            setFilteredStores(storesWithValidLocation)
         } catch (error) {
           console.error('가게 정보 로드 실패:', error)
           // 오류가 있으면 getStores 함수로 재시도
@@ -278,75 +303,78 @@ function MapPage() {
   }, [searchQuery, stores])
 
   // 마커 클릭 핸들러
-  const handleMarkerClick = useCallback(
-    (store) => {
-      console.log('마커 클릭:', store.id, store.name || store.storeName)
+  const handleMarkerClick = useCallback((store) => {
+    console.log('마커 클릭:', store?.id, store?.name || store?.storeName);
+    
+    // store가 null인 경우 선택 해제 후 종료
+    if (!store) {
+      setSelectedStoreId(null);
+      return;
+    }
 
-      // 선택된 가게 ID 설정 (토글 방식)
-      const isAlreadySelected = selectedStoreId === store.id
-      setSelectedStoreId(isAlreadySelected ? null : store.id)
+    // 항상 인포윈도우가 표시되도록 설정 - 토글 방식 제거
+    setSelectedStoreId(store.id);
+    
+    // 선택된 가게로 지도 중심 이동
+    setMapCenter({ lat: store.lat, lng: store.lng });
+    
+    // 가게 목록 최소화 (오버레이가 더 잘 보이도록)
+    setStoreListExpanded(false);
+    
+    // 지도 레벨 조정 (더 가깝게 보이도록)
+    setMapLevel(3);
+    
+    // 선택된 가게로 목록 스크롤
+    if (storeItemRefs.current[store.id] && storeListRef.current) {
+      // 약간의 지연을 두고 스크롤 (UI 업데이트 후에 실행되도록)
+      setTimeout(() => {
+        storeItemRefs.current[store.id].scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 100);
+    }
+  }, []);
 
-      // 선택된 가게로 지도 중심 이동 (이미 선택된 가게를 다시 클릭하면 중심 이동하지 않음)
-      if (!isAlreadySelected) {
-        setMapCenter({ lat: store.lat, lng: store.lng })
-        // 가게 목록 최소화 (오버레이가 더 잘 보이도록)
-        setStoreListExpanded(false)
-        // 지도 레벨 조정 (더 가깝게 보이도록)
-        setMapLevel(3)
-      }
-
-      // 선택된 가게로 목록 스크롤
-      if (storeItemRefs.current[store.id] && storeListRef.current) {
-        // 약간의 지연을 두고 스크롤 (UI 업데이트 후에 실행되도록)
-        setTimeout(() => {
-          storeItemRefs.current[store.id].scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-          })
-        }, 100)
-      }
-    },
-    [selectedStoreId]
-  )
+  // 줌 레벨 변경 핸들러 추가
+  const handleZoomChange = (newLevel) => {
+    // 최소 레벨 1, 최대 레벨 14로 제한
+    const level = Math.max(1, Math.min(14, newLevel))
+    setMapLevel(level)
+    console.log('줌 레벨 변경:', level)
+    // 줌 변경 시 가게 목록 상태를 변경하지 않도록 함
+  }
 
   // 가게 상세 페이지로 이동
   const handleStoreDetail = (storeId) => {
     navigate(`/store/${storeId}`)
   }
 
-  // 지도 확대
-  const handleZoomIn = () => {
-    if (mapLevel > 1) {
-      setMapLevel(mapLevel - 1)
+  // 사용자 위치로 이동하는 핸들러 - 현재 위치 다시 가져오기
+  const handleMoveToCurrentLocation = async () => {
+    try {
+      console.log('지도 - 현재 위치로 이동 요청')
+      // 위치 정보 새로 가져오기 시도
+      const location = await getUserLocation()
+      console.log('지도 - 현재 위치로 이동:', location)
+      setMapCenter(location)
+      setMapLevel(3) // 줌 레벨 설정
+    } catch (error) {
+      console.error('지도 - 현재 위치로 이동 실패:', error)
+      alert('현재 위치를 가져올 수 없습니다. 위치 접근 권한을 확인해주세요.')
     }
   }
 
-  // 지도 축소
-  const handleZoomOut = () => {
-    if (mapLevel < 14) {
-      setMapLevel(mapLevel + 1)
+  // 지도 클릭 핸들러
+  const handleMapClick = (map, mouseEvent) => {
+    // 특정 조건 제거 - 마커와 오버레이를 제외한 모든 클릭에서 처리되도록
+    if (mouseEvent && !mouseEvent._stopPropagation) {
+      // 확장된 목록이 있을 때만 최소화
+      if (storeListExpanded) {
+        setStoreListExpanded(false)
+      }
+      // 인포윈도우는 그대로 유지 (마커 클릭 시에만 변경)
     }
-  }
-
-  // 위치 이동 핸들러 추가
-  const handleMoveToCurrentLocation = () => {
-    if (userLocation) {
-      setMapCenter(userLocation)
-      setMapLevel(3)
-    } else {
-      alert(
-        '현재 위치 정보를 불러올 수 없습니다. 위치 접근 권한을 확인해주세요.',
-      )
-    }
-  }
-
-  // 지도 클릭 핸들러 추가
-  const handleMapClick = () => {
-    if (storeListExpanded) {
-      setStoreListExpanded(false)
-    }
-    // 선택된 가게 ID 초기화
-    setSelectedStoreId(null)
   }
 
   // 가게 목록 스크롤 핸들러 추가
@@ -427,7 +455,7 @@ function MapPage() {
               textAlign: 'center',
               fontWeight: 'bold',
               lineHeight: '50px'
-            },
+            }
           ]}
         >
           {/* 가게 마커 */}
@@ -446,7 +474,7 @@ function MapPage() {
     )
   }
 
-  // 가게 목록 부분 수정 (주소 표시 부분)
+  // 가게 목록 부분 수정 - z-index 변경
   const renderStoreList = () => {
     return (
       <div
@@ -484,7 +512,7 @@ function MapPage() {
                   }`}
                   onClick={() => handleMarkerClick(store)}
                 >
-                  <div className="w-12 h-12 bg-gray-200 rounded-md mr-3">
+                  <div className="w-12 h-12 bg-gray-200 rounded-md mr-3 overflow-hidden">
                     <img
                       src={storeDefaultImage}
                       alt={store.name || store.storeName}
@@ -624,21 +652,14 @@ function MapPage() {
           </button>
         </div>
 
-        {/* 내 위치로 이동 버튼 추가 */}
-        <div
-          className="absolute bottom-4 right-4 z-10"
-          style={{ bottom: storeListExpanded ? '42%' : '27%' }}
-        >
-          <button
-            className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center"
-            onClick={handleMoveToCurrentLocation}
-          >
-            <img src={myLocationMarker} alt="내 위치" className="w-6 h-6" />
-          </button>
+        {/* 내 위치로 이동 버튼 위치 수정 */}
+        <div className="absolute bottom-36 right-5 z-30">
+          <MapController 
+            onMoveToCurrentLocation={handleMoveToCurrentLocation}
+            onZoomIn={() => handleZoomChange(mapLevel - 1)}
+            onZoomOut={() => handleZoomChange(mapLevel + 1)}
+          />
         </div>
-
-        {/* 확대/축소 버튼 */}
-        <MapController onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
 
         {/* 가게 목록 */}
         {renderStoreList()}

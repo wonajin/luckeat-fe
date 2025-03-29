@@ -133,6 +133,9 @@ function EditStorePage() {
         storeName: store.storeName,
         address: store.address,
         businessNumber: store.businessNumber,
+        // 설명이 비어있으면 공백 문자 하나를 보냅니다. 서버의 유효성 검사를 통과하기 위함
+        description: formData.description === '' ? ' ' : formData.description,
+        contactNumber: formData.contactNumber || store.contactNumber || '',
         reviewSummary: store.reviewSummary || '',
         avgRating: store.avgRating || 0,
         avgRatingGoogle: store.avgRatingGoogle || 0,
@@ -346,7 +349,9 @@ function EditStorePage() {
                   </label>
                   <div className="bg-gray-50 p-4 border rounded-lg text-gray-700">
                     {store?.reviewSummary ? (
-                      <p className="text-sm leading-relaxed">{store.reviewSummary}</p>
+                      <p className="text-sm leading-relaxed">
+                        {store.reviewSummary}
+                      </p>
                     ) : (
                       <p className="text-sm text-gray-500">
                         리뷰 요약 정보가 없습니다.
@@ -382,7 +387,6 @@ function EditStorePage() {
                     className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
                     rows="4"
                     placeholder="가게 소개를 입력해주세요"
-                    required
                   />
                 </div>
 
@@ -398,7 +402,6 @@ function EditStorePage() {
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
                     placeholder="연락처를 입력해주세요"
-                    required
                   />
                 </div>
               </div>

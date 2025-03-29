@@ -23,6 +23,20 @@ function LoginPage() {
     }
   }, [location.state])
 
+  // 한글 입력을 막는 함수
+  const handlePasswordInput = (e) => {
+    // 정규식을 사용하여 한글 입력 감지
+    const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
+    
+    if (isHangul) {
+      // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
+      return
+    }
+    
+    // 한글이 아닌 경우 상태 업데이트
+    setPassword(e.target.value)
+  }
+
   const handleLogin = async (e) => {
     e.preventDefault()
     setError('')
@@ -106,7 +120,7 @@ function LoginPage() {
                 type="password"
                 id="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordInput}
                 className="w-full p-3 bg-gray-100 rounded-lg"
                 placeholder="비밀번호를 입력해주세요"
                 required

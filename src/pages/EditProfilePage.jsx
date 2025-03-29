@@ -65,9 +65,19 @@ function EditProfilePage() {
     }
   }
 
-  // 현재 비밀번호 변경 핸들러
+  // 한글 입력을 막는 함수 (현재 비밀번호)
   const handleCurrentPasswordChange = (e) => {
+    // 정규식을 사용하여 한글 입력 감지
+    const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
+    
+    if (isHangul) {
+      // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
+      return
+    }
+    
+    // 한글이 아닌 경우 상태 업데이트
     setCurrentPassword(e.target.value)
+    
     if (!e.target.value) {
       setCurrentPasswordError('현재 비밀번호를 입력해주세요.')
     } else {
@@ -75,8 +85,17 @@ function EditProfilePage() {
     }
   }
 
-  // 비밀번호 변경 핸들러
+  // 한글 입력을 막는 함수 (새 비밀번호)
   const handlePasswordChange = (e) => {
+    // 정규식을 사용하여 한글 입력 감지
+    const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
+    
+    if (isHangul) {
+      // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
+      return
+    }
+    
+    // 한글이 아닌 경우 상태 업데이트
     const value = e.target.value
     setNewPassword(value)
 
@@ -98,8 +117,17 @@ function EditProfilePage() {
     }
   }
 
-  // 비밀번호 확인 변경 핸들러
+  // 한글 입력을 막는 함수 (비밀번호 확인)
   const handleConfirmPasswordChange = (e) => {
+    // 정규식을 사용하여 한글 입력 감지
+    const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
+    
+    if (isHangul) {
+      // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
+      return
+    }
+    
+    // 한글이 아닌 경우 상태 업데이트
     const value = e.target.value
     setConfirmPassword(value)
 

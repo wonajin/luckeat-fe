@@ -254,7 +254,7 @@ function HomePage() {
   }
 
   const handleLocationSelect = (location) => {
-    setLocationFilter(location)
+    setLocationFilter(locationFilter === location ? '' : location)
   }
 
   const handleStoreClick = (store) => {

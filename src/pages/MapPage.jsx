@@ -520,8 +520,10 @@ function MapPage() {
                     />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-sm">
-                      {store.storeName || store.name}
+                    <h4 className="font-bold text-sm truncate" title={store.storeName || store.name}>
+                      {(store.storeName || store.name).length > 20
+                        ? (store.storeName || store.name).substring(0, 20) + '...'
+                        : (store.storeName || store.name)}
                     </h4>
                     <div className="flex items-center flex-wrap gap-1 mt-1">
                       {/* 할인 표시 개선 */}
@@ -540,8 +542,10 @@ function MapPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 truncate">
-                      {simplifyAddress(store.address || '주소 정보 없음')}
+                    <p className="text-xs text-gray-500 mt-1 truncate" title={store.address || '주소 정보 없음'}>
+                      {simplifyAddress(store.address || '주소 정보 없음').length > 20
+                        ? simplifyAddress(store.address || '주소 정보 없음').substring(0, 20) + '...'
+                        : simplifyAddress(store.address || '주소 정보 없음')}
                     </p>
                     {/* 별점 표시 */}
                     <div className="flex items-center mt-1">

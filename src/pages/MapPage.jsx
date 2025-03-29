@@ -438,6 +438,7 @@ function MapPage() {
               isSelected={selectedStoreId === store.id}
               onClick={handleMarkerClick}
               onDetail={handleStoreDetail}
+              userLocation={userLocation}
             />
           ))}
         </MarkerClusterer>

@@ -3,7 +3,37 @@ import { MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk'
 import defaultImage from '../../assets/images/luckeat-default.png'
 import storeDefaultImage from '../../assets/images/제빵사디폴트이미지.png'
 
-function StoreMarker({ store, isSelected, onClick, onDetail }) {
+function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
+  // 사용자 위치 정보 상태
+  const [currentLocation, setCurrentLocation] = useState(userLocation)
+
+  // 사용자 위치가 변경되면 업데이트
+  useEffect(() => {
+    setCurrentLocation(userLocation)
+  }, [userLocation])
+
+  // 현재 위치를 가져오기
+  const getCurrentPosition = () => {
+    return new Promise((resolve, reject) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords
+            resolve({ lat: latitude, lng: longitude })
+          },
+          (error) => {
+            console.error('위치 정보를 가져오는데 실패했습니다:', error)
+            reject(error)
+          }
+        )
+      } else {
+        const error = new Error('이 브라우저에서는 위치 정보를 지원하지 않습니다.')
+        console.error(error.message)
+        reject(error)
+      }
+    })
+  }
+
   // 마커 클릭했을 때 즉시 로그 출력 및 선택 상태 변경
   const handleMarkerClick = () => {
     console.log('마커 클릭됨:', store.id, store.name || store.storeName)
@@ -32,13 +62,37 @@ function StoreMarker({ store, isSelected, onClick, onDetail }) {
     }
   }
 
-  // 길찾기 열기
-  const handleDirections = (e) => {
+  // 길찾기 열기 - 현재 위치에서 선택한 가게까지
+  const handleDirections = async (e) => {
     e.stopPropagation() // 이벤트 전파 방지
     
-    // 카카오맵 길찾기 URL 생성
-    const kakaoMapUrl = `https://map.kakao.com/link/to/${store.name || store.storeName},${store.lat},${store.lng}`
-    window.open(kakaoMapUrl, '_blank')
+    try {
+      // 현재 위치 정보가 없으면 현재 위치를 가져옴
+      const startLocation = currentLocation || await getCurrentPosition()
+      
+      if (!startLocation) {
+        alert('현재 위치를 확인할 수 없습니다. 위치 접근 권한을 확인해주세요.')
+        return
+      }
+      
+      const storeName = store.name || store.storeName || '선택한 가게'
+      
+      // 카카오맵 길찾기 URL 생성
+      // 현재 위치에서 가게까지의 경로 안내
+      // 형식: https://map.kakao.com/link/from,출발지명,출발위도,출발경도/to,도착지명,도착위도,도착경도
+      const kakaoMapDirectUrl = `https://map.kakao.com/link/from/내 위치,${startLocation.lat},${startLocation.lng}/to/${storeName},${store.lat},${store.lng}`
+      
+      window.open(kakaoMapDirectUrl, '_blank')
+      console.log('길찾기 URL:', kakaoMapDirectUrl)
+      console.log('출발 위치:', startLocation)
+      console.log('도착 위치:', { lat: store.lat, lng: store.lng })
+    } catch (error) {
+      console.error('길찾기 실행 중 오류 발생:', error)
+      
+      // 에러가 발생해도 기본 URL로 열기 (목적지만 지정)
+      const kakaoMapUrl = `https://map.kakao.com/link/to/${store.name || store.storeName},${store.lat},${store.lng}`
+      window.open(kakaoMapUrl, '_blank')
+    }
   }
 
   // 마커 이미지 상수로 정의

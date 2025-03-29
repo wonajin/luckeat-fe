@@ -13,7 +13,7 @@ const API_ENDPOINTS = {
   REGISTER: '/users/register',
   LOGIN: '/users/login',
   LOGOUT: '/users/logout',
-  USER_INFO: '/users/info',
+  USER_INFO: '/users/me',
   UPDATE_NICKNAME: '/users/nickname',
 
   // 가게 관련

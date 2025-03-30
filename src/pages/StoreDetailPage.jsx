@@ -7,7 +7,7 @@ import { getStoreById } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
 import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import ScrollTopButton from '../components/common/ScrollTopButton'
-
+import { API_DIRECT_URL } from '../config/apiConfig'
 function StoreDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -27,6 +27,7 @@ function StoreDetailPage() {
   const productsRef = useRef(null)
   const storeInfoRef = useRef(null)
   const reviewsRef = useRef(null)
+
   
   // Google Maps 이미지 URL인지 확인하는 함수
   const isGoogleMapsImage = (url) => {
@@ -203,7 +204,10 @@ function StoreDetailPage() {
 
   // 공유 링크 복사
   const handleCopyShareLink = () => {
-    const shareUrl = store.storeUrl || `${window.location.origin}/store/${id}`
+    const shareUrl = store.storeUrl 
+      ? `${API_DIRECT_URL}/s/${store.storeUrl}`
+      : `${API_DIRECT_URL}/store/${id}`;
+
     navigator.clipboard
       .writeText(shareUrl)
       .then(() => {
@@ -792,7 +796,9 @@ function StoreDetailPage() {
             <div className="flex items-center justify-between border rounded-lg p-3 mb-4">
               <input
                 type="text"
-                value={store.storeUrl || `${window.location.origin}/store/${id}`}
+                value={store.storeUrl 
+                  ? `${API_DIRECT_URL}/s/${store.storeUrl}`
+                  : `${API_DIRECT_URL}/store/${id}`}
                 className="flex-1 pr-2 text-sm truncate"
                 readOnly
               />

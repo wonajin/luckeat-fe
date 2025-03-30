@@ -76,10 +76,23 @@ export const processImageData = async (
     // 이미지 업로드 함수 호출하여 URL 받기
     const imageUrl = await uploadImage(imageFile, type);
 
+    // S3 URL 구조에서 필요한 경로 부분 추출
+    // 예: https://luckeat-front.s3.ap-northeast-2.amazonaws.com/images/products/34abb3e9-6791-4a15-816f-539b91f4ebbd-레오나르도디카프리오.jpeg
+    // 에서 /images/products/34abb3e9-6791-4a15-816f-539b91f4ebbd-레오나르도디카프리오.jpeg 부분만 추출
+    const pathPart = imageUrl.replace('https://luckeat-front.s3.ap-northeast-2.amazonaws.com', '');
+    
+    // API_DIRECT_URL 변수를 사용하여 새 URL 생성 (.env의 VITE_API_URL 값이 설정되어 있음)
+    const formattedImageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`;
+    
+    console.log('이미지 URL 변환:', {
+      원본: imageUrl,
+      변환: formattedImageUrl
+    });
+
     // 업로드된 이미지 URL을 원본 데이터에 추가
     return {
       ...formData,
-      [imageFieldName]: imageUrl,
+      [imageFieldName]: formattedImageUrl,
     }
   } catch (error) {
     console.error('이미지 업로드 중 오류 발생:', error)

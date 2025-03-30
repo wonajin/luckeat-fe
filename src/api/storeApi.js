@@ -12,7 +12,7 @@ export const registerStore = async (storeData, storeImage) => {
       storeData,
       storeImage,
       'storeImg',
-      '/store-images',
+      'stores',
     )
 
     // 가게 등록 API 호출

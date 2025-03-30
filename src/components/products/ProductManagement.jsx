@@ -67,8 +67,8 @@ const ProductManagement = () => {
     setCurrentProduct(product)
     setFormData({
       productName: product.productName,
-      originalPrice: product.originalPrice,
-      discountedPrice: product.discountedPrice
+      originalPrice: product.originalPrice.toString(),
+      discountedPrice: product.discountedPrice.toString()
     })
     setProductImage(null)
     setProductImageUrl(product.productImg || '')
@@ -132,7 +132,11 @@ const ProductManagement = () => {
     try {
       if (editMode && currentProduct) {
         // 상품 수정
-        const updatedFormData = {...formData};
+        const updatedFormData = {
+          ...formData,
+          originalPrice: parseInt(formData.originalPrice),
+          discountedPrice: parseInt(formData.discountedPrice)
+        };
         
         if (!productImage && currentProduct.productImg) {
           // 이미지가 선택되지 않았고 기존 이미지가 있는 경우

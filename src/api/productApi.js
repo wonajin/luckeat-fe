@@ -64,8 +64,9 @@ export const updateProduct = async (storeId, productId, productData, productImag
     
     console.log('상품 수정 요청 데이터:', processedData);
     
-    // 상품 수정 API 호출
-    const response = await apiClient.put(`/stores/${storeId}/products/${productId}`, processedData);
+    // 상품 수정 API 호출 - 상대 경로 사용
+    const endpoint = `/stores/${storeId}/products/${productId}`;
+    const response = await apiClient.put(endpoint, processedData);
     console.log('상품 수정 응답:', response.data);
     return response.data;
   } catch (error) {

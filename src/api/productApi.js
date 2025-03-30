@@ -12,7 +12,7 @@ export const getStoreProducts = async (storeId) => {
   }
 }
 
-// 상품 등록 (임시 이미지 URL 사용)
+// 상품 등록 (이미지 업로드 지원)
 export const createProduct = async (storeId, productData, productImage) => {
   try {
     console.log('상품 등록 시작:', storeId);
@@ -23,20 +23,18 @@ export const createProduct = async (storeId, productData, productImage) => {
       discountedPrice: productData.discountedPrice
     });
     
-    // 임시 이미지 URL 설정
-    let finalProductData = { ...productData };
+    // 이미지 처리 및 업로드
+    const processedData = await processImageData(
+      productData,
+      productImage,
+      'productImg',
+      'products'
+    );
     
-    // 이미지가 있으면 임시 URL 설정, 없으면 그대로 진행
-    if (productImage) {
-      // 임시 이미지 URL 설정 (실제 업로드는 나중에 구현)
-      finalProductData.productImg = "https://via.placeholder.com/300x200?text=상품이미지";
-      console.log('임시 이미지 URL 추가됨');
-    }
-    
-    console.log('상품 등록 요청 데이터:', finalProductData);
+    console.log('상품 등록 요청 데이터:', processedData);
     
     // 상품 등록 API 호출
-    const response = await apiClient.post(`/stores/${storeId}/products`, finalProductData);
+    const response = await apiClient.post(`/stores/${storeId}/products`, processedData);
     console.log('상품 등록 응답:', response.data);
     return response.data;
   } catch (error) {
@@ -45,7 +43,7 @@ export const createProduct = async (storeId, productData, productImage) => {
   }
 }
 
-// 상품 수정 (임시 이미지 URL 사용)
+// 상품 수정 (이미지 업로드 지원)
 export const updateProduct = async (storeId, productId, productData, productImage) => {
   try {
     console.log('상품 수정 시작:', storeId, productId);
@@ -56,20 +54,18 @@ export const updateProduct = async (storeId, productId, productData, productImag
       productImg: productData.productImg
     });
     
-    // 임시 이미지 URL 설정
-    let finalProductData = { ...productData };
+    // 이미지 처리 및 업로드
+    const processedData = await processImageData(
+      productData,
+      productImage,
+      'productImg',
+      'products'
+    );
     
-    // 이미지가 있으면 임시 URL 설정, 없으면 기존 이미지 URL 유지
-    if (productImage) {
-      // 임시 이미지 URL 설정 (실제 업로드는 나중에 구현)
-      finalProductData.productImg = "https://via.placeholder.com/300x200?text=상품이미지";
-      console.log('임시 이미지 URL 추가됨');
-    }
-    
-    console.log('상품 수정 요청 데이터:', finalProductData);
+    console.log('상품 수정 요청 데이터:', processedData);
     
     // 상품 수정 API 호출
-    const response = await apiClient.put(`/stores/${storeId}/products/${productId}`, finalProductData);
+    const response = await apiClient.put(`/stores/${storeId}/products/${productId}`, processedData);
     console.log('상품 수정 응답:', response.data);
     return response.data;
   } catch (error) {

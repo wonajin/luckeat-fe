@@ -20,7 +20,6 @@ import EditStorePage from './pages/EditStorePage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
-
 // 오류 발생 시 보여줄 폴백 컴포넌트
 const FallbackComponent = () => {
   return (
@@ -53,7 +52,10 @@ function AuthWrapper({ children }) {
   useEffect(() => {
     // 현재 경로가 인증이 필요하지 않은 경로인지 확인
     const publicPaths = ['/login', '/signup', '/', '/home', '/map']
-    const isPublicPath = publicPaths.includes(location.pathname)
+    
+    const isStoreDetailPath = /^\/store\/[^/]+$/.test(location.pathname)
+   
+    const isPublicPath = publicPaths.includes(location.pathname) || isStoreDetailPath
 
     // 인증이 필요한 경로에서만 토큰 유효성 검사
     if (!isPublicPath) {

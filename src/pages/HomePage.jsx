@@ -40,22 +40,16 @@ function HomePage() {
       id: 1,
       image: banner01,
       link: '/intro',
-      title: '제주도의 맛있는 이야기',
-      description: '제주 현지 맛집을 찾아보세요',
     },
     {
       id: 2,
       image: banner02,
       link: '/jeju-special',
-      title: '제주 특별한 할인',
-      description: '오늘의 특별 할인 매장',
     },
     {
       id: 3,
       image: banner03,
       link: '/partner',
-      title: '제휴 매장 안내',
-      description: '럭킷과 함께하는 제주 맛집',
     },
   ]
 
@@ -150,9 +144,12 @@ function HomePage() {
     if (!storeListRef.current) return
 
     const { scrollTop, scrollHeight, clientHeight } = storeListRef.current
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100
+    const isNearBottom = 
+      scrollTop + clientHeight >= scrollHeight - 100 &&
+      !loading &&
+      displayedStores.length < filteredStores.length
 
-    if (isNearBottom && !loading && displayedStores.length < filteredStores.length) {
+    if (isNearBottom) {
       const nextPage = currentPage + 1
       const startIndex = (nextPage - 1) * storesPerPage
       const endIndex = startIndex + storesPerPage
@@ -339,9 +336,13 @@ function HomePage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden pb-16" ref={storeListRef} onScroll={handleScroll}>
+      <div 
+        className="flex-1 overflow-hidden pb-16" 
+        ref={storeListRef} 
+        onScroll={handleScroll}
+      >
         <div className="px-4 py-2 border-b">
-          <SearchBar 
+          <SearchBar
             initialValue={searchQuery}
             onSearch={setSearchQuery}
           />
@@ -360,12 +361,20 @@ function HomePage() {
                   index === currentSlide 
                     ? 'translate-x-0 opacity-100 z-10' 
                     : slideDirection === 'right'
-                      ? (index === (currentSlide === 0 ? cardNews.length - 1 : currentSlide - 1)
+                      ? index === (
+                          currentSlide === 0 
+                            ? cardNews.length - 1 
+                            : currentSlide - 1
+                        )
                           ? '-translate-x-full opacity-0 z-0'
-                          : 'translate-x-full opacity-0 z-0')
-                      : (index === (currentSlide === cardNews.length - 1 ? 0 : currentSlide + 1)
+                          : 'translate-x-full opacity-0 z-0'
+                      : index === (
+                          currentSlide === cardNews.length - 1 
+                            ? 0 
+                            : currentSlide + 1
+                        )
                           ? 'translate-x-full opacity-0 z-0'
-                          : '-translate-x-full opacity-0 z-0')
+                          : '-translate-x-full opacity-0 z-0'
                 }`}
                 onClick={() => handleCardClick(card.link)}
               >

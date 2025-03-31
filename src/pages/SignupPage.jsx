@@ -21,6 +21,34 @@ function SignupPage() {
     console.log('팝업 표시 상태 변경:', showSuccessPopup)
   }, [showSuccessPopup])
 
+  // 한글 입력을 막는 함수
+  const handlePasswordInput = (e) => {
+    // 정규식을 사용하여 한글 입력 감지
+    const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
+    
+    if (isHangul) {
+      // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
+      return
+    }
+    
+    // 한글이 아닌 경우 상태 업데이트
+    setPassword(e.target.value)
+  }
+
+  // 한글 입력을 막는 함수 (비밀번호 확인용)
+  const handleConfirmPasswordInput = (e) => {
+    // 정규식을 사용하여 한글 입력 감지
+    const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
+    
+    if (isHangul) {
+      // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
+      return
+    }
+    
+    // 한글이 아닌 경우 상태 업데이트
+    setConfirmPassword(e.target.value)
+  }
+
   const handleSignup = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -238,7 +266,7 @@ function SignupPage() {
                 type="password"
                 placeholder="비밀번호를 입력해주세요."
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordInput}
                 className="w-full p-3 bg-gray-100 rounded-lg"
                 required
               />
@@ -256,7 +284,7 @@ function SignupPage() {
                 type="password"
                 placeholder="비밀번호를 다시 입력해주세요."
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={handleConfirmPasswordInput}
                 className="w-full p-3 bg-gray-100 rounded-lg"
                 required
               />

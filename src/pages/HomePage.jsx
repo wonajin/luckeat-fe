@@ -254,7 +254,7 @@ function HomePage() {
   }
 
   const handleLocationSelect = (location) => {
-    setLocationFilter(location)
+    setLocationFilter(locationFilter === location ? '' : location)
   }
 
   const handleStoreClick = (store) => {
@@ -551,11 +551,15 @@ function HomePage() {
                     />
                   </div>
                   <div className="flex-1 ml-3">
-                    <h3 className="font-bold">
-                      {store.storeName || store.name || '이름 없음'}
+                    <h3 className="font-bold truncate" title={store.storeName || store.name || '이름 없음'}>
+                      {(store.storeName || store.name || '이름 없음').length > 20 
+                        ? (store.storeName || store.name || '이름 없음').substring(0, 20) + '...'
+                        : (store.storeName || store.name || '이름 없음')}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      {store.address || '주소 정보 없음'}
+                    <p className="text-sm text-gray-500 truncate" title={store.address || '주소 정보 없음'}>
+                      {(store.address || '주소 정보 없음').length > 20
+                        ? (store.address || '주소 정보 없음').substring(0, 20) + '...'
+                        : (store.address || '주소 정보 없음')}
                     </p>
                     <div className="flex items-center">
                       <div className="flex items-center text-sm text-yellow-500 mr-2">

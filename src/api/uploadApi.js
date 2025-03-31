@@ -1,13 +1,12 @@
-// 기본 API URL
-const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
+import { API_BASE_URL, API_DIRECT_URL } from '../config/apiConfig'
 
 /**
  * 이미지를 업로드하고 URL을 반환합니다.
  * @param {File} imageFile - 이미지 파일
- * @param {string} uploadPath - 업로드 경로 (예: '/store-images', '/product-images')
+ * @param {string} type - 업로드 타입 ('products', 'stores', 'reviews' 중 하나)
  * @returns {Promise<string>} 업로드된 이미지 URL
  */
-export const uploadImage = async (imageFile, uploadPath) => {
+export const uploadImage = async (imageFile, type) => {
   if (!imageFile) {
     return null;
   }
@@ -15,16 +14,19 @@ export const uploadImage = async (imageFile, uploadPath) => {
   try {
     // 이미지 업로드를 위한 FormData 객체 생성
     const imageFormData = new FormData();
-    imageFormData.append('image', imageFile);
+    imageFormData.append('file', imageFile);
 
     // 토큰 가져오기
     const accessToken = localStorage.getItem('accessToken');
 
-    console.log('이미지 업로드 시작:', `${API_BASE_URL}/api/v1${uploadPath}`);
+    // 업로드할 API 엔드포인트 결정
+    const endpoint = `/api/v1/images/${type}`;
+    
+    console.log('이미지 업로드 시작:', `${API_DIRECT_URL}${endpoint}`);
     console.log('업로드 이미지 정보:', imageFile.name, imageFile.type, imageFile.size);
 
     // fetch를 사용한 이미지 업로드
-    const response = await fetch(`${API_BASE_URL}/api/v1${uploadPath}`, {
+    const response = await fetch(`${API_DIRECT_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         Authorization: accessToken ? `Bearer ${accessToken}` : '',
@@ -56,14 +58,14 @@ export const uploadImage = async (imageFile, uploadPath) => {
  * @param {Object} formData - 폼 데이터
  * @param {File} imageFile - 이미지 파일
  * @param {string} imageFieldName - 이미지 필드 이름 (예: 'storeImg', 'productImg')
- * @param {string} uploadPath - 업로드 경로 (예: '/store-images', '/product-images')
+ * @param {string} type - 업로드 타입 ('products', 'stores', 'reviews' 중 하나)
  * @returns {Promise<Object>} 처리된 데이터
  */
 export const processImageData = async (
   formData,
   imageFile,
   imageFieldName,
-  uploadPath,
+  type,
 ) => {
   // 이미지 파일이 없는 경우 원본 데이터 반환
   if (!imageFile) {
@@ -72,12 +74,25 @@ export const processImageData = async (
 
   try {
     // 이미지 업로드 함수 호출하여 URL 받기
-    const imageUrl = await uploadImage(imageFile, uploadPath);
+    const imageUrl = await uploadImage(imageFile, type);
+
+    // S3 URL 구조에서 필요한 경로 부분 추출
+    // 예: https://luckeat-front.s3.ap-northeast-2.amazonaws.com/images/products/34abb3e9-6791-4a15-816f-539b91f4ebbd-레오나르도디카프리오.jpeg
+    // 에서 /images/products/34abb3e9-6791-4a15-816f-539b91f4ebbd-레오나르도디카프리오.jpeg 부분만 추출
+    const pathPart = imageUrl.replace('https://luckeat-front.s3.ap-northeast-2.amazonaws.com', '');
+    
+    // API_DIRECT_URL 변수를 사용하여 새 URL 생성 (.env의 VITE_API_URL 값이 설정되어 있음)
+    const formattedImageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`;
+    
+    console.log('이미지 URL 변환:', {
+      원본: imageUrl,
+      변환: formattedImageUrl
+    });
 
     // 업로드된 이미지 URL을 원본 데이터에 추가
     return {
       ...formData,
-      [imageFieldName]: imageUrl,
+      [imageFieldName]: formattedImageUrl,
     }
   } catch (error) {
     console.error('이미지 업로드 중 오류 발생:', error)
@@ -88,16 +103,16 @@ export const processImageData = async (
 /**
  * 여러 이미지를 업로드합니다.
  * @param {Array<File>} imageFiles - 이미지 파일 배열
- * @param {string} uploadPath - 업로드 경로
+ * @param {string} type - 업로드 타입 ('products', 'stores', 'reviews' 중 하나)
  * @returns {Promise<Array<string>>} 업로드된 이미지 URL 배열
  */
-export const uploadMultipleImages = async (imageFiles, uploadPath) => {
+export const uploadMultipleImages = async (imageFiles, type) => {
   if (!imageFiles || imageFiles.length === 0) {
     return []
   }
 
   try {
-    const uploadPromises = imageFiles.map(file => uploadImage(file, uploadPath));
+    const uploadPromises = imageFiles.map(file => uploadImage(file, type));
     return await Promise.all(uploadPromises);
   } catch (error) {
     console.error('이미지 업로드 중 오류 발생:', error)

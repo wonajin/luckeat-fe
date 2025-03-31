@@ -7,7 +7,7 @@ import { getStoreById } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
 import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import ScrollTopButton from '../components/common/ScrollTopButton'
-
+import { API_DIRECT_URL } from '../config/apiConfig'
 function StoreDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -21,11 +21,13 @@ function StoreDetailPage() {
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
   const [showReviewsModal, setShowReviewsModal] = useState(false)
   const [mapLoaded, setMapLoaded] = useState(false)
+  const [userLocation, setUserLocation] = useState(null) // 사용자 위치 상태 추가
   const mainContainerRef = useRef(null)
   const mapRef = useRef(null)
   const productsRef = useRef(null)
   const storeInfoRef = useRef(null)
   const reviewsRef = useRef(null)
+
   
   // Google Maps 이미지 URL인지 확인하는 함수
   const isGoogleMapsImage = (url) => {
@@ -57,6 +59,38 @@ function StoreDetailPage() {
 
     return imageUrl;
   }
+
+  // 현재 위치를 가져오기
+  const getCurrentPosition = () => {
+    return new Promise((resolve, reject) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords
+            const location = { lat: latitude, lng: longitude }
+            setUserLocation(location)
+            resolve(location)
+          },
+          (error) => {
+            console.error('위치 정보를 가져오는데 실패했습니다:', error)
+            reject(error)
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        )
+      } else {
+        const error = new Error('이 브라우저에서는 위치 정보를 지원하지 않습니다.')
+        console.error(error.message)
+        reject(error)
+      }
+    })
+  }
+
+  // 페이지 로드 시 사용자 위치 가져오기 시도
+  useEffect(() => {
+    getCurrentPosition().catch(err => {
+      console.warn('현재 위치를 가져오지 못했습니다:', err.message)
+    })
+  }, [])
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -170,7 +204,10 @@ function StoreDetailPage() {
 
   // 공유 링크 복사
   const handleCopyShareLink = () => {
-    const shareUrl = store.storeUrl || `${window.location.origin}/store/${id}`
+    const shareUrl = store.storeUrl 
+      ? `${API_DIRECT_URL}/s/${store.storeUrl}`
+      : `${API_DIRECT_URL}/store/${id}`;
+
     navigator.clipboard
       .writeText(shareUrl)
       .then(() => {
@@ -209,6 +246,42 @@ function StoreDetailPage() {
         reviewsRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }, 100);
+  }
+
+  // 카카오맵 길찾기 핸들러
+  const handleDirections = async (e) => {
+    e.preventDefault()
+    
+    if (!store || !store.latitude || !store.longitude) {
+      alert('가게 위치 정보가 없습니다.')
+      return
+    }
+    
+    try {
+      // 현재 위치가 없으면 다시 가져오기 시도
+      const startLocation = userLocation || await getCurrentPosition()
+      
+      if (!startLocation) {
+        alert('현재 위치를 확인할 수 없습니다. 위치 접근 권한을 확인해주세요.')
+        return
+      }
+      
+      console.log('출발 위치:', startLocation)
+      console.log('도착 위치:', { lat: store.latitude, lng: store.longitude })
+      
+      // 카카오맵 길찾기 URL 생성 (출발지->목적지)
+      const kakaoMapDirectUrl = `https://map.kakao.com/link/from/내 위치,${startLocation.lat},${startLocation.lng}/to/${store.storeName},${store.latitude},${store.longitude}`
+      
+      // 새 창에서 카카오맵 열기
+      window.open(kakaoMapDirectUrl, '_blank')
+      console.log('길찾기 URL:', kakaoMapDirectUrl)
+    } catch (error) {
+      console.error('길찾기 실행 중 오류 발생:', error)
+      
+      // 에러가 발생해도 기본 URL로 열기 (목적지만 지정)
+      const kakaoMapUrl = `https://map.kakao.com/link/to/${store.storeName},${store.latitude},${store.longitude}`
+      window.open(kakaoMapUrl, '_blank')
+    }
   }
 
   if (loading) {
@@ -394,14 +467,12 @@ function StoreDetailPage() {
               >
                 카카오맵으로 보기
               </a>
-              <a
-                href={`https://map.kakao.com/link/to/${store.storeName},${store.latitude},${store.longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={handleDirections}
                 className="flex-1 py-2 bg-blue-500 text-white font-bold rounded-lg text-center"
               >
                 길찾기
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -725,7 +796,9 @@ function StoreDetailPage() {
             <div className="flex items-center justify-between border rounded-lg p-3 mb-4">
               <input
                 type="text"
-                value={store.storeUrl || `${window.location.origin}/store/${id}`}
+                value={store.storeUrl 
+                  ? `${API_DIRECT_URL}/s/${store.storeUrl}`
+                  : `${API_DIRECT_URL}/store/${id}`}
                 className="flex-1 pr-2 text-sm truncate"
                 readOnly
               />

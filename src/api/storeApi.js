@@ -12,7 +12,7 @@ export const registerStore = async (storeData, storeImage) => {
       storeData,
       storeImage,
       'storeImg',
-      '/store-images',
+      'stores',
     )
 
     // 가게 등록 API 호출
@@ -142,32 +142,47 @@ export const getStoreById = async (storeId) => {
 }
 
 // 가게 정보 수정
-export const updateStore = async (storeId, storeData) => {
+export const updateStore = async (storeId, storeData, storeImage) => {
   try {
+    // 이미지 처리 (이미지 파일이 있는 경우에만)
+    let processedData = storeData;
+    if (storeImage) {
+      console.log('가게 이미지 업로드 시작:', storeImage.name);
+      processedData = await processImageData(
+        storeData,
+        storeImage,
+        'storeImg',
+        'stores'
+      );
+      console.log('이미지 처리 후 데이터:', processedData.storeImg);
+    }
+    
+    // API 호출
     const response = await apiClient.put(`/api/v1/stores/${storeId}`, {
-      storeName: storeData.storeName,
-      storeImg: storeData.storeImg,
-      address: storeData.address,
-      website: storeData.website || '',
-      storeUrl: storeData.storeUrl || '',
-      permissionUrl: storeData.permissionUrl || '',
-      latitude: storeData.latitude || 0,
-      longitude: storeData.longitude || 0,
-      contactNumber: storeData.contactNumber,
-      description: storeData.description,
-      businessNumber: storeData.businessNumber,
-      businessHours: storeData.businessHours || '',
-      reviewSummary: storeData.reviewSummary || '',
-      avgRating: storeData.avgRating || 0,
-      avgRatingGoogle: storeData.avgRatingGoogle || 0,
-      googlePlaceId: storeData.googlePlaceId || '',
-    })
+      storeName: processedData.storeName,
+      storeImg: processedData.storeImg,
+      address: processedData.address,
+      website: processedData.website || '',
+      storeUrl: processedData.storeUrl || '',
+      permissionUrl: processedData.permissionUrl || '',
+      latitude: processedData.latitude || 0,
+      longitude: processedData.longitude || 0,
+      contactNumber: processedData.contactNumber,
+      description: processedData.description,
+      businessNumber: processedData.businessNumber,
+      businessHours: processedData.businessHours || '',
+      reviewSummary: processedData.reviewSummary || '',
+      avgRating: processedData.avgRating || 0,
+      avgRatingGoogle: processedData.avgRatingGoogle || 0,
+      googlePlaceId: processedData.googlePlaceId || '',
+    });
     
     return {
       success: true,
       data: response.data,
     }
   } catch (error) {
+    console.error('가게 정보 수정 오류:', error);
     return {
       success: false,
       message: error.response?.data?.message || '가게 정보 수정에 실패했습니다.',

@@ -1,13 +1,11 @@
 // API 설정 파일
 const isDevelopment = process.env.NODE_ENV === 'development'
 
-const API_BASE_URL = isDevelopment 
-  ? 'https://dxa66rf338pjr.cloudfront.net/api/v1'
-  : 'https://dxa66rf338pjr.cloudfront.net/api/v1'
+// 환경변수에서 API URL 가져오기 (없으면 기본값 사용)
+const API_URL = import.meta.env.VITE_API_URL || 'https://dxa66rf338pjr.cloudfront.net'
 
-const API_DIRECT_URL = isDevelopment
-  ? 'https://dxa66rf338pjr.cloudfront.net'
-  : 'https://dxa66rf338pjr.cloudfront.net'
+const API_BASE_URL = `${API_URL}/api/v1`
+const API_DIRECT_URL = API_URL
 
 // API 엔드포인트
 const API_ENDPOINTS = {
@@ -15,7 +13,7 @@ const API_ENDPOINTS = {
   REGISTER: '/users/register',
   LOGIN: '/users/login',
   LOGOUT: '/users/logout',
-  USER_INFO: '/users/info',
+  USER_INFO: '/users/me',
   UPDATE_NICKNAME: '/users/nickname',
 
   // 가게 관련

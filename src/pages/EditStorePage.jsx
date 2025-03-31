@@ -32,6 +32,7 @@ function EditStorePage() {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [imagePreview, setImagePreview] = useState('')
+  const [storeImageFile, setStoreImageFile] = useState(null)
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -100,14 +101,12 @@ function EditStorePage() {
       return
     }
 
+    // 이미지 파일 저장
+    setStoreImageFile(file)
+    
     // 이미지 미리보기 생성
     const reader = new FileReader()
     reader.onloadend = () => {
-      // base64 데이터는 미리보기용으로만 사용하고, 실제 데이터는 기존 URL 유지
-      setFormData((prev) => ({
-        ...prev,
-        storeImg: store?.storeImg || '',
-      }))
       setImagePreview(reader.result)
     }
     reader.readAsDataURL(file)
@@ -133,6 +132,9 @@ function EditStorePage() {
         storeName: store.storeName,
         address: store.address,
         businessNumber: store.businessNumber,
+        // 설명이 비어있으면 공백 문자 하나를 보냅니다. 서버의 유효성 검사를 통과하기 위함
+        description: formData.description === '' ? ' ' : formData.description,
+        contactNumber: formData.contactNumber || store.contactNumber || '',
         reviewSummary: store.reviewSummary || '',
         avgRating: store.avgRating || 0,
         avgRatingGoogle: store.avgRatingGoogle || 0,
@@ -141,7 +143,10 @@ function EditStorePage() {
 
       // 디버깅을 위해 전송 데이터 로깅
       console.log('수정 요청 데이터:', dataToSubmit)
-      const response = await updateStore(store.id, dataToSubmit)
+      console.log('이미지 파일 존재 여부:', storeImageFile ? true : false)
+      
+      // 이미지 파일이 있는 경우 업로드 처리
+      const response = await updateStore(store.id, dataToSubmit, storeImageFile)
       if (response.success) {
         showToastMessage('가게 정보가 성공적으로 수정되었습니다.')
         setTimeout(() => {
@@ -346,7 +351,9 @@ function EditStorePage() {
                   </label>
                   <div className="bg-gray-50 p-4 border rounded-lg text-gray-700">
                     {store?.reviewSummary ? (
-                      <p className="text-sm leading-relaxed">{store.reviewSummary}</p>
+                      <p className="text-sm leading-relaxed">
+                        {store.reviewSummary}
+                      </p>
                     ) : (
                       <p className="text-sm text-gray-500">
                         리뷰 요약 정보가 없습니다.
@@ -382,7 +389,6 @@ function EditStorePage() {
                     className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
                     rows="4"
                     placeholder="가게 소개를 입력해주세요"
-                    required
                   />
                 </div>
 
@@ -398,7 +404,6 @@ function EditStorePage() {
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
                     placeholder="연락처를 입력해주세요"
-                    required
                   />
                 </div>
               </div>

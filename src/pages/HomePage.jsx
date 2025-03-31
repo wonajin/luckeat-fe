@@ -144,7 +144,7 @@ function HomePage() {
     if (!storeListRef.current) return
 
     const { scrollTop, scrollHeight, clientHeight } = storeListRef.current
-    const isNearBottom = 
+    const isNearBottom =
       scrollTop + clientHeight >= scrollHeight - 100 &&
       !loading &&
       displayedStores.length < filteredStores.length
@@ -154,7 +154,7 @@ function HomePage() {
       const startIndex = (nextPage - 1) * storesPerPage
       const endIndex = startIndex + storesPerPage
       const newStores = filteredStores.slice(0, endIndex)
-      
+
       setDisplayedStores(newStores)
       setCurrentPage(nextPage)
     }
@@ -336,16 +336,13 @@ function HomePage() {
         </div>
       </div>
 
-      <div 
-        className="flex-1 overflow-hidden pb-16" 
-        ref={storeListRef} 
+      <div
+        className="flex-1 overflow-hidden pb-16"
+        ref={storeListRef}
         onScroll={handleScroll}
       >
         <div className="px-4 py-2 border-b">
-          <SearchBar
-            initialValue={searchQuery}
-            onSearch={setSearchQuery}
-          />
+          <SearchBar initialValue={searchQuery} onSearch={setSearchQuery} />
         </div>
 
         <div
@@ -358,23 +355,21 @@ function HomePage() {
               <div
                 key={card.id}
                 className={`absolute top-0 left-0 w-full h-full transition-all duration-700 ease-in-out transform ${
-                  index === currentSlide 
-                    ? 'translate-x-0 opacity-100 z-10' 
+                  index === currentSlide
+                    ? 'translate-x-0 opacity-100 z-10'
                     : slideDirection === 'right'
-                      ? index === (
-                          currentSlide === 0 
-                            ? cardNews.length - 1 
-                            : currentSlide - 1
-                        )
-                          ? '-translate-x-full opacity-0 z-0'
-                          : 'translate-x-full opacity-0 z-0'
-                      : index === (
-                          currentSlide === cardNews.length - 1 
-                            ? 0 
-                            : currentSlide + 1
-                        )
-                          ? 'translate-x-full opacity-0 z-0'
-                          : '-translate-x-full opacity-0 z-0'
+                      ? index ===
+                        (currentSlide === 0
+                          ? cardNews.length - 1
+                          : currentSlide - 1)
+                        ? '-translate-x-full opacity-0 z-0'
+                        : 'translate-x-full opacity-0 z-0'
+                      : index ===
+                          (currentSlide === cardNews.length - 1
+                            ? 0
+                            : currentSlide + 1)
+                        ? 'translate-x-full opacity-0 z-0'
+                        : '-translate-x-full opacity-0 z-0'
                 }`}
                 onClick={() => handleCardClick(card.link)}
               >
@@ -385,19 +380,21 @@ function HomePage() {
                 />
               </div>
             ))}
-            
+
             <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
               {cardNews.map((_, index) => (
                 <button
                   key={index}
                   className={`w-2 h-2 rounded-full ${
-                    index === currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'
+                    index === currentSlide
+                      ? 'bg-white'
+                      : 'bg-white bg-opacity-50'
                   }`}
                   onClick={() => setCurrentSlide(index)}
                 />
               ))}
             </div>
-            
+
             {showArrows && (
               <>
                 <button
@@ -450,22 +447,24 @@ function HomePage() {
         </div>
 
         <div className="px-4 py-3 border-b">
-          <h3 className="text-base font-medium mb-2">어떤 음식을 찾으시나요?</h3>
+          <h3 className="text-base font-medium mb-2">
+            어떤 음식을 찾으시나요?
+          </h3>
           <div className="flex justify-between">
             {categoryOptions.map((option) => (
               <button
                 key={option.id}
                 onClick={() => handleCategorySelect(option.name)}
                 className={`flex flex-col items-center justify-center ${
-                  categoryFilter === option.name 
-                    ? 'text-yellow-600' 
+                  categoryFilter === option.name
+                    ? 'text-yellow-600'
                     : 'text-gray-600'
                 }`}
               >
-                <div 
+                <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
                     categoryFilter === option.name
-                      ? 'bg-yellow-100 border-2 border-yellow-400' 
+                      ? 'bg-yellow-100 border-2 border-yellow-400'
                       : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
@@ -558,7 +557,8 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {categoryFilter ? `${categoryFilter} 맛집` : '전체 맛집'} ({filteredStores.length})
+              {categoryFilter ? `${categoryFilter} 맛집` : '전체 맛집'} (
+              {filteredStores.length})
             </h2>
           </div>
 
@@ -585,15 +585,27 @@ function HomePage() {
                     />
                   </div>
                   <div className="flex-1 ml-3">
-                    <h3 className="font-bold truncate" title={store.storeName || store.name || '이름 없음'}>
-                      {(store.storeName || store.name || '이름 없음').length > 20 
-                        ? (store.storeName || store.name || '이름 없음').substring(0, 20) + '...'
-                        : (store.storeName || store.name || '이름 없음')}
+                    <h3
+                      className="font-bold truncate"
+                      title={store.storeName || store.name || '이름 없음'}
+                    >
+                      {(store.storeName || store.name || '이름 없음').length >
+                      20
+                        ? (
+                            store.storeName ||
+                            store.name ||
+                            '이름 없음'
+                          ).substring(0, 20) + '...'
+                        : store.storeName || store.name || '이름 없음'}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate" title={store.address || '주소 정보 없음'}>
+                    <p
+                      className="text-sm text-gray-500 truncate"
+                      title={store.address || '주소 정보 없음'}
+                    >
                       {(store.address || '주소 정보 없음').length > 20
-                        ? (store.address || '주소 정보 없음').substring(0, 20) + '...'
-                        : (store.address || '주소 정보 없음')}
+                        ? (store.address || '주소 정보 없음').substring(0, 20) +
+                          '...'
+                        : store.address || '주소 정보 없음'}
                     </p>
                     <div className="flex items-center">
                       <div className="flex items-center text-sm text-yellow-500 mr-2">

@@ -17,7 +17,7 @@ function HomePage() {
   const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-  const [locationFilter, setLocationFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
@@ -50,12 +50,13 @@ function HomePage() {
     },
   ]
 
-  const locationOptions = [
-    { id: 'nearby', name: '내 주변', icon: '📍' },
-    { id: 'jeju-city', name: '제주시', icon: '🏙️' },
-    { id: 'seogwipo', name: '서귀포', icon: '🌊' },
-    { id: 'aewol', name: '애월', icon: '☕' },
-    { id: 'hamdeok', name: '함덕', icon: '🏖️' },
+  const categoryOptions = [
+    { id: 'korean', name: '한식', icon: '🍚' },
+    { id: 'japanese', name: '일식', icon: '🍱' },
+    { id: 'chinese', name: '중식', icon: '🥢' },
+    { id: 'western', name: '양식', icon: '🍝' },
+    { id: 'cafe', name: '카페/베이커리', icon: '🍞' },
+    { id: 'salad', name: '샐러드/청과', icon: '🥗' },
   ]
 
   const nextSlide = () => {
@@ -76,8 +77,8 @@ function HomePage() {
           params.isDiscountOpen = true
         }
 
-        if (locationFilter !== '내 주변') {
-          params.location = locationFilter
+        if (categoryFilter) {
+          params.category = categoryFilter
         }
 
         try {
@@ -107,7 +108,7 @@ function HomePage() {
     }
 
     fetchData()
-  }, [showDiscountOnly, locationFilter])
+  }, [showDiscountOnly, categoryFilter])
 
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
 
@@ -176,22 +177,10 @@ function HomePage() {
       })
     }
 
-    if (locationFilter && locationFilter !== '내 주변') {
+    if (categoryFilter) {
       result = result.filter((store) => {
-        const address = (store.address || '').toLowerCase()
-        
-        switch(locationFilter) {
-          case '제주시':
-            return address.includes('제주시')
-          case '서귀포':
-            return address.includes('서귀포')
-          case '애월':
-            return address.includes('애월')
-          case '함덕':
-            return address.includes('함덕')
-          default:
-            return true
-        }
+        const storeCategory = (store.category || '').toLowerCase()
+        return storeCategory === categoryFilter.toLowerCase()
       })
     }
 
@@ -236,7 +225,7 @@ function HomePage() {
 
     console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
-  }, [searchQuery, sortOption, stores, locationFilter])
+  }, [searchQuery, sortOption, stores, categoryFilter])
 
   // filteredStores가 업데이트될 때마다 표시할 가게 목록 업데이트
   useEffect(() => {
@@ -253,8 +242,8 @@ function HomePage() {
     console.log('첫 번째 가게 키:', Object.keys(stores[0]))
   }
 
-  const handleLocationSelect = (location) => {
-    setLocationFilter(locationFilter === location ? '' : location)
+  const handleCategorySelect = (category) => {
+    setCategoryFilter(categoryFilter === category ? '' : category)
   }
 
   const handleStoreClick = (store) => {
@@ -287,7 +276,7 @@ function HomePage() {
           {isLoggedIn ? (
             <div className="flex space-x-2">
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={async () => {
                   await logout()
                   navigate(0)
@@ -299,14 +288,14 @@ function HomePage() {
           ) : (
             <div className="flex space-x-2">
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={() => navigate('/login')}
               >
                 로그인
               </button>
               <span className="text-gray-300">|</span>
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={() => navigate('/signup')}
               >
                 회원가입
@@ -416,21 +405,21 @@ function HomePage() {
         </div>
 
         <div className="px-4 py-3 border-b">
-          <h3 className="text-base font-medium mb-2">어디로 가시나요?</h3>
+          <h3 className="text-base font-medium mb-2">어떤 음식을 찾으시나요?</h3>
           <div className="flex justify-between">
-            {locationOptions.map((option) => (
+            {categoryOptions.map((option) => (
               <button
                 key={option.id}
-                onClick={() => handleLocationSelect(option.name)}
+                onClick={() => handleCategorySelect(option.name)}
                 className={`flex flex-col items-center justify-center ${
-                  locationFilter === option.name 
+                  categoryFilter === option.name 
                     ? 'text-yellow-600' 
                     : 'text-gray-600'
                 }`}
               >
                 <div 
                   className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
-                    locationFilter === option.name
+                    categoryFilter === option.name
                       ? 'bg-yellow-100 border-2 border-yellow-400' 
                       : 'bg-gray-100 hover:bg-gray-200'
                   }`}
@@ -524,7 +513,7 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {locationFilter === '내 주변' ? '내 주변' : locationFilter || '전체'} 가게 목록 ({filteredStores.length})
+              {categoryFilter ? `${categoryFilter} 맛집` : '전체 맛집'} ({filteredStores.length})
             </h2>
           </div>
 

@@ -74,37 +74,44 @@ function MyPage() {
           </div>
         ) : (
           <>
-            {/* 사용자 정보 */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                  <img
-                    src={bakerDefaultImage}
-                    alt="프로필"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-bold">
-                    {displayUser.nickname || '사용자'}님, 반갑수다~
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {displayUser.email || '이메일 정보가 없습니다'}
-                  </p>
-                  <div className="flex items-center mt-1">
-                    <span className="text-[#F7B32B] font-bold">
-                      {reviews.length}
-                    </span>
-                    <span className="ml-1 text-sm text-gray-500">
-                      개의 리뷰
-                    </span>
+            {/* 프로필 카드 */}
+
+            <div className="m-4 p-6 bg-[#ffe985cc] rounded-2xl">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h2 className="text-xl font-bold mb-1 text-black">{displayUser.nickname || '럭킷님'}</h2>
+                  <div className="text-base text-gray-800">{displayUser.email || 'aa@aa.com'}</div>
+                  <div className="mt-1 text-sm text-gray-800">
+                    <span className="font-bold">{reviews.length || 0}</span>
+                    <span className="ml-1">개의 리뷰</span>
                   </div>
-                  {displayUser.createdAt && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      가입일:{' '}
-                      {new Date(displayUser.createdAt).toLocaleDateString()}
-                    </p>
-                  )}
+                  {/* <div className="mt-1 text-sm text-gray-800">
+                    가입일: {displayUser.createdAt ? new Date(displayUser.createdAt).toLocaleDateString() : '2025. 3. 31.'}
+                  </div> */}
+                </div>
+                <button className="text-gray-800">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mt-2 pt-1 border-t border-black border-opacity-20">
+                <div className="grid grid-cols-3 gap-1">
+                  <div className="rounded-xl p-1 text-center">
+                    <div className="text-lg mb-0">💵</div>
+                    <div className="text-base font-bold text-black">0원</div>
+                    <div className="text-xs text-gray-700">아낀 금액</div>
+                  </div>
+                  <div className="rounded-xl p-1 text-center">
+                    <div className="text-lg mb-0">🌎</div>
+                    <div className="text-base font-bold text-black">0kg</div>
+                    <div className="text-xs text-gray-700">절약한 CO2</div>
+                  </div>
+                  <div className="rounded-xl p-1 text-center">
+                    <div className="text-lg mb-0">🌳</div>
+                    <div className="text-base font-bold text-black">0그루</div>
+                    <div className="text-xs text-gray-700">심은 나무</div>
+                  </div>
                 </div>
               </div>
             </div>

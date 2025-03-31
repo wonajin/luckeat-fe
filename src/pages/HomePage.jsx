@@ -5,9 +5,9 @@ import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import { getStores } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
-import homepageImage from '../assets/images/Homepage_1.png'
-import homepageImage2 from '../assets/images/Homepagr_2.png'
-import homepageImage3 from '../assets/images/Hompage_2.jpg'
+import banner01 from '../assets/images/럭킷배너01.png'
+import banner02 from '../assets/images/럭킷배너02.png'
+import banner03 from '../assets/images/럭킷배너03.png'
 import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
@@ -31,22 +31,31 @@ function HomePage() {
   const [displayedStores, setDisplayedStores] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const storesPerPage = 5
+  const [autoSlide, setAutoSlide] = useState(true)
+  const autoSlideInterval = useRef(null)
+  const [slideDirection, setSlideDirection] = useState('right')
 
   const cardNews = [
     {
       id: 1,
-      image: homepageImage,
+      image: banner01,
       link: '/intro',
+      title: '제주도의 맛있는 이야기',
+      description: '제주 현지 맛집을 찾아보세요',
     },
     {
       id: 2,
-      image: homepageImage2,
+      image: banner02,
       link: '/jeju-special',
+      title: '제주 특별한 할인',
+      description: '오늘의 특별 할인 매장',
     },
     {
       id: 3,
-      image: homepageImage3,
+      image: banner03,
       link: '/partner',
+      title: '제휴 매장 안내',
+      description: '럭킷과 함께하는 제주 맛집',
     },
   ]
 
@@ -59,12 +68,37 @@ function HomePage() {
     { id: 'salad', name: '샐러드/청과', icon: '🥗' },
   ]
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
+    setSlideDirection('right')
     setCurrentSlide((prev) => (prev === cardNews.length - 1 ? 0 : prev + 1))
+  }, [cardNews.length])
+
+  const prevSlide = useCallback(() => {
+    setSlideDirection('left')
+    setCurrentSlide((prev) => (prev === 0 ? cardNews.length - 1 : prev - 1))
+  }, [cardNews.length])
+
+  // 자동 슬라이드 설정
+  useEffect(() => {
+    if (autoSlide) {
+      autoSlideInterval.current = setInterval(nextSlide, 5000) // 5초마다 다음 슬라이드로
+    }
+    return () => {
+      if (autoSlideInterval.current) {
+        clearInterval(autoSlideInterval.current)
+      }
+    }
+  }, [autoSlide, nextSlide])
+
+  // 마우스 호버 시 자동 슬라이드 일시 정지
+  const handleMouseEnter = () => {
+    setShowArrows(true)
+    setAutoSlide(false)
   }
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? cardNews.length - 1 : prev - 1))
+  const handleMouseLeave = () => {
+    setShowArrows(false)
+    setAutoSlide(true)
   }
 
   useEffect(() => {
@@ -315,14 +349,24 @@ function HomePage() {
 
         <div
           className="relative px-4 py-4 border-b"
-          onMouseEnter={() => setShowArrows(true)}
-          onMouseLeave={() => setShowArrows(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <div className="relative w-full h-48 overflow-hidden rounded-lg">
             {cardNews.map((card, index) => (
               <div
                 key={card.id}
-                className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                className={`absolute top-0 left-0 w-full h-full transition-all duration-700 ease-in-out transform ${
+                  index === currentSlide 
+                    ? 'translate-x-0 opacity-100 z-10' 
+                    : slideDirection === 'right'
+                      ? (index === (currentSlide === 0 ? cardNews.length - 1 : currentSlide - 1)
+                          ? '-translate-x-full opacity-0 z-0'
+                          : 'translate-x-full opacity-0 z-0')
+                      : (index === (currentSlide === cardNews.length - 1 ? 0 : currentSlide + 1)
+                          ? 'translate-x-full opacity-0 z-0'
+                          : '-translate-x-full opacity-0 z-0')
+                }`}
                 onClick={() => handleCardClick(card.link)}
               >
                 <img
@@ -330,14 +374,6 @@ function HomePage() {
                   alt={card.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 p-5 flex flex-col justify-center items-center">
-                  <h1 className="text-white text-3xl font-bold text-center mb-2">
-                    {card.title}
-                  </h1>
-                  <p className="text-white text-xl opacity-90 text-center">
-                    {card.description}
-                  </p>
-                </div>
               </div>
             ))}
             

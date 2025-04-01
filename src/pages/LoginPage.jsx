@@ -1,94 +1,71 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import kakaoLoginImage from '../assets/images/kakao_login_medium_wide.png'
 import { API_DIRECT_URL } from '../config/apiConfig'
 
-function LoginPage() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { login } = useAuth()
+const LoginPage = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const { login, isLoggedIn } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [sessionMessage, setSessionMessage] = useState('')
-  const [loading, setLoading] = useState(false)
 
-  // 리다이렉션된 경우 메시지 표시
   useEffect(() => {
-    if (location.state?.message) {
-      setSessionMessage(location.state.message)
+    // 세션 만료 또는 로그인 필요 메시지가 있는 경우 표시
+    const message = location.state?.message
+    if (message) {
+      setSessionMessage(message)
+      // state를 초기화하여 새로고침 시 메시지가 다시 나타나지 않도록 함
+      window.history.replaceState({}, document.title)
     }
-  }, [location.state])
 
-  // 한글 입력을 막는 함수
-  const handlePasswordInput = (e) => {
-    // 정규식을 사용하여 한글 입력 감지
-    const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
-    if (isHangul) {
-      // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
-      return
+    // 이미 로그인되어 있으면 홈으로 리다이렉트
+    if (isLoggedIn) {
+      navigate('/')
     }
-    // 한글이 아닌 경우 상태 업데이트
-    setPassword(e.target.value)
+  }, [isLoggedIn, navigate, location.state])
+
+  const validateEmail = (email) => {
+    return email.includes('@')
   }
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
-
-    // 폼 검증
-    if (!email) {
-      setError('이메일을 입력해주세요.')
+    setErrorMessage('')
+    
+    // 유효성 검사
+    if (!email || !password) {
+      setErrorMessage('이메일과 비밀번호를 모두 입력해주세요.')
       return
     }
 
-    if (!password) {
-      setError('비밀번호를 입력해주세요.')
+    if (!validateEmail(email)) {
+      setErrorMessage('유효한 이메일 형식을 입력해주세요.')
       return
     }
 
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setError('유효한 이메일 형식이 아닙니다. 올바른 이메일 주소를 입력해주세요.')
-      return
-    }
+    setIsLoading(true)
 
     try {
-      setLoading(true)
-      const response = await login({ email, password })
-
-      if (response.success) {
-        navigate(location.state?.from || '/')
+      const result = await login(email, password)
+      
+      if (result.success) {
+        // 로그인 성공 - 홈페이지로 리다이렉트
+        navigate('/')
       } else {
-        // 오류 메시지 개선
-        if (
-          response.message.includes('인증') ||
-          response.message.includes('일치하지 않') ||
-          response.message.includes('아이디') ||
-          response.message.includes('비밀번호')
-        ) {
-          setError('이메일 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.')
-        } else if (response.message.includes('만료')) {
-          setError('로그인 정보가 만료되었습니다.\n다시 로그인해주세요.')
-        } else if (response.message.includes('정보를 저장')) {
-          setError('로그인 정보를 저장하는 중 문제가 발생했습니다.\n다시 시도해주세요.')
-        } else if (response.message.includes('불완전')) {
-          setError('로그인 정보가 불완전합니다.\n다시 로그인해주세요.')
-        } else {
-          setError(
-            response.message || '로그인에 실패했습니다.\n다시 시도해주세요.'
-          )
-        }
+        // 로그인 실패 메시지
+        setErrorMessage(result.message || '아이디 또는 비밀번호가 일치하지 않습니다.')
       }
     } catch (error) {
-      console.error('로그인 오류:', error)
-      setError('로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      setErrorMessage('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -110,10 +87,10 @@ function LoginPage() {
         )}
 
         {/* 오류 메시지 */}
-        {error && (
+        {errorMessage && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4 mb-4">
             <p className="font-medium">로그인 오류</p>
-            {error.split('\n').map((line, index) => (
+            {errorMessage.split('\n').map((line, index) => (
               <p key={index}>{line}</p>
             ))}
           </div>
@@ -127,7 +104,7 @@ function LoginPage() {
         </div>
 
         {/* 로그인 폼 */}
-        <form onSubmit={handleLogin} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* 로그인 필드들 */}
           <div className="border rounded-lg p-4 space-y-4">
             {/* 이메일 입력 */}
@@ -158,7 +135,7 @@ function LoginPage() {
                 type="password"
                 id="password"
                 value={password}
-                onChange={handlePasswordInput}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
                 placeholder="비밀번호를 입력해주세요"
                 required
@@ -173,9 +150,9 @@ function LoginPage() {
           <button
             type="submit"
             className="w-5/6 py-3 bg-yellow-500 text-white font-bold rounded-lg mx-auto block hover:bg-yellow-600 transition-colors"
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading ? '로그인 중...' : '로그인하기'}
+            {isLoading ? '로그인 중...' : '로그인하기'}
           </button>
 
           {/* 카카오 로그인 버튼 */}

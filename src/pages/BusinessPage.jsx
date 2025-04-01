@@ -5,6 +5,7 @@ import Header from '../components/layout/Header'
 import { useAuth } from '../context/AuthContext'
 import { getUserInfo } from '../api/userApi'
 import { getMyStore } from '../api/storeApi'
+import { getStorePendingReservations, updateReservationStatus } from '../api/reservationApi'
 import StoreCard from '../components/store/StoreCard'
 
 function BusinessPage() {
@@ -107,8 +108,17 @@ function BusinessPage() {
           setStoreData(storeResponse.data)
           console.log('가게 정보:', storeResponse.data)
           
-          // 더미 데이터 설정
-          setPendingReservations(dummyReservations)
+          // 스토어 ID가 있으면 대기 중인 예약 목록 가져오기
+          if (storeResponse.data && storeResponse.data.id) {
+            const pendingResponse = await getStorePendingReservations(storeResponse.data.id)
+            if (pendingResponse.success && pendingResponse.data) {
+              setPendingReservations(pendingResponse.data)
+            } else {
+              console.error('대기 중인 예약 조회 실패:', pendingResponse.message)
+              // API 실패 시 더미 데이터 사용(개발용)
+              // setPendingReservations(dummyReservations)
+            }
+          }
         }
       } catch (error) {
         console.error('데이터 로딩 중 오류:', error)
@@ -127,32 +137,52 @@ function BusinessPage() {
     try {
       setLoading(true)
       
-      // 상태 업데이트
+      // 상태 업데이트 UI 표시
       setReservationStatuses(prev => ({
         ...prev,
         [reservationId]: status
       }))
       
-      // 더미 데이터에서 해당 예약 제거 (API 호출 대신)
-      setTimeout(() => {
+      // API로 상태 업데이트
+      const statusData = {
+        reservationId: reservationId,
+        status: status
+      }
+      
+      const response = await updateReservationStatus(statusData)
+      
+      if (response.success) {
         // 업데이트된 예약 상태에 따른 메시지
         const message = status === 'CONFIRMED' 
           ? '예약이 승인되었습니다' 
           : '예약이 거절되었습니다'
-        showToastMessage(message, 'success')
+        // 승인 또는 거절에 따라 토스트 타입 설정
+        const toastType = status === 'CONFIRMED' ? 'success' : 'error'
+        showToastMessage(message, toastType)
         
-        // 2초 후에 목록에서 제거 (상태 변경이 보이도록)
+        // 목록에서 제거 (상태 변경이 보이도록 약간 지연)
         setTimeout(() => {
           setPendingReservations(prev => 
             prev.filter(r => r.id !== reservationId)
           )
-        }, 2000)
-        
-        setLoading(false)
-      }, 500)
+        }, 1000)
+      } else {
+        showToastMessage(`예약 상태 변경 실패: ${response.message}`, 'error')
+        // 상태 업데이트 실패 시 UI 원복
+        setReservationStatuses(prev => ({
+          ...prev,
+          [reservationId]: undefined
+        }))
+      }
     } catch (error) {
       console.error('예약 상태 변경 중 오류:', error)
       showToastMessage('예약 상태 변경 중 오류가 발생했습니다', 'error')
+      // 상태 업데이트 실패 시 UI 원복
+      setReservationStatuses(prev => ({
+        ...prev,
+        [reservationId]: undefined
+      }))
+    } finally {
       setLoading(false)
     }
   }
@@ -223,9 +253,9 @@ function BusinessPage() {
                     {pendingReservations.map((reservation) => (
                       <div key={reservation.id} className="py-2 flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium">{reservation.customerName || '고객'}</p>
-                          <p className="text-xs text-gray-500">럭키트 {reservation.quantity || 1}개</p>
-                          {reservation.isZeroWaste && (
+                          <p className="text-sm font-medium">{reservation.userId || '고객'}</p>
+                          <p className="text-xs text-gray-500">{reservation.productName || '상품'} {reservation.quantity || 1}개</p>
+                          {reservation.isZerowaste && (
                             <p className="text-xs text-green-600 font-medium">
                               제로웨이스트 손님 (포장용기 지참)
                             </p>
@@ -243,9 +273,9 @@ function BusinessPage() {
                             승인
                           </button>
                           <button
-                            onClick={() => handleReservationStatus(reservation.id, 'REJECTED')}
+                            onClick={() => handleReservationStatus(reservation.id, 'CANCELED')}
                             className={`px-3 py-1 text-white text-sm rounded transition-colors ${
-                              reservationStatuses[reservation.id] === 'REJECTED'
+                              reservationStatuses[reservation.id] === 'CANCELED'
                                 ? 'bg-red-500 hover:bg-red-600'
                                 : 'bg-gray-400 hover:bg-gray-500'
                             }`}

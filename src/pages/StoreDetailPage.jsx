@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
@@ -8,6 +8,8 @@ import defaultImage from '../assets/images/luckeat-default.png'
 import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 import { API_DIRECT_URL } from '../config/apiConfig'
+import { toast } from 'react-hot-toast'
+
 function StoreDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -27,6 +29,8 @@ function StoreDetailPage() {
   const productsRef = useRef(null)
   const storeInfoRef = useRef(null)
   const reviewsRef = useRef(null)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [showReservationModal, setShowReservationModal] = useState(false)
 
   
   // Google Maps 이미지 URL인지 확인하는 함수
@@ -284,6 +288,40 @@ function StoreDetailPage() {
     }
   }
 
+  // 예약하기 버튼 핸들러
+  const handleReservation = () => {
+    // 판매 중인 상품이 없는 경우
+    if (openProducts.length === 0) {
+      toast.error('현재 예약 가능한 럭키트가 없습니다.')
+      return
+    }
+    
+    // 판매 중인 상품이 하나뿐인 경우 바로 예약 페이지로 이동
+    if (openProducts.length === 1) {
+      navigateToReservation(openProducts[0])
+      return
+    }
+    
+    // 여러 상품이 있는 경우 모달 표시
+    setShowReservationModal(true)
+  }
+
+  // 예약 페이지로 이동하는 함수
+  const navigateToReservation = (product) => {
+    navigate(`/store/${id}/reservation`, {
+      state: {
+        storeId: id,
+        storeName: store.storeName,
+        productId: product.id, 
+        productName: product.productName,
+        productPrice: product.discountedPrice,
+        productImage: product.productImg 
+          ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}` 
+          : bakerDefaultImage
+      }
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col h-full items-center justify-center">
@@ -405,7 +443,7 @@ function StoreDetailPage() {
                 onClick={() => handleTabClick(tab)}
               >
                 {tab === 'map' && '지도'}
-                {tab === 'products' && '상품 정보'}
+                {tab === 'products' && '럭키트 정보'}
                 {tab === 'storeInfo' && '가게 정보'}
                 {tab === 'reviews' && '리뷰'}
               </button>
@@ -477,41 +515,58 @@ function StoreDetailPage() {
           )}
         </div>
 
-        {/* 상품 정보 섹션 */}
+        {/* 상품 정보 섹션 - 럭키트 한 개만 표시하도록 수정 */}
         <div ref={productsRef} id="products-section" className="p-3">
-          <h3 className="font-bold mb-2">
-            판매중인 상품 {openProducts.length}개
+          <h3 className="font-bold mb-2 text-lg">
+            럭키트 정보
           </h3>
-          {openProducts.map((product) => (
-            <div
-              key={product.id}
-              className="border rounded-lg p-3 mb-4 relative flex"
-            >
+          <div className="border rounded-lg p-3 mb-4 relative">
+            <div className="flex items-center mb-2">
+              <h4 className="font-bold">{openProducts.length > 0 ? openProducts[0].productName : '소금빵 럭키트'}</h4>
+              <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                럭키트
+              </span>
+            </div>
+            
+            <div className="p-2 bg-gray-50 rounded-md mb-3">
+              <p className="text-sm text-gray-700">
+                안녕하세요! {store.storeName}입니다<br />
+                저희 가게는 소금빵과 식빵등 식사빵위주로 럭키트를 제공하고있습니다 :)
+              </p>
+            </div>
+            
+            <div className="flex">
               <div className="flex-1">
-                <h4 className="font-bold">{product.productName}</h4>
-                <p className="text-sm line-through text-gray-400">
-                  {product.originalPrice.toLocaleString()}원
+                <p className="text-sm text-gray-600 mb-3">
+                  랜덤으로 구성된 먹거리 패키지입니다.<br />
+                  무엇이 들어있을지 열어봐야 알 수 있어요!
                 </p>
-                <p className="text-gray-700 font-bold">
-                  {product.discountedPrice.toLocaleString()}원
-                  <span className="text-red-500 ml-1">
-                    (
-                    {Math.floor(
-                      (1 - product.discountedPrice / product.originalPrice) *
-                        100,
-                    )}
-                    %)
+                
+                <div className="flex items-center">
+                  <div className="mr-4">
+                    <p className="text-sm line-through text-gray-400">
+                      {openProducts.length > 0 ? openProducts[0].originalPrice.toLocaleString() : '12,000'}원
+                    </p>
+                    <p className="text-lg font-bold">
+                      {openProducts.length > 0 ? openProducts[0].discountedPrice.toLocaleString() : '6,000'}원
+                    </p>
+                  </div>
+                  <span className="text-red-500 font-bold">
+                    {openProducts.length > 0 
+                      ? Math.floor((1 - openProducts[0].discountedPrice / openProducts[0].originalPrice) * 100)
+                      : 50}% 할인
                   </span>
-                </p>
+                </div>
               </div>
-              <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center relative">
+              
+              <div className="w-24 h-24 bg-gray-200 rounded-md flex-shrink-0">
                 <img
                   src={
-                    product.productImg
-                      ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
+                    openProducts.length > 0 && openProducts[0].productImg
+                      ? `https://dxflvza4ey8e9.cloudfront.net/product/${openProducts[0].productImg}`
                       : bakerDefaultImage
                   }
-                  alt={product.productName}
+                  alt={openProducts.length > 0 ? openProducts[0].productName : '소금빵 럭키트'}
                   className="w-full h-full object-cover rounded-md"
                   crossOrigin="anonymous"
                   onError={(e) => {
@@ -520,61 +575,15 @@ function StoreDetailPage() {
                 />
               </div>
             </div>
-          ))}
-
-          {/* 판매 종료 상품 */}
-          {closedProducts.length > 0 && (
-            <>
-              <h3 className="font-bold mb-2 mt-6">
-                판매 종료 상품 {closedProducts.length}개
-              </h3>
-              {closedProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="border rounded-lg p-3 mb-4 relative flex"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-bold">{product.productName}</h4>
-                    <p className="text-sm line-through text-gray-400">
-                      {product.originalPrice.toLocaleString()}원
-                    </p>
-                    <p className="text-gray-700 font-bold">
-                      {product.discountedPrice.toLocaleString()}원
-                      <span className="text-red-500 ml-1">
-                        (
-                        {Math.floor(
-                          (1 -
-                            product.discountedPrice / product.originalPrice) *
-                            100,
-                        )}
-                        %)
-                      </span>
-                    </p>
-                  </div>
-                  <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center relative">
-                    <img
-                      src={
-                        product.productImg
-                          ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
-                          : bakerDefaultImage
-                      }
-                      alt={product.productName}
-                      className="w-full h-full object-cover rounded-md"
-                      crossOrigin="anonymous"
-                      onError={(e) => {
-                        e.target.src = bakerDefaultImage
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
-                      <span className="text-xl font-bold text-white">
-                        품절
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
+            
+            {/* 예약하기 버튼 - 바로 이 섹션에 추가 */}
+            <button
+              className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg mt-4"
+              onClick={() => setShowPhonePopup(true)}
+            >
+              럭키트 예약하기
+            </button>
+          </div>
         </div>
 
         {/* 구분선 추가 - 상품정보와 기본정보 사이 */}
@@ -596,10 +605,41 @@ function StoreDetailPage() {
               ) : '웹사이트 정보 없음'}
             </p>
             <p className="text-gray-600">
-              🏷️ 영업시간: {store.businessHours || '정보 없음'}
-            </p>
-            <p className="text-gray-600">
-              🏪 사업자번호: {store.businessNumber || '정보 없음'}
+              <span className="block mb-1 font-bold">🏷️ 영업시간</span>
+              <div className="mt-2 ml-2">
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="border-gray-100">
+                      <td className="py-1 pr-2 font-medium">월요일</td>
+                      <td className="py-1 text-red-500 font-medium">휴무일</td>
+                    </tr>
+                    <tr className="">
+                      <td className="py-1 pr-2 font-medium">화요일</td>
+                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
+                    </tr>
+                    <tr className="">
+                      <td className="py-1 pr-2 font-medium">수요일</td>
+                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
+                    </tr>
+                    <tr className="">
+                      <td className="py-1 pr-2 font-medium">목요일</td>
+                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
+                    </tr>
+                    <tr className="">
+                      <td className="py-1 pr-2 font-medium">금요일</td>
+                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
+                    </tr>
+                    <tr className="">
+                      <td className="py-1 pr-2 font-medium">토요일</td>
+                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
+                    </tr>
+                    <tr className="">
+                      <td className="py-1 pr-2 font-medium">일요일</td>
+                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </p>
 
             {/* 공간 추가 */}
@@ -653,17 +693,7 @@ function StoreDetailPage() {
           )}
         </div>
 
-        {/* 연락하기 버튼 */}
-        <div className="p-4">
-          <button
-            className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg"
-            onClick={() => setShowPhonePopup(true)}
-          >
-            연락하기
-          </button>
-        </div>
-
-        {/* 구분선 추가 - 연락하기 버튼과 리뷰 섹션 사이 */}
+        {/* 구분선 추가 - 정보와 리뷰 섹션 사이 */}
         <div className="border-t border-gray-200 mx-4 my-3"></div>
 
         {/* 리뷰 섹션 */}
@@ -747,42 +777,78 @@ function StoreDetailPage() {
       {/* 맨 위로 버튼 - div 외부에 배치하여 항상 보이도록 */}
       <ScrollTopButton scrollContainerRef={mainContainerRef} />
 
-      {/* 전화번호 팝업 */}
+      {/* 전화번호 팝업을 럭키트 픽업 시간 선택 모달로 변경 */}
       {showPhonePopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
-            <h3 className="font-bold text-lg text-center mb-4">가게 연락처</h3>
-            <div className="flex items-center justify-between border rounded-lg p-3 mb-4">
-              <span className="text-lg">
-                {store.contactNumber || '연락처 정보 없음'}
-              </span>
-              <button onClick={handlePhoneNumberCopy} className="text-blue-500">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-bold text-lg">
+                {store.storeName}
+              </h3>
+              <button 
+                onClick={() => setShowPhonePopup(false)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               </button>
             </div>
-            {copySuccess && (
-              <p className="text-sm text-green-500 text-center mb-2">
-                복사되었습니다!
-              </p>
-            )}
+            
+            <p className="text-center text-sm text-gray-600 mb-3">
+              이 가게의 픽업 가능 시간은 4:30 pm ~ 5:00 pm 입니다
+            </p>
+            
+            <div className="flex items-center justify-center space-x-4 mb-3">
+              <button className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none">-</button>
+              <div className="text-xl font-bold">1</div>
+              <button className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none">+</button>
+            </div>
+            
+            <div className="flex items-center mb-3">
+              <input 
+                type="checkbox" 
+                id="bring-container" 
+                className="w-4 h-4 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
+              />
+              <label htmlFor="bring-container" className="ml-2 text-sm font-medium text-gray-600">
+                제로웨이스트를 위해 포장용기 지참할게요
+              </label>
+            </div>
+            
+            <p className="text-center text-xs text-gray-500 mb-3">
+              픽업 시간 외 방문 시 매너 픽업에 불이익이 있을 수 있습니다
+            </p>
+            
             <button
-              className="w-full py-2 bg-yellow-500 text-white font-bold rounded-lg"
+              className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg mb-2"
+              onClick={() => {
+                setShowPhonePopup(false)
+                if (openProducts.length > 0) {
+                  navigateToReservation(openProducts[0])
+                } else {
+                  // 더미 데이터를 사용하여 예약 페이지로 이동
+                  navigate(`/store/${id}/reservation`, {
+                    state: {
+                      storeId: id,
+                      storeName: store.storeName,
+                      productId: '1',
+                      productName: '소금빵 럭키트',
+                      productPrice: 6000,
+                      productImage: bakerDefaultImage
+                    }
+                  })
+                }
+              }}
+            >
+              픽업시간 확인했습니다
+            </button>
+            
+            <button
+              className="w-full py-2 text-gray-600 font-medium"
               onClick={() => setShowPhonePopup(false)}
             >
-              확인
+              닫기
             </button>
           </div>
         </div>

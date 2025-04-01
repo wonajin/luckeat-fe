@@ -43,17 +43,17 @@ function MapPage() {
 
   // 카테고리 옵션 추가
   const categoryOptions = [
-    { id: 'korean', name: '한식', icon: '🍚' },
-    { id: 'japanese', name: '일식', icon: '🍱' },
-    { id: 'chinese', name: '중식', icon: '🥢' },
-    { id: 'western', name: '양식', icon: '🍝' },
-    { id: 'cafe', name: '카페/베이커리', icon: '🍞' },
-    { id: 'salad', name: '샐러드/청과', icon: '🥗' },
+    { id: 1, name: '한식', icon: '🍚' },
+    { id: 2, name: '일식', icon: '🍱' },
+    { id: 3, name: '중식', icon: '🥢' },
+    { id: 4, name: '양식', icon: '🍝' },
+    { id: 5, name: '카페/베이커리', icon: '🍞' },
+    { id: 6, name: '샐러드/청과', icon: '🥗' },
   ]
 
   // 카테고리 선택 핸들러 추가
-  const handleCategorySelect = (category) => {
-    setCategoryFilter(categoryFilter === category ? '' : category)
+  const handleCategorySelect = (categoryId) => {
+    setCategoryFilter(categoryFilter === categoryId ? '' : categoryId)
   }
 
   // 사용자 위치 가져오기 함수
@@ -293,7 +293,7 @@ function MapPage() {
     loadKakaoMap()
   }, [])
 
-  // 검색어, 할인 필터가 변경될 때 가게 목록 필터링
+  // 검색어, 할인 필터, 카테고리가 변경될 때 가게 목록 필터링
   useEffect(() => {
     if (stores.length === 0) return
 
@@ -314,11 +314,10 @@ function MapPage() {
       console.log('검색 필터링 후 가게 수:', result.length)
     }
 
-    // 카테고리 필터링 추가
+    // 카테고리 필터링
     if (categoryFilter) {
       result = result.filter((store) => {
-        const storeCategory = (store.category || '').toLowerCase()
-        return storeCategory === categoryFilter.toLowerCase()
+        return store.categoryId === categoryFilter
       })
       console.log('카테고리 필터링 후 가게 수:', result.length)
     }
@@ -636,22 +635,22 @@ function MapPage() {
         />
       </div>
 
-      {/* 카테고리 필터 영역 추가 */}
+      {/* 카테고리 필터 영역 */}
       <div className="px-4 py-3 border-b">
         <div className="flex justify-between">
           {categoryOptions.map((option) => (
             <button
               key={option.id}
-              onClick={() => handleCategorySelect(option.name)}
+              onClick={() => handleCategorySelect(option.id)}
               className={`flex flex-col items-center justify-center ${
-                categoryFilter === option.name
+                categoryFilter === option.id
                   ? 'text-yellow-600'
                   : 'text-gray-600'
               }`}
             >
               <div
                 className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
-                  categoryFilter === option.name
+                  categoryFilter === option.id
                     ? 'bg-yellow-100 border-2 border-yellow-400'
                     : 'bg-gray-100 hover:bg-gray-200'
                 }`}

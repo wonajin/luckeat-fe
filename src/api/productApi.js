@@ -4,7 +4,7 @@ import { processImageData, uploadImage } from './uploadApi'
 // 가게의 상품 목록 조회
 export const getStoreProducts = async (storeId) => {
   try {
-    const response = await apiClient.get(`/stores/${storeId}/products`)
+    const response = await apiClient.get(`/api/v1/stores/${storeId}/products`)
     return response.data
   } catch (error) {
     console.error('상품 목록 조회 오류:', error)
@@ -22,7 +22,7 @@ export const createProduct = async (storeId, productData, productImg) => {
       formData.append('file', productImg)
       
       const imageResponse = await apiClient.post(
-        '/api/files/upload',
+        '/api/v1/images/products',
         formData,
         {
           headers: {
@@ -49,7 +49,7 @@ export const createProduct = async (storeId, productData, productImg) => {
       data.productImg = imgData
     }
     
-    const response = await apiClient.post(`/stores/${storeId}/products`, data)
+    const response = await apiClient.post(`/api/v1/stores/${storeId}/products`, data)
     return response.data
   } catch (error) {
     console.error('상품 등록 에러:', error)
@@ -72,7 +72,7 @@ export const updateProduct = async (
       formData.append('file', productImg)
       
       const imageResponse = await apiClient.post(
-        '/api/files/upload',
+        '/api/v1/images/products',
         formData,
         {
           headers: {
@@ -99,7 +99,7 @@ export const updateProduct = async (
       data.productImg = imgData
     }
     
-    const response = await apiClient.put(`/stores/${storeId}/products/${productId}`, data)
+    const response = await apiClient.put(`/api/v1/stores/${storeId}/products/${productId}`, data)
     return response.data
   } catch (error) {
     console.error('상품 수정 에러:', error)
@@ -107,10 +107,23 @@ export const updateProduct = async (
   }
 }
 
+// 상품 수량 수정
+export const updateProductCount = async (storeId, productId, count) => {
+  try {
+    const response = await apiClient.patch(`/api/v1/stores/${storeId}/products/${productId}/count`, {
+      count: count
+    })
+    return response.data
+  } catch (error) {
+    console.error('상품 수량 수정 오류:', error)
+    throw error
+  }
+}
+
 // 상품 상태 수정 (활성화/비활성화)
 export const updateProductStatus = async (storeId, productId, isOpen) => {
   try {
-    const response = await apiClient.patch(`/stores/${storeId}/products/${productId}/status`, {
+    const response = await apiClient.patch(`/api/v1/stores/${storeId}/products/${productId}/status`, {
       isOpen: isOpen
     })
     return response.data
@@ -123,7 +136,7 @@ export const updateProductStatus = async (storeId, productId, isOpen) => {
 // 상품 삭제
 export const deleteProduct = async (storeId, productId) => {
   try {
-    const response = await apiClient.delete(`/stores/${storeId}/products/${productId}`)
+    const response = await apiClient.delete(`/api/v1/stores/${storeId}/products/${productId}`)
     return response.data
   } catch (error) {
     console.error('상품 삭제 오류:', error)

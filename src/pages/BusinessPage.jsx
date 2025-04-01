@@ -12,8 +12,82 @@ function BusinessPage() {
   const { user, logout } = useAuth()
   const [userData, setUserData] = useState(null)
   const [storeData, setStoreData] = useState(null)
+  const [pendingReservations, setPendingReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [toastType, setToastType] = useState('success') // 'success' or 'error'
+  const [reservationStatuses, setReservationStatuses] = useState({}) // 예약 상태 저장
+
+  // 예약 더미 데이터
+  const dummyReservations = [
+    {
+      id: 1,
+      customerName: '김고객',
+      quantity: 2,
+      reservationDate: '2023-05-15',
+      reservationTime: '18:00',
+      isZeroWaste: true
+    },
+    {
+      id: 2,
+      customerName: '박손님',
+      quantity: 1,
+      reservationDate: '2023-05-15',
+      reservationTime: '19:30',
+      isZeroWaste: false
+    },
+    {
+      id: 3,
+      customerName: '이방문',
+      quantity: 3,
+      reservationDate: '2023-05-16',
+      reservationTime: '12:00',
+      isZeroWaste: true
+    },
+    // 추가 데이터 (스크롤 테스트용)
+    {
+      id: 4,
+      customerName: '강고객',
+      quantity: 2,
+      reservationDate: '2023-05-17',
+      reservationTime: '13:00',
+      isZeroWaste: true
+    },
+    {
+      id: 5,
+      customerName: '윤손님',
+      quantity: 3,
+      reservationDate: '2023-05-17',
+      reservationTime: '14:30',
+      isZeroWaste: false
+    },
+    {
+      id: 6,
+      customerName: '임방문',
+      quantity: 1,
+      reservationDate: '2023-05-17',
+      reservationTime: '16:00',
+      isZeroWaste: true
+    },
+    {
+      id: 7,
+      customerName: '한손님',
+      quantity: 2,
+      reservationDate: '2023-05-18',
+      reservationTime: '12:30',
+      isZeroWaste: false
+    },
+    {
+      id: 8,
+      customerName: '오방문',
+      quantity: 4,
+      reservationDate: '2023-05-18',
+      reservationTime: '18:30',
+      isZeroWaste: true
+    }
+  ]
 
   // 사용자 정보와 가게 정보 가져오기
   useEffect(() => {
@@ -32,7 +106,9 @@ function BusinessPage() {
         if (storeResponse.success) {
           setStoreData(storeResponse.data)
           console.log('가게 정보:', storeResponse.data)
-          console.log('가게 ID 속성:', Object.keys(storeResponse.data))
+          
+          // 더미 데이터 설정
+          setPendingReservations(dummyReservations)
         }
       } catch (error) {
         console.error('데이터 로딩 중 오류:', error)
@@ -45,6 +121,51 @@ function BusinessPage() {
       fetchData()
     }
   }, [user])
+
+  // 예약 상태 업데이트 (승인/거절)
+  const handleReservationStatus = async (reservationId, status) => {
+    try {
+      setLoading(true)
+      
+      // 상태 업데이트
+      setReservationStatuses(prev => ({
+        ...prev,
+        [reservationId]: status
+      }))
+      
+      // 더미 데이터에서 해당 예약 제거 (API 호출 대신)
+      setTimeout(() => {
+        // 업데이트된 예약 상태에 따른 메시지
+        const message = status === 'CONFIRMED' 
+          ? '예약이 승인되었습니다' 
+          : '예약이 거절되었습니다'
+        showToastMessage(message, 'success')
+        
+        // 2초 후에 목록에서 제거 (상태 변경이 보이도록)
+        setTimeout(() => {
+          setPendingReservations(prev => 
+            prev.filter(r => r.id !== reservationId)
+          )
+        }, 2000)
+        
+        setLoading(false)
+      }, 500)
+    } catch (error) {
+      console.error('예약 상태 변경 중 오류:', error)
+      showToastMessage('예약 상태 변경 중 오류가 발생했습니다', 'error')
+      setLoading(false)
+    }
+  }
+
+  // 토스트 메시지 표시 함수
+  const showToastMessage = (message, type = 'success') => {
+    setToastMessage(message)
+    setToastType(type)
+    setShowToast(true)
+    setTimeout(() => {
+      setShowToast(false)
+    }, 3000)
+  }
 
   const handleLogout = async () => {
     try {
@@ -81,40 +202,97 @@ function BusinessPage() {
               <h1 className="text-3xl font-bold text-gray-800">
                 사업자 페이지
               </h1>
+              <p className="text-gray-600 mt-2">
+                사장님의 승인을 기다리는 예약목록들이 있어요
+              </p>
             </div>
             
-            {/* 가게 정보 카드 */}
-            {storeData ? (
-              <div className="px-4 mb-6">
-                <h2 className="text-xl font-bold text-gray-700 mb-3">
-                  내 가게 정보
-                </h2>
-                <StoreCard store={storeData} />
+            {/* 펜딩 예약 목록 */}
+            <div className="px-4 mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-bold text-gray-700">대기 중인 예약</h2>
+                {pendingReservations.length > 3 && (
+                  <span className="text-xs text-gray-500">
+                    스크롤하여 더 많은 예약을 확인하세요 ↓
+                  </span>
+                )}
               </div>
-            ) : (
-              <div className="px-4 py-6 mb-6 bg-gray-100 rounded-lg mx-4 text-center">
-                <p className="text-gray-600 mb-3">
-                  등록된 가게 정보가 없습니다.
-                </p>
-                <button
-                  className="py-2 px-4 bg-[#F7B32B] hover:bg-[#E09D18] text-white font-bold rounded transition-colors"
-                  onClick={() => navigate('/register-store')}
-                >
-                  가게 등록하기
-                </button>
+              <div className="bg-white rounded-lg shadow-md p-4 overflow-y-auto" style={{ maxHeight: '180px' }}>
+                {pendingReservations.length > 0 ? (
+                  <div className="divide-y">
+                    {pendingReservations.map((reservation) => (
+                      <div key={reservation.id} className="py-2 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{reservation.customerName || '고객'}</p>
+                          <p className="text-xs text-gray-500">럭키트 {reservation.quantity || 1}개</p>
+                          {reservation.isZeroWaste && (
+                            <p className="text-xs text-green-600 font-medium">
+                              제로웨이스트 손님 (포장용기 지참)
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleReservationStatus(reservation.id, 'CONFIRMED')}
+                            className={`px-3 py-1 text-white text-sm rounded transition-colors ${
+                              reservationStatuses[reservation.id] === 'CONFIRMED'
+                                ? 'bg-green-500 hover:bg-green-600'
+                                : 'bg-gray-400 hover:bg-gray-500'
+                            }`}
+                          >
+                            승인
+                          </button>
+                          <button
+                            onClick={() => handleReservationStatus(reservation.id, 'REJECTED')}
+                            className={`px-3 py-1 text-white text-sm rounded transition-colors ${
+                              reservationStatuses[reservation.id] === 'REJECTED'
+                                ? 'bg-red-500 hover:bg-red-600'
+                                : 'bg-gray-400 hover:bg-gray-500'
+                            }`}
+                          >
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-4">대기 중인 예약이 없습니다</p>
+                )}
               </div>
-            )}
+            </div>
             
-            <div className="mt-6">
+            <div className="mt-2">
               {/* 메뉴 목록 */}
               <div className="p-4 space-y-4">
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-                    onClick={() => storeData && navigate(`/store/${storeData.id}/products`)}
+                    onClick={() => {
+                      if (storeData) {
+                        console.log('가게 상세보기 이동:', storeData.id);
+                        navigate(`/store/${storeData.id}`);
+                      }
+                    }}
                     disabled={!storeData}
                   >
-                    <span>상품 정보</span>
+                    <span>가게 상세보기</span>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                </div>
+
+                <div className="border-b pb-2">
+                  <button
+                    className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
+                    onClick={() => {
+                      if (storeData) {
+                        console.log('럭키트 관리 이동:', storeData.id);
+                        navigate(`/store/${storeData.id}/products`);
+                      }
+                    }}
+                    disabled={!storeData}
+                  >
+                    <span>럭키트 관리</span>
                     <span className="text-gray-400">→</span>
                   </button>
                 </div>
@@ -124,7 +302,23 @@ function BusinessPage() {
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => navigate('/edit-store')}
                   >
-                    <span>가게 정보</span>
+                    <span>가게 정보 수정</span>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                </div>
+
+                <div className="border-b pb-2">
+                  <button
+                    className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
+                    onClick={() => {
+                      if (storeData) {
+                        console.log('가게 예약 리스트 이동:', storeData.id);
+                        navigate(`/store/${storeData.id}/reservations`);
+                      }
+                    }}
+                    disabled={!storeData}
+                  >
+                    <span>가게 예약 리스트</span>
                     <span className="text-gray-400">→</span>
                   </button>
                 </div>
@@ -142,7 +336,7 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 font-bold">고객 문의</span>
-                    <span className="text-gray-400">luckeat@example.com</span>
+                    <span className="text-gray-400">example@example.com</span>
                   </div>
                 </div>
               </div>
@@ -179,6 +373,17 @@ function BusinessPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 토스트 메시지 */}
+      {showToast && (
+        <div
+          className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 ${
+            toastType === 'error' ? 'bg-red-500' : 'bg-green-500'
+          } text-white`}
+        >
+          {toastMessage}
         </div>
       )}
 

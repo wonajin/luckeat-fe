@@ -57,7 +57,7 @@ function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
 
   return (
     <>
-      {/* 가게 마커 - 선택시에도 파란 마커 유지 */}
+      {/* 가게 마커 */}
       <MapMarker
         position={{ lat: store.lat, lng: store.lng }}
         image={{

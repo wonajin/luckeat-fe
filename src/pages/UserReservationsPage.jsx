@@ -5,7 +5,7 @@ import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDate, formatTime } from '../utils/dateUtils'
 import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
-import { getUserReservations, updateReservationStatus } from '../api/reservationApi'
+import { getUserReservations, cancelReservation } from '../api/reservationApi'
 
 const ReservationStatusBadge = ({ status }) => {
   const { bgColor, textColor } = getStatusStyle(status)
@@ -43,42 +43,16 @@ const UserReservationsPage = () => {
     const fetchReservations = async () => {
       try {
         setLoading(true)
-        // 현재 로그인한 사용자의 ID를 가져와 API 호출에 사용
-        // user 객체에서 id를 추출하거나 없을 경우 임시 더미 데이터 사용
-        if (user && user.id) {
-          const response = await getUserReservations(user.id)
-          
-          if (response.success) {
-            // 실제 데이터가 있는 경우 사용
-            setReservations(response.data || [])
-          } else {
-            setError(response.message || '예약 정보를 가져오는데 실패했습니다.')
-            // 에러 발생 시 화면에 "잘못된 요청" 대신 더 구체적인 오류 메시지 표시
-            console.error('API 오류 응답:', response)
-          }
+        // 'me' 파라미터를 사용하여 현재 로그인한 사용자의 예약을 조회
+        const response = await getUserReservations('me')
+        
+        if (response.success) {
+          // 실제 데이터가 있는 경우 사용
+          setReservations(response.data || [])
         } else {
-          // 사용자 ID가 없는 경우(로그인 안됨 또는 미완성 프로필) 더미 데이터 표시
-          console.warn('사용자 ID가 없어 더미 데이터를 표시합니다.')
-          // 임시 더미 데이터 (실제 백엔드 연동 시 제거 필요)
-          const dummyData = [
-            {
-              id: 1,
-              userId: 1,
-              storeId: 101,
-              productId: 201,
-              storeName: '맛있는 베이커리',
-              productName: '크로와상 키트',
-              quantity: 2,
-              totalPrice: 15000,
-              price: 15000,
-              reservationDate: '2023-05-20',
-              reservationTime: '18:00',
-              status: 'PENDING',
-              isZerowaste: true,
-              createdAt: '2023-05-15T14:30:00Z'
-            }
-          ]
-          setReservations(dummyData)
+          setError(response.message || '예약 정보를 가져오는데 실패했습니다.')
+          // 에러 발생 시 화면에 "잘못된 요청" 대신 더 구체적인 오류 메시지 표시
+          console.error('API 오류 응답:', response)
         }
       } catch (error) {
         console.error('예약 목록 조회 오류:', error)
@@ -89,7 +63,7 @@ const UserReservationsPage = () => {
     }
 
     fetchReservations()
-  }, [isLoggedIn, user, navigate])
+  }, [isLoggedIn, navigate])
 
   const handleCancelReservation = async () => {
     if (!reservationToCancel) return
@@ -97,13 +71,8 @@ const UserReservationsPage = () => {
     try {
       setLoading(true)
       
-      // 예약 상태 변경 API 호출 (CANCELED 상태로 변경)
-      const statusData = {
-        reservationId: reservationToCancel.id,
-        status: RESERVATION_STATUS.CANCELED
-      }
-      
-      const response = await updateReservationStatus(statusData)
+      // cancelReservation API 사용
+      const response = await cancelReservation(reservationToCancel.id)
       
       if (response.success) {
         // 예약 상태 업데이트

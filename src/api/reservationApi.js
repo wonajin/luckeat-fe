@@ -151,3 +151,73 @@ export const getUserReservations = async (userId) => {
     }
   }
 }
+
+/**
+ * 사용자의 완료된 예약 목록 조회
+ * @returns {Promise<object>} 완료된 예약 목록
+ */
+export const getUserCompletedReservations = async () => {
+  try {
+    // 'me'를 사용하여 현재 사용자의 모든 예약을 가져옴
+    const userId = 'me'
+    const response = await apiClient.get(`/api/v1/reservation/${userId}`)
+    
+    if (response.data) {
+      // 서버 응답에서 완료된 예약만 필터링
+      // 'COMPLETED', 'PICKED_UP' 등 완료 상태인 예약만 필터링
+      const completedOrders = response.data.filter(
+        (order) =>
+          order.status === 'COMPLETED' ||
+          order.status === 'PICKED_UP' ||
+          order.status === 'DONE'
+      )
+      
+      return {
+        success: true,
+        data: { 
+          completedOrders 
+        }
+      }
+    }
+    
+    return {
+      success: true,
+      data: { completedOrders: [] }
+    }
+  } catch (error) {
+    console.error('완료된 예약 목록 조회 오류:', error)
+    return {
+      success: false,
+      message:
+        error.response?.data?.message || '완료된 예약 목록 조회에 실패했습니다.',
+      data: { completedOrders: [] }
+    }
+  }
+}
+
+/**
+ * 사용자의 환경 기여 통계 조회
+ * @returns {Promise<object>} 환경 기여 통계 데이터
+ */
+export const getUserEcoStats = async () => {
+  try {
+    const response = await apiClient.get('/api/v1/reservation/user/eco-stats')
+
+    return {
+      success: true,
+      data: response.data,
+    }
+  } catch (error) {
+    console.error('환경 기여 통계 조회 오류:', error)
+    // API 엔드포인트가 아직 없을 수 있으므로 실패해도 빈 데이터 반환
+    return {
+      success: false,
+      message:
+        error.response?.data?.message || '환경 기여 통계 조회에 실패했습니다.',
+      data: {
+        completedOrders: [],
+        totalSaved: 0,
+      },
+    }
+  }
+}

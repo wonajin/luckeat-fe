@@ -4,36 +4,11 @@ import Header from '../components/layout/Header'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDate, formatTime } from '../utils/dateUtils'
+import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
 
 const ReservationStatusBadge = ({ status }) => {
-  let bgColor = 'bg-gray-200'
-  let textColor = 'text-gray-700'
-  let statusText = '대기중'
-
-  switch (status) {
-    case 'CONFIRMED':
-      bgColor = 'bg-green-100'
-      textColor = 'text-green-700'
-      statusText = '승인됨'
-      break
-    case 'CANCELED':
-      bgColor = 'bg-red-100'
-      textColor = 'text-red-700'
-      statusText = '취소됨'
-      break
-    case 'COMPLETED':
-      bgColor = 'bg-blue-100'
-      textColor = 'text-blue-700'
-      statusText = '완료'
-      break
-    case 'REJECTED':
-      bgColor = 'bg-yellow-100'
-      textColor = 'text-yellow-700'
-      statusText = '거절됨'
-      break
-    default:
-      break
-  }
+  const { bgColor, textColor } = getStatusStyle(status)
+  const statusText = getStatusText(status)
 
   return (
     <span className={`${bgColor} ${textColor} text-xs font-medium px-2.5 py-0.5 rounded`}>
@@ -66,7 +41,7 @@ const StoreReservationsPage = () => {
       reservationDate: '2023-05-15',
       reservationTime: '18:00',
       createdAt: '2023-05-14T14:30:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       isZeroWaste: true
     },
     {
@@ -78,7 +53,7 @@ const StoreReservationsPage = () => {
       reservationTime: '19:30',
       notes: '문 앞에 놓아주세요',
       createdAt: '2023-05-14T15:45:00',
-      status: 'CONFIRMED',
+      status: RESERVATION_STATUS.CONFIRMED,
       isZeroWaste: false
     },
     {
@@ -89,7 +64,7 @@ const StoreReservationsPage = () => {
       reservationDate: '2023-05-16',
       reservationTime: '12:00',
       createdAt: '2023-05-14T16:20:00',
-      status: 'COMPLETED',
+      status: RESERVATION_STATUS.COMPLETED,
       isZeroWaste: true
     },
     {
@@ -100,7 +75,7 @@ const StoreReservationsPage = () => {
       reservationDate: '2023-05-16',
       reservationTime: '17:30',
       createdAt: '2023-05-14T17:10:00',
-      status: 'REJECTED',
+      status: RESERVATION_STATUS.REJECTED,
       isZeroWaste: false
     },
     {
@@ -112,7 +87,7 @@ const StoreReservationsPage = () => {
       reservationTime: '18:45',
       notes: '친환경 용기 준비해주세요',
       createdAt: '2023-05-14T18:05:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       isZeroWaste: true
     },
     // 추가 데이터 (스크롤 테스트용)
@@ -124,7 +99,7 @@ const StoreReservationsPage = () => {
       reservationDate: '2023-05-17',
       reservationTime: '13:00',
       createdAt: '2023-05-15T09:10:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       isZeroWaste: true
     },
     {
@@ -135,7 +110,7 @@ const StoreReservationsPage = () => {
       reservationDate: '2023-05-17',
       reservationTime: '14:30',
       createdAt: '2023-05-15T10:20:00',
-      status: 'CONFIRMED',
+      status: RESERVATION_STATUS.CONFIRMED,
       isZeroWaste: false
     },
     {
@@ -146,7 +121,7 @@ const StoreReservationsPage = () => {
       reservationDate: '2023-05-17',
       reservationTime: '16:00',
       createdAt: '2023-05-15T11:30:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       isZeroWaste: true
     },
     {
@@ -157,7 +132,7 @@ const StoreReservationsPage = () => {
       reservationDate: '2023-05-18',
       reservationTime: '12:30',
       createdAt: '2023-05-15T13:40:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       isZeroWaste: false
     },
     {
@@ -168,7 +143,7 @@ const StoreReservationsPage = () => {
       reservationDate: '2023-05-18',
       reservationTime: '18:30',
       createdAt: '2023-05-15T14:50:00',
-      status: 'CONFIRMED',
+      status: RESERVATION_STATUS.CONFIRMED,
       isZeroWaste: true
     }
   ]
@@ -190,7 +165,7 @@ const StoreReservationsPage = () => {
       setLoading(true)
       
       setTimeout(() => {
-        const message = status === 'CONFIRMED' ? '예약이 승인되었습니다' : '예약이 거절되었습니다'
+        const message = status === RESERVATION_STATUS.CONFIRMED ? '예약이 승인되었습니다' : '예약이 거절되었습니다'
         showToastMessage(message, 'success')
         
         setReservations(prev => 
@@ -200,6 +175,7 @@ const StoreReservationsPage = () => {
               : reservation
           )
         )
+        
         setLoading(false)
       }, 500)
     } catch (error) {

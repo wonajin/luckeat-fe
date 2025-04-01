@@ -4,36 +4,11 @@ import Header from '../components/layout/Header'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDate, formatTime } from '../utils/dateUtils'
+import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
 
 const ReservationStatusBadge = ({ status }) => {
-  let bgColor = 'bg-gray-200'
-  let textColor = 'text-gray-700'
-  let statusText = '대기중'
-
-  switch (status) {
-    case 'CONFIRMED':
-      bgColor = 'bg-green-100'
-      textColor = 'text-green-700'
-      statusText = '승인됨'
-      break
-    case 'CANCELED':
-      bgColor = 'bg-red-100'
-      textColor = 'text-red-700'
-      statusText = '취소됨'
-      break
-    case 'COMPLETED':
-      bgColor = 'bg-blue-100'
-      textColor = 'text-blue-700'
-      statusText = '완료'
-      break
-    case 'REJECTED':
-      bgColor = 'bg-yellow-100'
-      textColor = 'text-yellow-700'
-      statusText = '거절됨'
-      break
-    default:
-      break
-  }
+  const { bgColor, textColor } = getStatusStyle(status)
+  const statusText = getStatusText(status)
 
   return (
     <span className={`${bgColor} ${textColor} text-xs font-medium px-2.5 py-0.5 rounded`}>
@@ -68,7 +43,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-20',
       reservationTime: '18:00',
       createdAt: '2023-05-15T14:30:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       price: 15000,
       isZeroWaste: true
     },
@@ -81,7 +56,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-21',
       reservationTime: '19:30',
       createdAt: '2023-05-16T15:45:00',
-      status: 'CONFIRMED',
+      status: RESERVATION_STATUS.CONFIRMED,
       price: 8000,
       isZeroWaste: false
     },
@@ -94,7 +69,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-18',
       reservationTime: '12:00',
       createdAt: '2023-05-14T16:20:00',
-      status: 'COMPLETED',
+      status: RESERVATION_STATUS.COMPLETED,
       price: 12000,
       isZeroWaste: true
     },
@@ -107,7 +82,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-16',
       reservationTime: '17:30',
       createdAt: '2023-05-10T17:10:00',
-      status: 'REJECTED',
+      status: RESERVATION_STATUS.REJECTED,
       price: 10000,
       isZeroWaste: false
     },
@@ -120,7 +95,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-22',
       reservationTime: '18:45',
       createdAt: '2023-05-17T18:05:00',
-      status: 'CANCELED',
+      status: RESERVATION_STATUS.CANCELED,
       price: 14000,
       isZeroWaste: true
     },
@@ -134,7 +109,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-23',
       reservationTime: '12:00',
       createdAt: '2023-05-18T10:10:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       price: 9000,
       isZeroWaste: true
     },
@@ -147,7 +122,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-24',
       reservationTime: '14:30',
       createdAt: '2023-05-18T11:20:00',
-      status: 'CONFIRMED',
+      status: RESERVATION_STATUS.CONFIRMED,
       price: 12000,
       isZeroWaste: false
     },
@@ -160,7 +135,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-25',
       reservationTime: '18:00',
       createdAt: '2023-05-18T14:30:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       price: 25000,
       isZeroWaste: true
     },
@@ -173,7 +148,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-25',
       reservationTime: '19:00',
       createdAt: '2023-05-19T09:45:00',
-      status: 'CONFIRMED',
+      status: RESERVATION_STATUS.CONFIRMED,
       price: 18000,
       isZeroWaste: false
     },
@@ -186,7 +161,7 @@ const UserReservationsPage = () => {
       reservationDate: '2023-05-26',
       reservationTime: '10:00',
       createdAt: '2023-05-19T15:55:00',
-      status: 'PENDING',
+      status: RESERVATION_STATUS.PENDING,
       price: 16000,
       isZeroWaste: true
     }
@@ -217,7 +192,7 @@ const UserReservationsPage = () => {
         setReservations(prev => 
           prev.map(reservation => 
             reservation.id === reservationToCancel.id 
-              ? { ...reservation, status: 'CANCELED' }
+              ? { ...reservation, status: RESERVATION_STATUS.CANCELED }
               : reservation
           )
         )

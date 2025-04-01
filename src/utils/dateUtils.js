@@ -8,9 +8,9 @@ export const formatDate = (dateString) => {
     
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).replace(/\./g, '-').replace(/\s/g, '').slice(0, -1)
+      month: 'long',
+      day: 'numeric',
+    }).replace(/\.\s*$/, '') // 마지막 점 제거
   } catch (error) {
     console.error('날짜 형식 변환 오류:', error)
     return '날짜 정보 없음'
@@ -28,7 +28,7 @@ export const formatTime = (timeString) => {
     return date.toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: true
     })
   } catch (error) {
     console.error('시간 형식 변환 오류:', error)
@@ -39,7 +39,20 @@ export const formatTime = (timeString) => {
 // 날짜와 시간 결합 함수 (YYYY-MM-DD HH:MM)
 export const formatDateTime = (dateTimeString) => {
   try {
-    return `${formatDate(dateTimeString)} ${formatTime(dateTimeString)}`
+    const date = new Date(dateTimeString)
+    if (isNaN(date.getTime())) {
+      return '날짜 시간 정보 없음'
+    }
+    
+    // 한국어 날짜 + 시간 형식
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).replace(/\.\s*$/, '') // 마지막 점 제거
   } catch (error) {
     console.error('날짜 시간 형식 변환 오류:', error)
     return '날짜 시간 정보 없음'

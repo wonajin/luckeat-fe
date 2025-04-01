@@ -42,6 +42,14 @@ function EditStorePage() {
     endTime: '17:30',
   })
   const [showPickupTimePicker, setShowPickupTimePicker] = useState(false)
+  const [errors, setErrors] = useState({
+    storeName: '',
+    address: '',
+    businessNumber: '',
+    contactNumber: '',
+    description: '',
+    pickupTime: ''
+  })
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -151,19 +159,66 @@ function EditStorePage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    
+    // 에러 초기화
+    const newErrors = {}
+    let hasError = false
 
     try {
+      // 사업자 번호 유효성 검사
+      const businessNumberRegex = /^\d{3}-\d{2}-\d{5}$/
+      if (formData.businessNumber && !businessNumberRegex.test(formData.businessNumber)) {
+        newErrors.businessNumber = '사업자 번호는 XXX-XX-XXXXX 형식으로 입력해주세요.'
+        hasError = true
+      }
+
+      // 연락처 유효성 검사
+      const phoneRegex = /^(0\d{1,2}-\d{3,4}-\d{4})$/
+      if (formData.contactNumber && !phoneRegex.test(formData.contactNumber)) {
+        newErrors.contactNumber = '연락처는 0XX-XXXX-XXXX 또는 0X-XXXX-XXXX 형식으로 입력해주세요.'
+        hasError = true
+      }
+
+      // 가게 소개 길이 검사
+      if (formData.description && formData.description.length > 1000) {
+        newErrors.description = '가게 소개는 1000자 이하로 입력해주세요.'
+        hasError = true
+      }
+
+      // 필수 입력 필드 검사
+      if (!formData.storeName.trim()) {
+        newErrors.storeName = '가게명은 필수 입력 항목입니다.'
+        hasError = true
+      } else if (formData.storeName.length > 255) {
+        newErrors.storeName = '가게명은 255자 이하로 입력해주세요.'
+        hasError = true
+      }
+
+      if (!formData.address.trim()) {
+        newErrors.address = '주소는 필수 입력 항목입니다.'
+        hasError = true
+      } else if (formData.address.length < 5 || formData.address.length > 255) {
+        newErrors.address = '주소는 5-255자 사이로 입력해주세요.'
+        hasError = true
+      }
+
       // 시간 유효성 검사
       const startTime = new Date(`2000-01-01T${pickupTimeRange.startTime}`)
       const endTime = new Date(`2000-01-01T${pickupTimeRange.endTime}`)
       
       if (startTime >= endTime) {
-        setError('픽업 시작 시간은 종료 시간보다 빨라야 합니다.')
+        newErrors.pickupTime = '픽업 시작 시간은 종료 시간보다 빨라야 합니다.'
+        hasError = true
+      }
+
+      // 에러가 있으면 제출하지 않음
+      if (hasError) {
+        setErrors(newErrors)
         setLoading(false)
         return
       }
-      
-      // 수정된 데이터를 서버에 전송
+
+      // 모든 유효성 검사를 통과한 경우 데이터 제출
       const dataToSubmit = {
         ...formData,
         storeName: formData.storeName || store.storeName,
@@ -179,23 +234,16 @@ function EditStorePage() {
         googlePlaceId: store.googlePlaceId || '',
       }
 
-      // 디버깅을 위해 전송 데이터 로깅
-      console.log('수정 요청 데이터:', dataToSubmit)
-      console.log('이미지 파일 존재 여부:', storeImageFile ? true : false)
-      console.log('store.pickupTime:', store.pickupTime)
-      
-      // 이미지 파일이 있는 경우 업로드 처리
       const response = await updateStore(store.id, dataToSubmit, storeImageFile)
       if (response.success) {
-        showToastMessage('가게 정보가 성공적으로 수정되었습니다.')
-        setTimeout(() => {
-          navigate('/business')
-        }, 1500)
+        navigate('/business')
       } else {
         setError(response.message || '가게 정보 수정에 실패했습니다.')
+        showToastMessage(response.message || '가게 정보 수정에 실패했습니다.')
       }
     } catch (error) {
       setError('가게 정보 수정 중 오류가 발생했습니다.')
+      showToastMessage('가게 정보 수정 중 오류가 발생했습니다.')
       console.error('가게 정보 수정 중 오류:', error)
     } finally {
       setLoading(false)
@@ -409,9 +457,14 @@ function EditStorePage() {
                     name="storeName"
                     value={formData.storeName}
                     onChange={handleInputChange}
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent ${
+                      errors.storeName ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder={store?.storeName || '정보 없음'}
                   />
+                  {errors.storeName && (
+                    <p className="mt-1 text-sm text-red-500">{errors.storeName}</p>
+                  )}
                 </div>
 
                 {/* 주소 */}
@@ -424,9 +477,14 @@ function EditStorePage() {
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent ${
+                      errors.address ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder={store?.address || '정보 없음'}
                   />
+                  {errors.address && (
+                    <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                  )}
                 </div>
 
                 {/* 사업자번호 */}
@@ -439,9 +497,14 @@ function EditStorePage() {
                     name="businessNumber"
                     value={formData.businessNumber}
                     onChange={handleInputChange}
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent ${
+                      errors.businessNumber ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder={store?.businessNumber || '정보 없음'}
                   />
+                  {errors.businessNumber && (
+                    <p className="mt-1 text-sm text-red-500">{errors.businessNumber}</p>
+                  )}
                 </div>
 
                 {/* 운영시간 */}
@@ -483,7 +546,7 @@ function EditStorePage() {
                     />
                   </div>
                   <p className="text-sm text-gray-500">
-                    현재 설정: {formData.pickupTime || '미설정'}
+                    현재 설정: {store?.pickupTime || '미설정'}
                   </p>
                 </div>
 
@@ -512,9 +575,14 @@ function EditStorePage() {
                     name="contactNumber"
                     value={formData.contactNumber}
                     onChange={handleInputChange}
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent ${
+                      errors.contactNumber ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="연락처를 입력해주세요"
                   />
+                  {errors.contactNumber && (
+                    <p className="mt-1 text-sm text-red-500">{errors.contactNumber}</p>
+                  )}
                 </div>
               </div>
             </div>

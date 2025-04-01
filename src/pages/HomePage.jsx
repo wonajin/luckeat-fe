@@ -54,12 +54,12 @@ function HomePage() {
   ]
 
   const categoryOptions = [
-    { id: 'korean', name: '한식', icon: '🍚' },
-    { id: 'japanese', name: '일식', icon: '🍱' },
-    { id: 'chinese', name: '중식', icon: '🥢' },
-    { id: 'western', name: '양식', icon: '🍝' },
-    { id: 'cafe', name: '카페/베이커리', icon: '🍞' },
-    { id: 'salad', name: '샐러드/청과', icon: '🥗' },
+    { id: 1, name: '한식', icon: '🍚' },
+    { id: 2, name: '일식', icon: '🍱' },
+    { id: 3, name: '중식', icon: '🥢' },
+    { id: 4, name: '양식', icon: '🍝' },
+    { id: 5, name: '카페/베이커리', icon: '🍞' },
+    { id: 6, name: '샐러드/청과', icon: '🥗' },
   ]
 
   const nextSlide = useCallback(() => {
@@ -100,26 +100,28 @@ function HomePage() {
       try {
         setLoading(true)
 
-        const params = {}
+        let url = 'https://dxa66rf338pjr.cloudfront.net/api/v1/stores'
+        let queryParams = new URLSearchParams()
+
+        // 할인 중인 가게만 보기 필터
         if (showDiscountOnly) {
-          params.isDiscountOpen = true
+          queryParams.append('isDiscountOpen', 'true')
         }
 
-        if (categoryFilter) {
-          params.category = categoryFilter
+        // 쿼리 파라미터가 있으면 URL에 추가
+        if (queryParams.toString()) {
+          url += `?${queryParams.toString()}`
         }
 
         try {
-          const storesData = await getStores(params)
-          console.log('가게 데이터 API 응답:', storesData)
+          const response = await fetch(url)
+          const data = await response.json()
+          console.log('가게 데이터 API 응답:', data)
 
-          const storesList = Array.isArray(storesData)
-            ? storesData
-            : storesData?.data || []
-          console.log('처리된 가게 목록:', storesList)
-
-          setStores(storesList)
-          setFilteredStores(storesList)
+          if (data) {
+            setStores(data)
+            setFilteredStores(data)
+          }
         } catch (storeError) {
           console.error('가게 데이터 로딩 중 오류:', storeError)
           setStores([])
@@ -136,7 +138,7 @@ function HomePage() {
     }
 
     fetchData()
-  }, [showDiscountOnly, categoryFilter])
+  }, [showDiscountOnly])
 
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
 
@@ -198,8 +200,8 @@ function HomePage() {
     if (!stores || stores.length === 0) return
 
     let result = [...stores]
-    console.log('필터링 전 가게 수:', result.length)
 
+    // 검색어 필터링
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter((store) => {
@@ -208,13 +210,17 @@ function HomePage() {
       })
     }
 
+    // 카테고리 필터링
     if (categoryFilter) {
-      result = result.filter((store) => {
-        const storeCategory = (store.category || '').toLowerCase()
-        return storeCategory === categoryFilter.toLowerCase()
-      })
+      const category = categoryOptions.find(
+        (opt) => opt.name === categoryFilter,
+      )
+      if (category) {
+        result = result.filter((store) => store.categoryId === category.id)
+      }
     }
 
+    // 정렬 옵션 적용
     if (sortOption === '가까운 순') {
       result.sort((a, b) => {
         const distanceA =
@@ -228,33 +234,20 @@ function HomePage() {
         return distanceA - distanceB
       })
     } else if (sortOption === '리뷰 많은 순') {
-      result.sort((a, b) => {
-        const reviewsA = a.reviewCount || 0
-        const reviewsB = b.reviewCount || 0
-        return reviewsB - reviewsA
-      })
+      result.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
     } else if (sortOption === '공유 많은 순') {
-      result.sort((a, b) => {
-        const shareCountA = a.shareCount || 0
-        const shareCountB = b.shareCount || 0
-        return shareCountB - shareCountA
-      })
+      result.sort((a, b) => (b.shareCount || 0) - (a.shareCount || 0))
     } else if (sortOption === '별점 높은 순') {
       result.sort((a, b) => {
         const ratingA = a.avgRatingGoogle || 0
         const ratingB = b.avgRatingGoogle || 0
-
         if (ratingB === ratingA) {
-          const reviewsA = a.reviewCount || 0
-          const reviewsB = b.reviewCount || 0
-          return reviewsB - reviewsA
+          return (b.reviewCount || 0) - (a.reviewCount || 0)
         }
-
         return ratingB - ratingA
       })
     }
 
-    console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
   }, [searchQuery, sortOption, stores, categoryFilter])
 

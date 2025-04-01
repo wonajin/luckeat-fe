@@ -286,13 +286,13 @@ function BusinessPage() {
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
                       if (storeData) {
-                        console.log('상품 정보 수정 이동:', storeData.id);
+                        console.log('럭키트 관리 이동:', storeData.id);
                         navigate(`/store/${storeData.id}/products`);
                       }
                     }}
                     disabled={!storeData}
                   >
-                    <span>상품 정보 수정</span>
+                    <span>럭키트 관리</span>
                     <span className="text-gray-400">→</span>
                   </button>
                 </div>

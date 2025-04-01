@@ -141,7 +141,7 @@ const ProductManagement = () => {
     const newErrors = {}
 
     if (!formData.productName.trim()) {
-      newErrors.productName = '상품명을 입력하세요'
+      newErrors.productName = '패키지명을 입력하세요'
       isValid = false
     }
 
@@ -156,7 +156,7 @@ const ProductManagement = () => {
     }
 
     if (!formData.description) {
-      newErrors.description = '상품 설명을 입력하세요'
+      newErrors.description = '패키지 설명을 입력하세요'
       isValid = false
     }
 
@@ -203,11 +203,11 @@ const ProductManagement = () => {
         }
         
         await updateProduct(storeId, currentProduct.productId, updatedFormData, productImage)
-        showToast('상품이 수정되었습니다.')
+        showToast('럭키트가 수정되었습니다.')
       } else {
         // 이미 상품이 존재하는 경우 추가 불가
         if (products.length > 0) {
-          showToast('상품은 한 개만 등록 가능합니다. 기존 상품을 수정하세요.', 'error')
+          showToast('럭키트는 한 개만 등록 가능합니다. 기존 럭키트를 수정하세요.', 'error')
           return
         }
         
@@ -223,14 +223,14 @@ const ProductManagement = () => {
         }
         
         await createProduct(storeId, productRequestData, productImage)
-        showToast('상품이 등록되었습니다.')
+        showToast('럭키트가 등록되었습니다.')
       }
       
       setIsModalVisible(false) // 모달 닫기
       loadProducts() // 상품 목록 새로고침
     } catch (error) {
-      console.error('상품 저장 실패:', error)
-      showToast('상품 저장에 실패했습니다.', 'error')
+      console.error('럭키트 저장 실패:', error)
+      showToast('럭키트 저장에 실패했습니다.', 'error')
     }
   }
 
@@ -274,12 +274,12 @@ const ProductManagement = () => {
       if (!currentProduct) return
       
       await deleteProduct(storeId, currentProduct.productId)
-      showToast('상품이 삭제되었습니다.')
+      showToast('럭키트가 삭제되었습니다.')
       setConfirmModalVisible(false)
       loadProducts() // 상품 목록 새로고침
     } catch (error) {
-      console.error('상품 삭제 실패:', error)
-      showToast('상품 삭제에 실패했습니다.', 'error')
+      console.error('럭키트 삭제 실패:', error)
+      showToast('럭키트 삭제에 실패했습니다.', 'error')
     }
   }
 
@@ -289,17 +289,28 @@ const ProductManagement = () => {
       const newStatus = !product.isActive
       await updateProductStatus(storeId, product.productId, newStatus)
       
-      showToast(`상품이 ${newStatus ? '활성화' : '비활성화'} 되었습니다.`)
+      showToast(`럭키트가 ${newStatus ? '활성화' : '비활성화'} 되었습니다.`)
       loadProducts() // 상품 목록 새로고침
     } catch (error) {
-      console.error('상품 상태 변경 실패:', error)
-      showToast('상품 상태 변경에 실패했습니다.', 'error')
+      console.error('럭키트 상태 변경 실패:', error)
+      showToast('럭키트 상태 변경에 실패했습니다.', 'error')
     }
   }
   
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold text-center mb-6">상품 관리</h1>
+      <h1 className="text-2xl font-bold text-center mb-6">럭키트 관리</h1>
+      
+      {/* 럭키트 설명 추가 */}
+      <div className="mb-6 bg-[#FFF8E8] p-4 rounded-lg border border-[#F7B32B] text-sm">
+        <h3 className="font-bold text-[#F7B32B] mb-2">💡 럭키트란?</h3>
+        <p className="text-gray-700 mb-2">
+          하루 영업이 끝나고 남은 음식들을 랜덤으로 한 봉투에 담아 할인된 가격에 판매하는 상품입니다.
+        </p>
+        <p className="text-gray-700 font-medium">
+          ⚠️ 럭키트는 한 가게당 하나만 등록할 수 있습니다.
+        </p>
+      </div>
       
       {loading ? (
         <div className="flex justify-center items-center h-32">
@@ -318,12 +329,12 @@ const ProductManagement = () => {
           
           {products.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-6 text-center">
-              <p className="text-gray-500 mb-4">등록된 상품이 없습니다.</p>
+              <p className="text-gray-500 mb-4">등록된 럭키트가 없습니다.</p>
               <button
                 onClick={openAddModal}
                 className="px-4 py-2 bg-[#F7B32B] hover:bg-[#E09D18] text-white font-medium rounded-lg transition-colors"
               >
-                상품 등록하기
+                럭키트 등록하기
               </button>
             </div>
           ) : (
@@ -335,17 +346,13 @@ const ProductManagement = () => {
                 >
                   <div className="p-4">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex items-center">
+                        <div className="bg-[#F7B32B] text-white text-xs font-medium px-2 py-1 rounded mr-2">
+                          럭키트
+                        </div>
                         <h3 className="font-bold text-lg text-gray-800">
                           {product.productName}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {product.isActive ? (
-                            <span className="text-green-600">활성화됨</span>
-                          ) : (
-                            <span className="text-red-600">비활성화됨</span>
-                          )}
-                        </p>
                       </div>
                       <div>
                         <span className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
@@ -353,6 +360,14 @@ const ProductManagement = () => {
                         </span>
                       </div>
                     </div>
+                    
+                    <p className="text-sm text-gray-500 mt-1">
+                      {product.isActive ? (
+                        <span className="text-green-600">활성화됨</span>
+                      ) : (
+                        <span className="text-red-600">비활성화됨</span>
+                      )}
+                    </p>
                     
                     <div className="mt-4 flex flex-col sm:flex-row sm:items-end justify-between">
                       <div>
@@ -362,6 +377,9 @@ const ProductManagement = () => {
                           </span>
                           <span className="ml-2 text-sm text-gray-500 line-through">
                             {product.originalPrice.toLocaleString()}원
+                          </span>
+                          <span className="ml-2 text-xs text-blue-600">
+                            {Math.round((1 - product.discountedPrice / product.originalPrice) * 100)}% 할인
                           </span>
                         </div>
                         <p className="text-sm text-gray-700 mt-2 line-clamp-2">
@@ -426,7 +444,7 @@ const ProductManagement = () => {
           <div className="relative bg-white rounded-lg w-full max-w-md mx-auto">
             <div className="p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">
-                {editMode ? '상품 수정' : '신규 상품 등록'}
+                {editMode ? '럭키트 수정' : '럭키트 등록'}
               </h3>
               
               <form onSubmit={handleSubmit}>
@@ -441,7 +459,7 @@ const ProductManagement = () => {
                     value={formData.productName}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="상품명을 입력하세요"
+                    placeholder="럭키트 이름을 입력하세요"
                   />
                   {errors.productName && (
                     <p className="text-red-500 text-xs mt-1">{errors.productName}</p>
@@ -451,7 +469,7 @@ const ProductManagement = () => {
                 {/* 이미지 */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    상품 이미지
+                    럭키트 이미지
                   </label>
                   <div
                     className="relative h-40 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer mb-1"
@@ -460,7 +478,7 @@ const ProductManagement = () => {
                     {productImageUrl ? (
                       <img
                         src={productImageUrl}
-                        alt="상품 이미지"
+                        alt="럭키트 이미지"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -581,7 +599,7 @@ const ProductManagement = () => {
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded-md"
                     rows="3"
-                    placeholder="상품 설명을 입력하세요"
+                    placeholder="럭키트에 포함될 수 있는 음식들을 설명해주세요"
                   ></textarea>
                   {errors.description && (
                     <p className="text-red-500 text-xs mt-1">{errors.description}</p>
@@ -614,9 +632,9 @@ const ProductManagement = () => {
       {confirmModalVisible && (
         <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg w-full max-w-sm mx-auto p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">상품 삭제</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">럭키트 삭제</h3>
             <p className="text-sm text-gray-500 mb-4">
-              정말로 이 상품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              정말로 이 럭키트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </p>
             <div className="flex justify-end space-x-3">
               <button

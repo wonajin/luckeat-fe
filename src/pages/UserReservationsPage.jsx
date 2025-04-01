@@ -306,7 +306,7 @@ const UserReservationsPage = () => {
         {/* 상단 정보 영역 */}
         <div className="bg-white p-4 shadow-sm">
           <h1 className="text-xl font-bold text-gray-800 mb-2">
-            나의 예약 목록
+            나의 예약
           </h1>
           <p className="text-sm text-gray-600">
             모든 예약 내역을 확인하고 관리할 수 있습니다.

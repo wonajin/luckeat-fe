@@ -313,7 +313,7 @@ function BusinessPage() {
                     onClick={() => {
                       if (storeData) {
                         console.log('가게 예약 리스트 이동:', storeData.id);
-                        navigate(`/store/${storeData.id}/reservations`);
+                        navigate(`/store/${storeData.id}/reservation`);
                       }
                     }}
                     disabled={!storeData}

@@ -10,10 +10,12 @@ import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 import { API_DIRECT_URL } from '../config/apiConfig'
 import { toast } from 'react-hot-toast'
+import { useAuth } from '../context/AuthContext'
 
 function StoreDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { isLoggedIn, user } = useAuth()
   const [activeTab, setActiveTab] = useState('map')
   const [store, setStore] = useState(null)
   const [showPhonePopup, setShowPhonePopup] = useState(false)
@@ -40,6 +42,7 @@ function StoreDetailPage() {
   const [reservationLoading, setReservationLoading] = useState(false) // 예약 진행 상태 추가
   const [showSuccessModal, setShowSuccessModal] = useState(false) // 성공 모달 상태 추가
   const [reservationResult, setReservationResult] = useState(null) // 예약 결과 정보 저장
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   // Google Maps 이미지 URL인지 확인하는 함수
   const isGoogleMapsImage = (url) => {
@@ -395,6 +398,21 @@ function StoreDetailPage() {
     setShowSuccessModal(false)
   }
 
+  // 예약하기 버튼 클릭 핸들러
+  const handleReservationClick = () => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true)
+      return
+    }
+    setShowPhonePopup(true)
+  }
+
+  // 로그인 페이지로 이동
+  const handleLoginClick = () => {
+    navigate('/login')
+    setShowLoginModal(false)
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col h-full items-center justify-center">
@@ -615,6 +633,12 @@ function StoreDetailPage() {
                   </p>
                 </div>
 
+                <div className="flex items-center mb-3">
+                  <span className="text-sm text-gray-600">
+                    남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span>
+                  </span>
+                </div>
+
                 <div className="flex">
                   <div className="flex-1">
                     <div className="flex items-center">
@@ -652,7 +676,7 @@ function StoreDetailPage() {
 
                 <button
                   className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg mt-4"
-                  onClick={() => setShowPhonePopup(true)}
+                  onClick={handleReservationClick}
                 >
                   럭키트 예약하기
                 </button>
@@ -1043,6 +1067,57 @@ function StoreDetailPage() {
                 onClick={() => setShowSuccessModal(false)}
               >
                 계속 둘러보기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 로그인 필요 모달 */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">로그인 필요</h3>
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="text-center mb-4">
+              <p className="text-gray-600">
+                예약하기는 로그인이 필요한 서비스입니다.
+                <br />
+                로그인하시겠습니까?
+              </p>
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <button
+                className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg"
+                onClick={handleLoginClick}
+              >
+                로그인하기
+              </button>
+              <button
+                className="w-full py-2 text-gray-600 font-medium"
+                onClick={() => setShowLoginModal(false)}
+              >
+                취소
               </button>
             </div>
           </div>

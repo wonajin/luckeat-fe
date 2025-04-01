@@ -500,7 +500,7 @@ function MapPage() {
       <div
         ref={storeListRef}
         className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg overflow-y-auto z-10 transition-all duration-300 ${
-          storeListExpanded ? 'h-2/5' : 'h-1/4'
+          storeListExpanded ? 'h-[50%]' : 'h-1/4'
         }`}
         onScroll={handleStoreListScroll}
       >
@@ -630,7 +630,7 @@ function MapPage() {
       {/* 검색 영역 */}
       <div className="px-4 py-2 border-b">
         <SearchBar
-          placeholder="가게 또는 메뉴 검색"
+          placeholder="가게 이름, 메뉴 검색"
           initialValue={searchQuery}
           onSearch={handleSearch}
         />

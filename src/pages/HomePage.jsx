@@ -212,7 +212,9 @@ function HomePage() {
 
     // 카테고리 필터링
     if (categoryFilter) {
-      const category = categoryOptions.find((opt) => opt.name === categoryFilter)
+      const category = categoryOptions.find(
+        (opt) => opt.name === categoryFilter,
+      )
       if (category) {
         result = result.filter((store) => store.categoryId === category.id)
       }
@@ -221,12 +223,14 @@ function HomePage() {
     // 정렬 옵션 적용
     if (sortOption === '가까운 순') {
       result.sort((a, b) => {
-        const distanceA = typeof a.distance === 'string' 
-          ? parseFloat(a.distance.replace(/[^0-9.]/g, '')) 
-          : parseFloat(a.distance || 0)
-        const distanceB = typeof b.distance === 'string' 
-          ? parseFloat(b.distance.replace(/[^0-9.]/g, '')) 
-          : parseFloat(b.distance || 0)
+        const distanceA =
+          typeof a.distance === 'string'
+            ? parseFloat(a.distance.replace(/[^0-9.]/g, ''))
+            : parseFloat(a.distance || 0)
+        const distanceB =
+          typeof b.distance === 'string'
+            ? parseFloat(b.distance.replace(/[^0-9.]/g, ''))
+            : parseFloat(b.distance || 0)
         return distanceA - distanceB
       })
     } else if (sortOption === '리뷰 많은 순') {

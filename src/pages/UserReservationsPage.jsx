@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
-import { formatDate, formatTime } from '../utils/dateUtils'
+import { formatDateTime } from '../utils/dateUtils'
 import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
 import { getUserReservations, cancelReservation } from '../api/reservationApi'
 
@@ -271,8 +271,8 @@ const UserReservationsPage = () => {
                         <p className="text-sm text-gray-500 mt-1">
                           {reservation.productName} {reservation.quantity}개
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {new Date(reservation.createdAt).toLocaleDateString('ko-KR')}
+                        <p className="text-sm text-gray-500">
+                          {formatDateTime(reservation.createdAt)}
                         </p>
                         {reservation.isZeroWaste && (
                           <p className="text-xs text-green-600 font-medium mt-1">
@@ -296,15 +296,15 @@ const UserReservationsPage = () => {
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">예약 날짜:</span>{' '}
-                            <span className="text-gray-600">{formatDate(reservation.reservationDate)}</span>
+                            <span className="text-gray-600">{formatDateTime(reservation.reservationDate)}</span>
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">예약 시간:</span>{' '}
-                            <span className="text-gray-600">{formatTime(reservation.reservationTime)}</span>
+                            <span className="text-gray-600">{formatDateTime(reservation.reservationTime)}</span>
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">예약 생성:</span>{' '}
-                            <span className="text-gray-600">{new Date(reservation.createdAt).toLocaleDateString('ko-KR')}</span>
+                            <span className="text-gray-600">{formatDateTime(reservation.createdAt)}</span>
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">포장 방법:</span>{' '}

@@ -292,13 +292,13 @@ function EditProfilePage() {
         <h1 className="text-2xl font-bold text-center mb-6">회원정보 수정</h1>
 
         {/* 이메일 표시 (수정 불가) */}
-        <div className="mb-6">
+        <div className="mb-2">
           <label className="block text-sm font-medium mb-1">이메일</label>
           <input
             type="email"
             value={user?.email || ''}
             disabled
-            className="w-full p-3 bg-gray-300 rounded-lg border border-gray-300 text-gray-500 font-medium"
+            className="w-full p-2 bg-gray-300 rounded-lg border border-gray-300 text-gray-500 font-medium"
           />
           <p className="text-gray-500 text-xs mt-1">
             * 이메일은 수정할 수 없습니다.
@@ -312,7 +312,7 @@ function EditProfilePage() {
             type="text"
             value={nickname}
             onChange={handleNicknameChange}
-            className="w-full p-3 bg-gray-100 rounded-lg border border-gray-300"
+            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300"
           />
           {isNicknameSame && (
             <p className="text-gray-500 text-sm mt-1">
@@ -349,7 +349,7 @@ function EditProfilePage() {
             value={currentPassword}
             onChange={handleCurrentPasswordChange}
             placeholder="현재 비밀번호를 입력해주세요."
-            className="w-full p-3 bg-gray-100 rounded-lg border border-gray-300 mb-2"
+            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300 mb-2"
           />
           {currentPasswordError && (
             <p className="text-red-500 text-sm mb-2">
@@ -363,7 +363,7 @@ function EditProfilePage() {
             value={newPassword}
             onChange={handlePasswordChange}
             placeholder="새로운 비밀번호를 입력해주세요."
-            className="w-full p-3 bg-gray-100 rounded-lg border border-gray-300 mb-2"
+            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300 mb-2"
           />
           {passwordError && (
             <p className="text-red-500 text-sm mb-2">* {passwordError}</p>
@@ -377,7 +377,7 @@ function EditProfilePage() {
             value={confirmPassword}
             onChange={handleConfirmPasswordChange}
             placeholder="비밀번호를 다시 한번 입력해주세요."
-            className="w-full p-3 bg-gray-100 rounded-lg border border-gray-300"
+            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300"
           />
           {passwordsNotMatch && (
             <p className="text-red-500 text-sm mt-1">

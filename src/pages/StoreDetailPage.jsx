@@ -4,6 +4,7 @@ import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
 import { Map, MapMarker } from 'react-kakao-maps-sdk' //카카오맵 추가
 import { getStoreById, getProductById } from '../api/storeApi'
+import { createReservation } from '../api/reservationApi' // 예약 API 추가
 import defaultImage from '../assets/images/luckeat-default.png'
 import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import ScrollTopButton from '../components/common/ScrollTopButton'
@@ -34,6 +35,11 @@ function StoreDetailPage() {
   const [productInfo, setProductInfo] = useState(null)
   const [productLoading, setProductLoading] = useState(false)
   const [productError, setProductError] = useState(null)
+  const [quantity, setQuantity] = useState(1) // 수량 상태 추가
+  const [isZerowaste, setIsZerowaste] = useState(false) // 제로웨이스트 상태 추가
+  const [reservationLoading, setReservationLoading] = useState(false) // 예약 진행 상태 추가
+  const [showSuccessModal, setShowSuccessModal] = useState(false) // 성공 모달 상태 추가
+  const [reservationResult, setReservationResult] = useState(null) // 예약 결과 정보 저장
 
   // Google Maps 이미지 URL인지 확인하는 함수
   const isGoogleMapsImage = (url) => {
@@ -315,38 +321,78 @@ function StoreDetailPage() {
     }
   }
 
-  // 예약하기 버튼 핸들러
-  const handleReservation = () => {
-    // 판매 중인 상품이 없는 경우
-    if (openProducts.length === 0) {
-      toast.error('현재 예약 가능한 럭키트가 없습니다.')
-      return
-    }
-
-    // 판매 중인 상품이 하나뿐인 경우 바로 예약 페이지로 이동
-    if (openProducts.length === 1) {
-      navigateToReservation(openProducts[0])
-      return
-    }
-
-    // 여러 상품이 있는 경우 모달 표시
-    setShowReservationModal(true)
+  // 수량 증가 함수
+  const increaseQuantity = () => {
+    setQuantity((prev) => prev + 1)
   }
 
-  // 예약 페이지로 이동하는 함수
-  const navigateToReservation = (product) => {
-    navigate(`/store/${id}/reservation`, {
-      state: {
-        storeId: id,
-        storeName: store.storeName,
-        productId: product.id,
-        productName: product.productName,
-        productPrice: product.discountedPrice,
-        productImage: product.productImg
-          ? `https://dxflvza4ey8e9.cloudfront.net/product/${product.productImg}`
-          : bakerDefaultImage,
-      },
-    })
+  // 수량 감소 함수
+  const decreaseQuantity = () => {
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1))
+  }
+
+  // 제로웨이스트 토글 함수
+  const toggleZerowaste = () => {
+    setIsZerowaste((prev) => !prev)
+  }
+
+  // 예약 처리 함수
+  const handleMakeReservation = async () => {
+    // 상품 ID가 없으면 예약 불가
+    if (!productInfo?.id) {
+      toast.error('예약할 상품 정보가 없습니다.')
+      return
+    }
+
+    try {
+      setReservationLoading(true)
+      
+      // 예약 데이터 구성
+      const reservationData = {
+        productId: productInfo.id,
+        quantity: quantity,
+        isZerowaste: isZerowaste
+      }
+      
+      console.log('예약 요청 데이터:', reservationData)
+      
+      // 예약 API 호출
+      const result = await createReservation(id, reservationData)
+      
+      if (result.success) {
+        // 페이지 이동 대신 성공 모달 표시
+        toast.success('예약이 완료되었습니다!')
+        setShowPhonePopup(false)
+        
+        // 예약 결과 정보 저장
+        setReservationResult({
+          storeId: id,
+          storeName: store.storeName,
+          productId: productInfo.id,
+          productName: productInfo.productName,
+          productPrice: productInfo.discountedPrice,
+          quantity: quantity,
+          isZerowaste: isZerowaste,
+          reservationId: result.data.reservationId || 'success',
+        })
+        
+        // 성공 모달 표시
+        setShowSuccessModal(true)
+      } else {
+        toast.error(result.message || '예약에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('예약 처리 중 오류:', error)
+      toast.error('예약 처리 중 오류가 발생했습니다.')
+    } finally {
+      setReservationLoading(false)
+    }
+  }
+
+  // 예약 완료 후 마이페이지로 이동
+  const goToMyPage = () => {
+    navigate('/mypage')
+    setShowSuccessModal(false)
   }
 
   if (loading) {
@@ -652,38 +698,11 @@ function StoreDetailPage() {
             <p className="text-gray-600">
               <span className="block mb-1 font-bold">🏷️ 영업시간</span>
               <div className="mt-2 ml-2">
-                <table className="w-full text-sm">
-                  <tbody>
-                    <tr className="border-gray-100">
-                      <td className="py-1 pr-2 font-medium">월요일</td>
-                      <td className="py-1 text-red-500 font-medium">휴무일</td>
-                    </tr>
-                    <tr className="">
-                      <td className="py-1 pr-2 font-medium">화요일</td>
-                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
-                    </tr>
-                    <tr className="">
-                      <td className="py-1 pr-2 font-medium">수요일</td>
-                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
-                    </tr>
-                    <tr className="">
-                      <td className="py-1 pr-2 font-medium">목요일</td>
-                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
-                    </tr>
-                    <tr className="">
-                      <td className="py-1 pr-2 font-medium">금요일</td>
-                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
-                    </tr>
-                    <tr className="">
-                      <td className="py-1 pr-2 font-medium">토요일</td>
-                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
-                    </tr>
-                    <tr className="">
-                      <td className="py-1 pr-2 font-medium">일요일</td>
-                      <td className="py-1">오후 4:30 ~ 오전 1:00</td>
-                    </tr>
-                  </tbody>
-                </table>
+                {store.businessHours ? (
+                  <p className="py-1">{store.businessHours}</p>
+                ) : (
+                  <p className="py-1 text-gray-500">영업시간 정보가 없습니다.</p>
+                )}
               </div>
             </p>
 
@@ -853,15 +872,21 @@ function StoreDetailPage() {
             </div>
 
             <p className="text-center text-sm text-gray-600 mb-3">
-              이 가게의 픽업 가능 시간은 4:30 pm ~ 5:00 pm 입니다
+              이 가게의 픽업 가능 시간은 {store.pickupTime || '설정되지 않았습니다'}
             </p>
 
             <div className="flex items-center justify-center space-x-4 mb-3">
-              <button className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none">
+              <button 
+                className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none"
+                onClick={decreaseQuantity}
+              >
                 -
               </button>
-              <div className="text-xl font-bold">1</div>
-              <button className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none">
+              <div className="text-xl font-bold">{quantity}</div>
+              <button 
+                className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none"
+                onClick={increaseQuantity}
+              >
                 +
               </button>
             </div>
@@ -870,6 +895,8 @@ function StoreDetailPage() {
               <input
                 type="checkbox"
                 id="bring-container"
+                checked={isZerowaste}
+                onChange={toggleZerowaste}
                 className="w-4 h-4 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
               />
               <label
@@ -886,26 +913,10 @@ function StoreDetailPage() {
 
             <button
               className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg mb-2"
-              onClick={() => {
-                setShowPhonePopup(false)
-                if (openProducts.length > 0) {
-                  navigateToReservation(openProducts[0])
-                } else {
-                  // 더미 데이터를 사용하여 예약 페이지로 이동
-                  navigate(`/store/${id}/reservation`, {
-                    state: {
-                      storeId: id,
-                      storeName: store.storeName,
-                      productId: '1',
-                      productName: '소금빵 럭키트',
-                      productPrice: 6000,
-                      productImage: bakerDefaultImage,
-                    },
-                  })
-                }
-              }}
+              onClick={handleMakeReservation}
+              disabled={reservationLoading}
             >
-              픽업시간 확인했습니다
+              {reservationLoading ? '예약 처리 중...' : '픽업시간 확인했습니다'}
             </button>
 
             <button
@@ -962,6 +973,78 @@ function StoreDetailPage() {
             >
               닫기
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 성공 모달 */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">예약 완료</h3>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="text-center mb-4">
+              <div className="w-20 h-20 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-12 w-12 text-green-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h4 className="text-xl font-bold mb-2">예약이 완료되었습니다!</h4>
+              <p className="text-gray-600 mb-3">
+                {reservationResult?.storeName}에서 {reservationResult?.quantity}개의 럭키트가 예약되었습니다.
+              </p>
+              <p className="text-sm text-gray-500 mb-1">
+                {reservationResult?.isZerowaste && '제로웨이스트 지참 예정'}
+              </p>
+              <p className="text-sm text-gray-500">
+                픽업 시간: {store.pickupTime || '오후 4:30 ~ 5:00'}
+              </p>
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <button
+                className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg"
+                onClick={goToMyPage}
+              >
+                마이페이지로 이동
+              </button>
+              <button
+                className="w-full py-2 text-gray-600 font-medium"
+                onClick={() => setShowSuccessModal(false)}
+              >
+                계속 둘러보기
+              </button>
+            </div>
           </div>
         </div>
       )}

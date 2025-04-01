@@ -162,6 +162,7 @@ export const updateStore = async (storeId, storeData, storeImage) => {
       storeName: processedData.storeName,
       storeImg: processedData.storeImg,
       address: processedData.address,
+      categoryId: processedData.categoryId,
       website: processedData.website || '',
       storeUrl: processedData.storeUrl || '',
       permissionUrl: processedData.permissionUrl || '',

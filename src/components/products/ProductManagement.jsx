@@ -13,18 +13,14 @@ const ProductManagement = () => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [currentProduct, setCurrentProduct] = useState(null)
-  const [productImage, setProductImage] = useState(null)
-  const [productImageUrl, setProductImageUrl] = useState('')
   const [formData, setFormData] = useState({
     productName: '',
     originalPrice: '',
     discountedPrice: '',
     description: '',
-    expiryDate: '',
     stock: 1,
   })
   const [errors, setErrors] = useState({})
-  const fileInputRef = useRef(null)
   const [toast, setToast] = useState({ show: false, message: '', type: '' })
 
   // 상품 목록 로드
@@ -67,11 +63,8 @@ const ProductManagement = () => {
       originalPrice: product.originalPrice.toString(),
       discountedPrice: product.discountedPrice.toString(),
       description: product.description || '',
-      expiryDate: product.expiryDate ? product.expiryDate.split('T')[0] : '',
-      stock: product.stock || 1,
+      stock: product.productCount || 1,
     })
-    setProductImage(null)
-    setProductImageUrl(product.productImg || '')
     setEditMode(true)
     setIsModalVisible(true)
   }
@@ -84,11 +77,8 @@ const ProductManagement = () => {
       originalPrice: '',
       discountedPrice: '',
       description: '',
-      expiryDate: '',
       stock: 1,
     })
-    setProductImage(null)
-    setProductImageUrl('')
     setEditMode(false)
     setIsModalVisible(true)
   }
@@ -160,20 +150,6 @@ const ProductManagement = () => {
       isValid = false
     }
 
-    if (!formData.expiryDate) {
-      newErrors.expiryDate = '유효기간을 설정하세요'
-      isValid = false
-    } else {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const expiryDate = new Date(formData.expiryDate)
-      
-      if (expiryDate < today) {
-        newErrors.expiryDate = '유효기간은 오늘 이후로 설정해주세요'
-        isValid = false
-      }
-    }
-
     setErrors(newErrors)
     return isValid
   }
@@ -186,80 +162,41 @@ const ProductManagement = () => {
     
     try {
       if (editMode && currentProduct) {
-        // 상품 수정
         const updatedFormData = {
           ...formData,
           originalPrice: parseInt(formData.originalPrice),
           discountedPrice: parseInt(formData.discountedPrice),
           description: formData.description,
-          expiryDate: formData.expiryDate,
           stock: parseInt(formData.stock)
         }
         
-        if (!productImage && currentProduct.productImg) {
-          // 이미지가 선택되지 않았고 기존 이미지가 있는 경우
-          // 이미지 URL을 폼 데이터에 포함시켜 기존 이미지를 유지
-          updatedFormData.productImg = currentProduct.productImg
-        }
-        
-        await updateProduct(storeId, currentProduct.productId, updatedFormData, productImage)
+        await updateProduct(storeId, currentProduct.id, updatedFormData)
         showToast('럭키트가 수정되었습니다.')
       } else {
-        // 이미 상품이 존재하는 경우 추가 불가
         if (products.length > 0) {
           showToast('럭키트는 한 개만 등록 가능합니다. 기존 럭키트를 수정하세요.', 'error')
           return
         }
         
-        // 상품 등록 (API 요청 형식에 맞게 데이터 구성)
         const productRequestData = {
-          productId: 0, // 신규 상품 등록 시 0으로 설정
           productName: formData.productName,
           originalPrice: parseInt(formData.originalPrice),
           discountedPrice: parseInt(formData.discountedPrice),
           description: formData.description,
-          expiryDate: formData.expiryDate,
-          stock: parseInt(formData.stock)
+          stock: parseInt(formData.stock),
+          isOpen: true // 기본값 추가
         }
         
-        await createProduct(storeId, productRequestData, productImage)
+        await createProduct(storeId, productRequestData)
         showToast('럭키트가 등록되었습니다.')
       }
       
-      setIsModalVisible(false) // 모달 닫기
-      loadProducts() // 상품 목록 새로고침
+      setIsModalVisible(false)
+      loadProducts()
     } catch (error) {
       console.error('럭키트 저장 실패:', error)
       showToast('럭키트 저장에 실패했습니다.', 'error')
     }
-  }
-
-  // 이미지 변경 처리
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    // 이미지 유효성 검사
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    if (!validTypes.includes(file.type)) {
-      showToast('지원하지 않는 파일 형식입니다. JPG, PNG, WEBP 형식만 가능합니다.', 'error')
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('파일 크기는 5MB를 초과할 수 없습니다.', 'error')
-      return
-    }
-
-    // 이미지 파일 저장
-    setProductImage(file)
-    
-    // 이미지 미리보기 생성
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setProductImageUrl(reader.result)
-    }
-    reader.readAsDataURL(file)
   }
 
   // 삭제 확인 모달 표시
@@ -273,7 +210,7 @@ const ProductManagement = () => {
     try {
       if (!currentProduct) return
       
-      await deleteProduct(storeId, currentProduct.productId)
+      await deleteProduct(storeId, currentProduct.id)
       showToast('럭키트가 삭제되었습니다.')
       setConfirmModalVisible(false)
       loadProducts() // 상품 목록 새로고침
@@ -286,11 +223,20 @@ const ProductManagement = () => {
   // 상품 상태 토글 (활성화/비활성화)
   const toggleProductStatus = async (product) => {
     try {
-      const newStatus = !product.isActive
-      await updateProductStatus(storeId, product.productId, newStatus)
+      const newStatus = !product.isOpen
+      const response = await updateProductStatus(storeId, product.id, newStatus)
       
-      showToast(`럭키트가 ${newStatus ? '활성화' : '비활성화'} 되었습니다.`)
-      loadProducts() // 상품 목록 새로고침
+      // response가 직접 상품 데이터를 반환하므로 이를 사용하여 상태 업데이트
+      if (response) {
+        setProducts(prevProducts => 
+          prevProducts.map(p => 
+            p.id === product.id ? response : p
+          )
+        )
+        showToast(`럭키트가 ${response.isOpen ? '활성화' : '비활성화'} 되었습니다.`)
+      } else {
+        showToast('럭키트 상태 변경에 실패했습니다.', 'error')
+      }
     } catch (error) {
       console.error('럭키트 상태 변경 실패:', error)
       showToast('럭키트 상태 변경에 실패했습니다.', 'error')
@@ -342,12 +288,16 @@ const ProductManagement = () => {
               {products.map((product) => (
                 <div
                   key={product.productId}
-                  className="bg-white rounded-lg shadow-md overflow-hidden"
+                  className={`bg-white rounded-lg shadow-md overflow-hidden ${
+                    !product.isOpen ? 'opacity-60' : ''
+                  }`}
                 >
                   <div className="p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center">
-                        <div className="bg-[#F7B32B] text-white text-xs font-medium px-2 py-1 rounded mr-2">
+                        <div className={`text-white text-xs font-medium px-2 py-1 rounded mr-2 ${
+                          product.isOpen ? 'bg-[#F7B32B]' : 'bg-gray-400'
+                        }`}>
                           럭키트
                         </div>
                         <h3 className="font-bold text-lg text-gray-800">
@@ -355,84 +305,60 @@ const ProductManagement = () => {
                         </h3>
                       </div>
                       <div>
-                        <span className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                          재고: {product.stock || 1}개
+                        <span className={`inline-block text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                          product.isOpen 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          재고: {product.productCount || 1}개
                         </span>
                       </div>
                     </div>
                     
-                    <p className="text-sm text-gray-500 mt-1">
-                      {product.isActive ? (
-                        <span className="text-green-600">활성화됨</span>
-                      ) : (
-                        <span className="text-red-600">비활성화됨</span>
-                      )}
-                    </p>
-                    
-                    <div className="mt-4 flex flex-col sm:flex-row sm:items-end justify-between">
-                      <div>
-                        <div className="flex items-baseline">
-                          <span className="text-lg font-bold text-red-600">
-                            {product.discountedPrice.toLocaleString()}원
-                          </span>
-                          <span className="ml-2 text-sm text-gray-500 line-through">
-                            {product.originalPrice.toLocaleString()}원
-                          </span>
-                          <span className="ml-2 text-xs text-blue-600">
-                            {Math.round((1 - product.discountedPrice / product.originalPrice) * 100)}% 할인
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-700 mt-2 line-clamp-2">
-                          {product.description}
-                        </p>
+                    <div className="mt-4">
+                      <div className="flex items-baseline">
+                        <span className="text-lg font-bold text-red-600">
+                          {product.discountedPrice.toLocaleString()}원
+                        </span>
+                        <span className="ml-2 text-sm text-gray-500 line-through">
+                          {product.originalPrice.toLocaleString()}원
+                        </span>
+                        <span className="ml-2 text-xs text-blue-600">
+                          {Math.round((1 - product.discountedPrice / product.originalPrice) * 100)}% 할인
+                        </span>
                       </div>
-                      <div className="flex mt-4 sm:mt-0 space-x-2">
-                        <button
-                          onClick={() => toggleProductStatus(product)}
-                          className={`text-xs px-3 py-1 rounded ${
-                            product.isActive
-                              ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                              : 'bg-green-100 text-green-600 hover:bg-green-200'
-                          }`}
-                        >
-                          {product.isActive ? '비활성화' : '활성화'}
-                        </button>
-                        <button
-                          onClick={() => openEditModal(product)}
-                          className="text-xs px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded"
-                        >
-                          수정
-                        </button>
-                        <button
-                          onClick={() => openDeleteConfirm(product)}
-                          className="text-xs px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3">
-                      <p className="text-xs text-gray-500">
-                        유효기간: {new Date(product.expiryDate).toLocaleDateString()}
+                      <p className="text-sm text-gray-700 mt-2">
+                        {product.description}
                       </p>
+                    </div>
+
+                    <div className="flex justify-end space-x-2 mt-4">
+                      <button
+                        onClick={() => toggleProductStatus(product)}
+                        className={`text-xs px-3 py-1 rounded ${
+                          product.isOpen
+                            ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                            : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                        }`}
+                      >
+                        {product.isOpen ? '활성화' : '비활성화'}
+                      </button>
+                      <button
+                        onClick={() => openEditModal(product)}
+                        className="text-xs px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded"
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => openDeleteConfirm(product)}
+                        className="text-xs px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded"
+                      >
+                        삭제
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-          
-          {products.length === 0 && (
-            <div className="fixed bottom-24 right-4">
-              <button
-                onClick={openAddModal}
-                className="w-14 h-14 rounded-full bg-[#F7B32B] hover:bg-[#E09D18] text-white shadow-lg flex items-center justify-center transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
             </div>
           )}
         </>
@@ -465,43 +391,7 @@ const ProductManagement = () => {
                     <p className="text-red-500 text-xs mt-1">{errors.productName}</p>
                   )}
                 </div>
-                
-                {/* 이미지 */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    럭키트 이미지
-                  </label>
-                  <div
-                    className="relative h-40 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer mb-1"
-                    onClick={() => fileInputRef.current.click()}
-                  >
-                    {productImageUrl ? (
-                      <img
-                        src={productImageUrl}
-                        alt="럭키트 이미지"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-gray-500 text-sm">이미지를 선택하세요</div>
-                    )}
-                    
-                    <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-white text-sm font-medium">
-                        이미지 선택
-                      </span>
-                    </div>
-                  </div>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                  <p className="text-xs text-gray-500">
-                    JPG, PNG, WEBP 형식만 가능 (최대 5MB)
-                  </p>
-                </div>
+                  
                 
                 {/* 가격 정보 */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
@@ -545,49 +435,35 @@ const ProductManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     재고 수량
                   </label>
-                  <div className="flex items-center">
-                    <button
-                      type="button"
-                      onClick={decreaseStock}
-                      className="p-2 bg-gray-200 rounded-l-md"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="text"
-                      name="stock"
-                      value={formData.stock}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border-y border-gray-300 text-center"
-                      readOnly
-                    />
-                    <button
-                      type="button"
-                      onClick={increaseStock}
-                      className="p-2 bg-gray-200 rounded-r-md"
-                    >
-                      +
-                    </button>
+                  <div className="flex flex-col space-y-2">
+                    <p className="text-sm text-gray-500">현재 재고: {currentProduct?.productCount || 1}개</p>
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={decreaseStock}
+                        className="p-2 bg-gray-200 rounded-l-md"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="text"
+                        name="stock"
+                        value={formData.stock}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border-y border-gray-300 text-center"
+                        readOnly
+                      />
+                      <button
+                        type="button"
+                        onClick={increaseStock}
+                        className="p-2 bg-gray-200 rounded-r-md"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
-                
-                {/* 유효기간 */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    유효기간 (소진 기한)
-                  </label>
-                  <input
-                    type="date"
-                    name="expiryDate"
-                    value={formData.expiryDate}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
-                  {errors.expiryDate && (
-                    <p className="text-red-500 text-xs mt-1">{errors.expiryDate}</p>
-                  )}
-                </div>
-                
+                    
                 {/* 상품 설명 */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">

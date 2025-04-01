@@ -170,11 +170,13 @@ export const updateStore = async (storeId, storeData, storeImage) => {
       contactNumber: processedData.contactNumber,
       description: processedData.description,
       businessNumber: processedData.businessNumber,
+      pickupTime: processedData.pickupTime || '',
       businessHours: processedData.businessHours || '',
       reviewSummary: processedData.reviewSummary || '',
       avgRating: processedData.avgRating || 0,
       avgRatingGoogle: processedData.avgRatingGoogle || 0,
       googlePlaceId: processedData.googlePlaceId || '',
+      categoryId: processedData.categoryId,
     });
     
     return {

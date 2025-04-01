@@ -13,64 +13,96 @@ export const getStoreProducts = async (storeId) => {
 }
 
 // 상품 등록 (이미지 업로드 지원)
-export const createProduct = async (storeId, productData, productImage) => {
+export const createProduct = async (storeId, productData, productImg) => {
   try {
-    console.log('상품 등록 시작:', storeId);
-    console.log('상품 데이터:', {
-      productId: productData.productId,
+    // 이미지 처리
+    let imgData = null
+    if (productImg) {
+      const formData = new FormData()
+      formData.append('file', productImg)
+      
+      const imageResponse = await apiClient.post(
+        '/api/files/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
+      
+      if (imageResponse.status === 200) {
+        imgData = imageResponse.data
+      }
+    }
+    
+    // 상품 데이터 생성
+    const data = {
       productName: productData.productName,
-      originalPrice: productData.originalPrice,
-      discountedPrice: productData.discountedPrice
-    });
+      originalPrice: parseInt(productData.originalPrice),
+      discountedPrice: parseInt(productData.discountedPrice),
+      description: productData.description || '',
+      expiryDate: productData.expiryDate || null,
+    }
     
-    // 이미지 처리 및 업로드
-    const processedData = await processImageData(
-      productData,
-      productImage,
-      'productImg',
-      'products'
-    );
+    if (imgData) {
+      data.productImg = imgData
+    }
     
-    console.log('상품 등록 요청 데이터:', processedData);
-    
-    // 상품 등록 API 호출
-    const response = await apiClient.post(`/stores/${storeId}/products`, processedData);
-    console.log('상품 등록 응답:', response.data);
-    return response.data;
+    const response = await apiClient.post(`/stores/${storeId}/products`, data)
+    return response.data
   } catch (error) {
-    console.error('상품 등록 오류:', error)
+    console.error('상품 등록 에러:', error)
     throw error
   }
 }
 
 // 상품 수정 (이미지 업로드 지원)
-export const updateProduct = async (storeId, productId, productData, productImage) => {
+export const updateProduct = async (
+  storeId,
+  productId,
+  productData,
+  productImg
+) => {
   try {
-    console.log('상품 수정 시작:', storeId, productId);
-    console.log('상품 데이터:', {
+    // 이미지 처리
+    let imgData = null
+    if (productImg) {
+      const formData = new FormData()
+      formData.append('file', productImg)
+      
+      const imageResponse = await apiClient.post(
+        '/api/files/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
+      
+      if (imageResponse.status === 200) {
+        imgData = imageResponse.data
+      }
+    }
+    
+    // 상품 데이터 업데이트
+    const data = {
       productName: productData.productName,
-      originalPrice: productData.originalPrice,
-      discountedPrice: productData.discountedPrice,
-      productImg: productData.productImg
-    });
+      originalPrice: parseInt(productData.originalPrice),
+      discountedPrice: parseInt(productData.discountedPrice),
+      description: productData.description || '',
+      expiryDate: productData.expiryDate || null,
+    }
     
-    // 이미지 처리 및 업로드
-    const processedData = await processImageData(
-      productData,
-      productImage,
-      'productImg',
-      'products'
-    );
+    if (imgData) {
+      data.productImg = imgData
+    }
     
-    console.log('상품 수정 요청 데이터:', processedData);
-    
-    // 상품 수정 API 호출 - 상대 경로 사용
-    const endpoint = `/stores/${storeId}/products/${productId}`;
-    const response = await apiClient.put(endpoint, processedData);
-    console.log('상품 수정 응답:', response.data);
-    return response.data;
+    const response = await apiClient.put(`/stores/${storeId}/products/${productId}`, data)
+    return response.data
   } catch (error) {
-    console.error('상품 수정 오류:', error)
+    console.error('상품 수정 에러:', error)
     throw error
   }
 }

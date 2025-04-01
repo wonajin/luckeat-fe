@@ -33,6 +33,10 @@ function EditStorePage() {
   const [toastMessage, setToastMessage] = useState('')
   const [imagePreview, setImagePreview] = useState('')
   const [storeImageFile, setStoreImageFile] = useState(null)
+  const [timeRange, setTimeRange] = useState({
+    openTime: '09:00',
+    closeTime: '18:00',
+  })
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -59,6 +63,15 @@ function EditStorePage() {
             googlePlaceId: response.data.googlePlaceId || '',
           })
           setImagePreview(response.data.storeImg || '')
+          if (response.data.businessHours) {
+            const times = response.data.businessHours.split(' - ')
+            if (times.length === 2) {
+              setTimeRange({
+                openTime: times[0],
+                closeTime: times[1]
+              })
+            }
+          }
         } else {
           setError('가게 정보를 불러오는데 실패했습니다.')
         }
@@ -161,6 +174,24 @@ function EditStorePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleTimeChange = (e) => {
+    const { name, value } = e.target
+    setTimeRange((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+    
+    // 업무 시간 형식을 "09:00 - 18:00" 형태로 formData에 저장
+    const updatedBusinessHours = name === 'openTime'
+      ? `${value} - ${timeRange.closeTime}`
+      : `${timeRange.openTime} - ${value}`
+      
+    setFormData((prev) => ({
+      ...prev,
+      businessHours: updatedBusinessHours,
+    }))
   }
 
   if (loading) {
@@ -363,18 +394,28 @@ function EditStorePage() {
                 </div>
 
                 {/* 영업시간 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    영업시간
-                  </label>
-                  <textarea
-                    name="businessHours"
-                    value={store?.businessHours || '정보 없음'}
-                    disabled
-                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
-                    rows="3"
-                    placeholder="영업시간을 입력해주세요"
-                  />
+                <div className="flex flex-col gap-2 mb-6">
+                  <label className="text-gray-700 font-medium">업무 시간</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      name="openTime"
+                      value={timeRange.openTime}
+                      onChange={handleTimeChange}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 w-1/2"
+                    />
+                    <span className="text-gray-500">-</span>
+                    <input
+                      type="time"
+                      name="closeTime"
+                      value={timeRange.closeTime}
+                      onChange={handleTimeChange}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 w-1/2"
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    현재 설정: {formData.businessHours || '미설정'}
+                  </p>
                 </div>
 
                 {/* 가게 소개 */}

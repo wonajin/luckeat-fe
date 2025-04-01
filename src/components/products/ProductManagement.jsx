@@ -19,7 +19,9 @@ const ProductManagement = () => {
   const [formData, setFormData] = useState({
     productName: '',
     originalPrice: '',
-    discountedPrice: ''
+    discountedPrice: '',
+    description: '',
+    expiryDate: '',
   })
   const [errors, setErrors] = useState({})
   const fileInputRef = useRef(null)
@@ -68,7 +70,9 @@ const ProductManagement = () => {
     setFormData({
       productName: product.productName,
       originalPrice: product.originalPrice.toString(),
-      discountedPrice: product.discountedPrice.toString()
+      discountedPrice: product.discountedPrice.toString(),
+      description: product.description || '',
+      expiryDate: product.expiryDate ? product.expiryDate.split('T')[0] : '',
     })
     setProductImage(null)
     setProductImageUrl(product.productImg || '')
@@ -82,7 +86,9 @@ const ProductManagement = () => {
     setFormData({
       productName: '',
       originalPrice: '',
-      discountedPrice: ''
+      discountedPrice: '',
+      description: '',
+      expiryDate: '',
     })
     setProductImage(null)
     setProductImageUrl('')
@@ -93,10 +99,25 @@ const ProductManagement = () => {
   // 입력 필드 변경 처리
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData({
+      ...formData,
+      [name]: value,
+    })
+    
+    // 가격 필드인 경우 숫자만 입력되도록 유효성 검사 추가
+    if (name === 'originalPrice' || name === 'discountedPrice') {
+      if (!/^\d*$/.test(value)) {
+        setErrors({
+          ...errors,
+          [name]: '숫자만 입력해주세요',
+        })
+      } else {
+        // 에러 제거
+        const updatedErrors = { ...errors }
+        delete updatedErrors[name]
+        setErrors(updatedErrors)
+      }
+    }
   }
 
   // 폼 유효성 검사
@@ -119,6 +140,25 @@ const ProductManagement = () => {
       isValid = false
     }
 
+    if (!formData.description) {
+      newErrors.description = '상품 설명을 입력하세요'
+      isValid = false
+    }
+
+    if (!formData.expiryDate) {
+      newErrors.expiryDate = '유효기간을 설정하세요'
+      isValid = false
+    } else {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const expiryDate = new Date(formData.expiryDate)
+      
+      if (expiryDate < today) {
+        newErrors.expiryDate = '유효기간은 오늘 이후로 설정해주세요'
+        isValid = false
+      }
+    }
+
     setErrors(newErrors)
     return isValid
   }
@@ -135,13 +175,15 @@ const ProductManagement = () => {
         const updatedFormData = {
           ...formData,
           originalPrice: parseInt(formData.originalPrice),
-          discountedPrice: parseInt(formData.discountedPrice)
-        };
+          discountedPrice: parseInt(formData.discountedPrice),
+          description: formData.description,
+          expiryDate: formData.expiryDate
+        }
         
         if (!productImage && currentProduct.productImg) {
           // 이미지가 선택되지 않았고 기존 이미지가 있는 경우
           // 이미지 URL을 폼 데이터에 포함시켜 기존 이미지를 유지
-          updatedFormData.productImg = currentProduct.productImg;
+          updatedFormData.productImg = currentProduct.productImg
         }
         
         await updateProduct(storeId, currentProduct.productId, updatedFormData, productImage)
@@ -152,8 +194,10 @@ const ProductManagement = () => {
           productId: 0, // 신규 상품 등록 시 0으로 설정
           productName: formData.productName,
           originalPrice: parseInt(formData.originalPrice),
-          discountedPrice: parseInt(formData.discountedPrice)
-        };
+          discountedPrice: parseInt(formData.discountedPrice),
+          description: formData.description,
+          expiryDate: formData.expiryDate
+        }
         
         await createProduct(storeId, productRequestData, productImage)
         showToast('상품이 등록되었습니다.')
@@ -246,6 +290,29 @@ const ProductManagement = () => {
                   <div className="flex flex-col text-sm text-gray-500">
                     <p className="mr-2">원가: {product.originalPrice.toLocaleString()}원</p>
                     <p className="mr-2">할인가: {product.discountedPrice.toLocaleString()}원</p>
+                    
+                    {/* 유효기간 표시 추가 */}
+                    {product.expiryDate && (
+                      <p className="mr-2 text-xs flex items-center mt-1">
+                        <span className="inline-block mr-1">
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="h-3 w-3" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke="currentColor"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                            />
+                          </svg>
+                        </span>
+                        유효기간: {new Date(product.expiryDate).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -271,6 +338,17 @@ const ProductManagement = () => {
                       <p className="text-sm text-gray-700 mt-1">{product.description}</p>
                     </div>
                   )}
+                  
+                  {/* 유효기간 정보 추가 */}
+                  {product.expiryDate && (
+                    <div className="mb-3">
+                      <span className="font-medium">유효기간:</span>
+                      <p className="text-sm text-indigo-600 mt-1">
+                        {new Date(product.expiryDate).toLocaleDateString()}까지 유효
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-end gap-2 mt-2">
                     <button
                       type="button"
@@ -397,6 +475,21 @@ const ProductManagement = () => {
               
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2">
+                  상품 설명
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className={`w-full p-2 border rounded-lg ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="상품에 대한 설명을 입력해주세요"
+                  rows="3"
+                ></textarea>
+                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
                   상품 이미지
                 </label>
                 <div 
@@ -425,6 +518,25 @@ const ProductManagement = () => {
                     className="hidden"
                   />
                 </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  유효기간
+                </label>
+                <input
+                  type="date"
+                  name="expiryDate"
+                  value={formData.expiryDate}
+                  onChange={handleInputChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.expiryDate ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.expiryDate && (
+                  <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
+                )}
               </div>
               
               <div className="flex justify-end gap-2 mt-4">

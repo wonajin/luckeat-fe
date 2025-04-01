@@ -125,7 +125,10 @@ function HomePage() {
       if (categoryFilter) {
         const category = categoryOptions.find(opt => opt.name === categoryFilter)
         if (category) {
+          console.log('카테고리 필터 적용:', category.name, category.id);
           queryParams.append('categoryId', category.id)
+        } else {
+          console.log('카테고리를 찾을 수 없음:', categoryFilter);
         }
       }
 
@@ -183,20 +186,48 @@ function HomePage() {
         // 페이지가 1이거나 reset이 true면 데이터 초기화
         if (page === 1 || reset) {
           setStores(data)
-          setDisplayedStores(data)
-          setFilteredStores(data)
+          
+          // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
+          let filteredData = [...data];
+          if (categoryFilter) {
+            const category = categoryOptions.find(opt => opt.name === categoryFilter);
+            if (category) {
+              console.log('클라이언트 측 카테고리 필터링 적용:', category.name, category.id);
+              filteredData = filteredData.filter(store => {
+                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0]);
+                console.log('가게 카테고리 ID 확인:', store.storeName, storeCategoryId);
+                return String(storeCategoryId) === String(category.id);
+              });
+              console.log('필터링 후 가게 수:', filteredData.length);
+            }
+          }
+          
+          setDisplayedStores(filteredData)
+          setFilteredStores(filteredData)
           // 첫 페이지인 경우 전체 가게 수를 현재 받은 데이터의 개수로 설정
-          setTotalStoreCount(data.length === storesPerPage ? data.length + '*' : data.length)
+          setTotalStoreCount(filteredData.length)
         } else {
           // 이미 로드된 데이터에 추가
           setStores(prev => [...prev, ...data])
-          setDisplayedStores(prev => [...prev, ...data])
-          setFilteredStores(prev => [...prev, ...data])
-          // 총 가게 수 업데이트 (로드된 데이터로 계산)
-          setTotalStoreCount(prev => {
-            const newTotal = data.length + (prev.toString().includes('*') ? parseInt(prev) : prev)
-            return data.length === storesPerPage ? newTotal + '*' : newTotal
-          })
+          
+          // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
+          let filteredData = [...data];
+          if (categoryFilter) {
+            const category = categoryOptions.find(opt => opt.name === categoryFilter);
+            if (category) {
+              console.log('클라이언트 측 카테고리 필터링 적용(추가 데이터):', category.name, category.id);
+              filteredData = filteredData.filter(store => {
+                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0]);
+                return String(storeCategoryId) === String(category.id);
+              });
+            }
+          }
+          
+          const updatedFilteredData = [...filteredStores, ...filteredData];
+          setDisplayedStores(prev => [...prev, ...filteredData])
+          setFilteredStores(updatedFilteredData)
+          // 총 가게 수 업데이트 (필터링된 데이터로 계산)
+          setTotalStoreCount(updatedFilteredData.length)
         }
 
         // 받은 데이터가 요청한 size보다 적으면 더 이상 데이터가 없는 것으로 간주
@@ -300,8 +331,10 @@ function HomePage() {
     console.log('카테고리 선택:', category);
     // 이미 선택된 카테고리를 다시 클릭하면 해제
     if (categoryFilter === category) {
+      console.log('카테고리 해제');
       setCategoryFilter('')
     } else {
+      console.log('카테고리 설정:', category);
       setCategoryFilter(category)
     }
   }

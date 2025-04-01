@@ -628,7 +628,7 @@ function MapPage() {
       <Header title="지도" />
 
       {/* 검색 영역 */}
-      <div className="p-4 border-b">
+      <div className="px-4 py-2 border-b">
         <SearchBar
           placeholder="가게 또는 메뉴 검색"
           initialValue={searchQuery}

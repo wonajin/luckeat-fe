@@ -288,7 +288,7 @@ function EditProfilePage() {
     <div className="flex flex-col h-full bg-white">
       <Header title="회원정보 수정" onBack={() => navigate('/mypage')} />
 
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 overflow-y-auto">
         <h1 className="text-2xl font-bold text-center mb-6">회원정보 수정</h1>
 
         {/* 이메일 표시 (수정 불가) */}

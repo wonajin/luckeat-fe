@@ -499,24 +499,20 @@ function MapPage() {
       <div
         ref={storeListRef}
         className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg overflow-y-auto z-10 transition-all duration-300 ${
-          storeListExpanded ? 'h-[50%]' : 'h-1/4'
+          storeListExpanded ? 'h-1/2' : 'h-1/4'
         }`}
         onScroll={handleStoreListScroll}
       >
-        <div className="sticky top-0 w-full flex justify-center pt-2 pb-1 bg-white z-10">
+        <div
+          className="sticky top-0 w-full flex justify-center pt-2 pb-1 bg-white z-10 cursor-pointer"
+          onClick={() => setStoreListExpanded(!storeListExpanded)}
+        >
           <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
         </div>
 
         <div className="p-4">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-bold">주변 가게 ({filteredStores.length})</h3>
-            {/* 최대화/최소화 토글 버튼 추가 */}
-            <button
-              className="text-xs px-2 py-1 bg-gray-100 rounded-full"
-              onClick={() => setStoreListExpanded(!storeListExpanded)}
-            >
-              {storeListExpanded ? '최소화' : '전체보기'}
-            </button>
           </div>
           <div className="space-y-3">
             {filteredStores.length > 0 ? (

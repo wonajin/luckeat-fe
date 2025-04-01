@@ -114,25 +114,36 @@ export const getMessageByStatusCode = (statusCode, message = null) => {
  * @returns {Object} 성공 정보를 담은 객체
  */
 export const handleSuccessResponse = (response) => {
-  let message = null
+  let message = null;
+  let isSuccess = true;
+
+  // 서버 응답에 명시적인 성공 플래그가 있는지 확인
+  if (response.data && response.data.hasOwnProperty('success')) {
+    isSuccess = response.data.success;
+  }
 
   // 응답 데이터에 메시지가 있으면 사용
   if (response.data && response.data.message) {
-    message = response.data.message
+    message = response.data.message;
   }
   // 없으면 상태 코드에 따라 기본 메시지 사용
   else if (response.status === 201) {
-    message = SUCCESS_MESSAGES.REGISTER_SUCCESS
+    message = SUCCESS_MESSAGES.REGISTER_SUCCESS;
   } else if (response.status === 200) {
-    message = '요청이 성공적으로 처리되었습니다.'
+    message = '요청이 성공적으로 처리되었습니다.';
+  }
+
+  // 성공 여부가 명시적으로 실패로 표시되었을 경우
+  if (!isSuccess) {
+    message = message || '요청이 성공적으로 처리되지 않았습니다.';
   }
 
   return {
-    success: true,
+    success: isSuccess,
     data: response.data,
     statusCode: response.status,
     message: message,
-  }
+  };
 }
 
 /**

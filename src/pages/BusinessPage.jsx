@@ -7,6 +7,7 @@ import { getUserInfo } from '../api/userApi'
 import { getMyStore } from '../api/storeApi'
 import { getStorePendingReservations, updateReservationStatus } from '../api/reservationApi'
 import StoreCard from '../components/store/StoreCard'
+import { formatDate, formatTime } from '../utils/dateUtils'
 
 function BusinessPage() {
   const navigate = useNavigate()
@@ -253,8 +254,11 @@ function BusinessPage() {
                     {pendingReservations.map((reservation) => (
                       <div key={reservation.id} className="py-2 flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium">{reservation.userId || '고객'}</p>
+                          <p className="text-sm font-medium">{reservation.userNickname || reservation.userId || '고객'}</p>
                           <p className="text-xs text-gray-500">{reservation.productName || '상품'} {reservation.quantity || 1}개</p>
+                          <p className="text-xs text-gray-500">
+                            {formatDate(reservation.createdAt)} {formatTime(reservation.createdAt)}
+                          </p>
                           {reservation.isZerowaste && (
                             <p className="text-xs text-green-600 font-medium">
                               제로웨이스트 손님 (포장용기 지참)

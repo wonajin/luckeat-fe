@@ -87,103 +87,107 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navigation />
-      <Header title="로그인" showBackButton={true} />
-      <main className="container mx-auto py-8 px-4">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-          {/* 세션 메시지 표시 - 개선된 스타일 */}
-          {sessionMessage && (
-            <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded-md border border-yellow-200">
-              <p className="font-medium">{sessionMessage}</p>
-            </div>
-          )}
+    <div className="flex flex-col h-full">
+      {/* 헤더 */}
+      <Header title="로그인" />
 
-          {/* 오류 메시지 표시 - 개선된 스타일 */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-md border border-red-200">
-              <p className="font-medium">{error}</p>
-            </div>
-          )}
+      <div className="flex-1 p-4 overflow-y-auto">
+        {/* 세션 만료 메시지 */}
+        {sessionMessage && (
+          <div
+            className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded"
+            role="alert"
+          >
+            <p>{sessionMessage}</p>
+          </div>
+        )}
 
-          {/* 로그인 폼 */}
-          <form onSubmit={handleLogin} className="space-y-6 mt-4">
-            {/* 로그인 필드들 */}
-            <div className="border rounded-lg p-4 space-y-4">
-              {/* 이메일 입력 */}
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  이메일 주소
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3 bg-gray-100 rounded-lg"
-                  placeholder="이메일 주소를 입력해주세요"
-                  required
+        {/* 오류 메시지 */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4 mb-4">
+            {error}
+          </div>
+        )}
+
+        {/* 로그인 폼 */}
+        <form onSubmit={handleLogin} className="space-y-6 mt-4">
+          {/* 로그인 필드들 */}
+          <div className="border rounded-lg p-4 space-y-4">
+            {/* 이메일 입력 */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                이메일 주소
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-3 bg-gray-100 rounded-lg"
+                placeholder="이메일 주소를 입력해주세요"
+                required
+              />
+            </div>
+
+            {/* 비밀번호 입력 */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                비밀번호
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={handlePasswordInput}
+                className="w-full p-3 bg-gray-100 rounded-lg"
+                placeholder="비밀번호를 입력해주세요"
+                required
+              />
+            </div>
+          </div>
+
+          {/* 로그인 버튼 */}
+          <button
+            type="submit"
+            className="w-5/6 py-2 bg-yellow-500 text-white font-bold rounded-lg mx-auto block"
+            disabled={loading}
+          >
+            {loading ? '로그인 중...' : '로그인'}
+          </button>
+
+          {/* 카카오 로그인 버튼 */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = `${API_DIRECT_URL}/oauth2/authorization/kakao`
+              }}
+              className="w-full"
+            >
+              <div className="flex justify-center items-center">
+                <img
+                  src={kakaoLoginImage}
+                  alt="카카오 로그인"
+                  className="w-5/6 h-auto rounded-lg"
                 />
               </div>
-
-              {/* 비밀번호 입력 */}
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  비밀번호
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={handlePasswordInput}
-                  className="w-full p-3 bg-gray-100 rounded-lg"
-                  placeholder="비밀번호를 입력해주세요"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* 로그인 버튼 */}
-            <button
-              type="submit"
-              className="w-5/6 py-2 bg-yellow-500 text-white font-bold rounded-lg mx-auto block"
-              disabled={loading}
-            >
-              {loading ? '로그인 중...' : '로그인'}
-            </button>
-
-            {/* 카카오 로그인 버튼 */}
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = `${API_DIRECT_URL}/oauth2/authorization/kakao`
-                }}
-                className="w-full"
-              >
-                <div className="flex justify-center items-center">
-                  <img
-                    src={kakaoLoginImage}
-                    alt="카카오 로그인"
-                    className="w-5/6 h-auto rounded-lg"
-                  />
-                </div>
-              </button>
-            </div>
-          </form>
-
-          {/* 회원가입 링크 */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600 mb-2">계정이 없으신가요?</p>
-            <button
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
-              onClick={() => navigate('/signup')}
-            >
-              회원가입하기
             </button>
           </div>
+        </form>
+
+        {/* 회원가입 링크 */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-600 mb-2">계정이 없으신가요?</p>
+          <button
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+            onClick={() => navigate('/signup')}
+          >
+            회원가입하기
+          </button>
         </div>
-      </main>
+      </div>
+
+      <Navigation />
     </div>
   )
 }

@@ -46,7 +46,7 @@ const ReservationStatusBadge = ({ status }) => {
 const StoreReservationsPage = () => {
   const { storeId } = useParams()
   const navigate = useNavigate()
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, checkCurrentAuthStatus } = useAuth()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('ALL') // 'ALL', 'PENDING', 'CONFIRMED', 'CANCELED'
@@ -56,6 +56,26 @@ const StoreReservationsPage = () => {
   const [toastType, setToastType] = useState('success') // 'success' or 'error'
   const [expandedReservationId, setExpandedReservationId] = useState(null)
   const [activeFilter, setActiveFilter] = useState('ALL')
+
+  useEffect(() => {
+    const verifyAuth = async () => {
+      const isValid = await checkCurrentAuthStatus()
+      if (!isValid) {
+        navigate('/login')
+        return
+      }
+
+      if (!storeId) {
+        setError('가게 정보를 찾을 수 없습니다.')
+        setLoading(false)
+        return
+      }
+
+      fetchReservations()
+    }
+
+    verifyAuth()
+  }, [navigate, storeId, checkCurrentAuthStatus])
 
   const fetchReservations = async () => {
     try {
@@ -81,17 +101,6 @@ const StoreReservationsPage = () => {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/login')
-      return
-    }
-
-    if (storeId) {
-      fetchReservations()
-    }
-  }, [isLoggedIn, navigate, storeId])
 
   const handleReservationStatus = async (reservationId, status) => {
     try {

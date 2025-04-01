@@ -95,8 +95,8 @@ function AppRoutes() {
         <Route path="/edit-profile" element={<EditProfilePage />} />
         <Route path="/store/:storeId/products" element={<ProductManagementPage />} />
         <Route path="/edit-store" element={<EditStorePage />} />
-        <Route path="/store/:storeId/reservations" element={<StoreReservationsPage />} />
-        <Route path="/reservations" element={<UserReservationsPage />} />
+        <Route path="/store/:storeId/reservation" element={<StoreReservationsPage />} />
+        <Route path="/reservation" element={<UserReservationsPage />} />
       </Routes>
     </AuthWrapper>
   )

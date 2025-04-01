@@ -4,7 +4,10 @@ import Header from '../components/layout/Header'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDate, formatTime } from '../utils/dateUtils'
-import { getStoreReservations, updateReservationStatus } from '../api/reservationApi'
+import { 
+  getStoreReservations,
+  updateReservationStatus,
+} from '../api/reservationApi'
 
 const ReservationStatusBadge = ({ status }) => {
   let bgColor = 'bg-gray-200'
@@ -113,13 +116,13 @@ const StoreReservationsPage = () => {
           prev.map((reservation) =>
             reservation.id === reservationId
               ? { ...reservation, status: status }
-              : reservation
-          )
+              : reservation,
+          ),
         )
       } else {
         showToastMessage(
           response.message || '예약 상태 변경에 실패했습니다',
-          'error'
+          'error',
         )
       }
     } catch (error) {
@@ -141,7 +144,7 @@ const StoreReservationsPage = () => {
 
   const toggleReservationDetails = (reservationId) => {
     setExpandedReservationId(
-      expandedReservationId === reservationId ? null : reservationId
+      expandedReservationId === reservationId ? null : reservationId,
     )
   }
 
@@ -357,7 +360,7 @@ const StoreReservationsPage = () => {
                                 e.stopPropagation()
                                 handleReservationStatus(
                                   reservation.id,
-                                  'CANCELED'
+                                  'CANCELED',
                                 )
                               }}
                               className="flex-1 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition"
@@ -369,7 +372,7 @@ const StoreReservationsPage = () => {
                                 e.stopPropagation()
                                 handleReservationStatus(
                                   reservation.id,
-                                  'CONFIRMED'
+                                  'CONFIRMED',
                                 )
                               }}
                               className="flex-1 py-2 bg-[#F7B32B] hover:bg-[#E09D18] text-white rounded-lg transition"
@@ -398,7 +401,9 @@ const StoreReservationsPage = () => {
 
       {showToast && (
         <div
-          className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 bg-[#F7B32B] text-white`}
+          className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 ${
+            toastType === 'error' ? 'bg-red-500' : 'bg-green-500'
+          } text-white`}
         >
           {toastMessage}
         </div>
@@ -409,4 +414,4 @@ const StoreReservationsPage = () => {
   )
 }
 
-export default StoreReservationsPage 
+export default StoreReservationsPage

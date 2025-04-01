@@ -9,6 +9,7 @@ import banner01 from '../assets/images/럭킷배너01.png'
 import banner02 from '../assets/images/럭킷배너02.png'
 import banner03 from '../assets/images/럭킷배너03.png'
 import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
+import luckeatLogo from '../assets/images/luckeat-logo.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 
@@ -294,7 +295,7 @@ function HomePage() {
           className="text-2xl font-bold text-yellow-500"
           onClick={() => navigate(0)}
         >
-          제빵사
+          <img src={luckeatLogo} alt="럭킷" className="h-6" />
         </h1>
         <div className="absolute right-4 text-sm">
           {isLoggedIn ? (

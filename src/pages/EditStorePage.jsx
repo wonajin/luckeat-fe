@@ -335,29 +335,6 @@ function EditStorePage() {
 
       <div className="flex-1 overflow-y-auto">
         <form onSubmit={handleSubmit}>
-          {/* 안내 문구 */}
-          <div className="bg-blue-50 border-b border-blue-100 p-4">
-            <div className="flex items-start">
-              <svg
-                className="h-5 w-5 text-blue-400 mt-0.5 mr-2"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <p className="text-sm text-blue-700">
-                가게 정보는 구글 맵에서 가져오는 데이터입니다.
-                <br />
-                주소, 영업시간 등 기본 정보 변경이 필요하시다면 구글 맵에서 수정해 주세요.
-              </p>
-            </div>
-          </div>
-
           {/* 가게 이미지 */}
           <div className="relative h-44 mx-4 mt-4">
             {imagePreview ? (

@@ -5,7 +5,7 @@ import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDate, formatTime } from '../utils/dateUtils'
 import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
-import { getUserReservations, updateReservationStatus } from '../api/reservationApi'
+import { getUserReservations, cancelReservation } from '../api/reservationApi'
 
 const ReservationStatusBadge = ({ status }) => {
   const { bgColor, textColor } = getStatusStyle(status)
@@ -87,13 +87,8 @@ const UserReservationsPage = () => {
     try {
       setLoading(true)
       
-      // 예약 상태 변경 API 호출 (CANCELED 상태로 변경)
-      const statusData = {
-        reservationId: reservationToCancel.id,
-        status: RESERVATION_STATUS.CANCELED
-      }
-      
-      const response = await updateReservationStatus(statusData)
+      // cancelReservation API 사용
+      const response = await cancelReservation(reservationToCancel.id)
       
       if (response.success) {
         // 예약 상태 업데이트

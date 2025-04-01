@@ -83,16 +83,18 @@ export function AuthProvider({ children }) {
         // 로그인 성공 시 이미 userApi.login에서 로컬 스토리지에 사용자 정보와 토큰을 저장함
         // 저장된 사용자 정보 가져오기
         const storedUser = localStorage.getItem('user')
-        if (storedUser) {
+        const accessToken = localStorage.getItem('accessToken')
+        
+        // 토큰과 사용자 정보가 모두 있는지 확인
+        if (storedUser && accessToken) {
           const userData = JSON.parse(storedUser)
-          setUser(userData)
-          setIsLoggedIn(true)
           
-          // 사용자 정보가 제대로 저장되었는지 확인하고, 필요한 정보가 모두 있는지 확인
-          if (!userData.role) {
-            console.warn(
-              '사용자 정보가 불완전합니다. 정보를 업데이트합니다.',
-            )
+          // 필수 사용자 정보가 모두 있는지 확인
+          if (userData && userData.userId && userData.email && userData.role) {
+            setUser(userData)
+            setIsLoggedIn(true)
+            
+            // 사용자 정보 업데이트 (선택사항)
             try {
               const userInfoResponse = await userApi.getUserInfo()
               if (userInfoResponse.success) {
@@ -104,11 +106,29 @@ export function AuthProvider({ children }) {
             } catch (err) {
               console.error('사용자 정보 업데이트에 실패했습니다:', err)
             }
+            
+            return { success: true, user: userData }
+          } else {
+            // 필수 사용자 정보가 없는 경우
+            console.error('사용자 정보가 불완전합니다:', userData)
+            localStorage.removeItem('accessToken')
+            localStorage.removeItem('refreshToken')
+            localStorage.removeItem('user')
+            return {
+              success: false,
+              message: '로그인 정보가 불완전합니다. 다시 로그인해주세요.',
+            }
           }
-          
-          return { success: true, user: userData }
+        } else {
+          // 토큰이나 사용자 정보가 없는 경우
+          console.error('로그인 정보가 없습니다.')
+          return {
+            success: false,
+            message: '로그인 정보를 저장하지 못했습니다. 다시 로그인해주세요.',
+          }
         }
       }
+      
       return {
         success: false,
         message: response.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.',

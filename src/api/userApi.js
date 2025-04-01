@@ -64,10 +64,10 @@ export const login = async (credentials) => {
     // 프록시를 통한 요청
     console.log('로그인 요청 시작...')
     const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
-    console.log('로그인 성공:', response.data)
+    console.log('로그인 응답:', response.data)
 
-    // 로그인 성공 시 사용자 정보 및 토큰 저장
-    if (response.data) {
+    // 로그인 성공 여부 확인
+    if (response.data && response.data.success === true) {
       // 토큰 저장
       if (response.data.accessToken) {
         localStorage.setItem(TOKEN_KEYS.ACCESS, response.data.accessToken)
@@ -84,6 +84,13 @@ export const login = async (credentials) => {
         role: response.data.role,
       }
       localStorage.setItem('user', JSON.stringify(userData))
+    } else {
+      // 로그인 실패 시 기존 토큰 제거
+      localStorage.removeItem(TOKEN_KEYS.ACCESS)
+      localStorage.removeItem(TOKEN_KEYS.REFRESH)
+      localStorage.removeItem('user')
+      
+      console.log('로그인 실패:', response.data.message || '인증 실패')
     }
 
     return handleSuccessResponse(response)
@@ -101,6 +108,11 @@ export const login = async (credentials) => {
       '로그인 요청 URL:',
       error.config ? error.config.url : '요청 URL 없음',
     )
+
+    // 오류 발생 시 토큰 제거
+    localStorage.removeItem(TOKEN_KEYS.ACCESS)
+    localStorage.removeItem(TOKEN_KEYS.REFRESH)
+    localStorage.removeItem('user')
 
     return handleErrorResponse(error)
   }

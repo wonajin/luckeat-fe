@@ -53,7 +53,7 @@ function LoginPage() {
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      setError('유효한 이메일 형식이 아닙니다.')
+      setError('유효한 이메일 형식이 아닙니다. 올바른 이메일 주소를 입력해주세요.')
       return
     }
 
@@ -67,14 +67,20 @@ function LoginPage() {
         // 오류 메시지 개선
         if (
           response.message.includes('인증') ||
-          response.message.includes('일치하지 않')
+          response.message.includes('일치하지 않') ||
+          response.message.includes('아이디') ||
+          response.message.includes('비밀번호')
         ) {
-          setError('아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.')
+          setError('이메일 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.')
         } else if (response.message.includes('만료')) {
-          setError('로그인 시간이 만료되었습니다. 다시 로그인해주세요.')
+          setError('로그인 정보가 만료되었습니다.\n다시 로그인해주세요.')
+        } else if (response.message.includes('정보를 저장')) {
+          setError('로그인 정보를 저장하는 중 문제가 발생했습니다.\n다시 시도해주세요.')
+        } else if (response.message.includes('불완전')) {
+          setError('로그인 정보가 불완전합니다.\n다시 로그인해주세요.')
         } else {
           setError(
-            response.message || '로그인에 실패했습니다. 다시 시도해주세요.',
+            response.message || '로그인에 실패했습니다.\n다시 시도해주세요.'
           )
         }
       }
@@ -98,16 +104,27 @@ function LoginPage() {
             className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded"
             role="alert"
           >
-            <p>{sessionMessage}</p>
+            <p className="font-medium">{sessionMessage}</p>
+            <p className="text-sm mt-1">로그인 후 이용해주세요.</p>
           </div>
         )}
 
         {/* 오류 메시지 */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4 mb-4">
-            {error}
+            <p className="font-medium">로그인 오류</p>
+            {error.split('\n').map((line, index) => (
+              <p key={index}>{line}</p>
+            ))}
           </div>
         )}
+
+        {/* 로그인 안내 */}
+        <div className="mb-6 text-center">
+          <p className="text-gray-600">
+            럭키트 서비스를 이용하시려면 로그인해주세요.
+          </p>
+        </div>
 
         {/* 로그인 폼 */}
         <form onSubmit={handleLogin} className="space-y-6 mt-4">
@@ -123,10 +140,13 @@ function LoginPage() {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 bg-gray-100 rounded-lg"
+                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
                 placeholder="이메일 주소를 입력해주세요"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                가입 시 사용한 이메일을 입력하세요.
+              </p>
             </div>
 
             {/* 비밀번호 입력 */}
@@ -139,24 +159,28 @@ function LoginPage() {
                 id="password"
                 value={password}
                 onChange={handlePasswordInput}
-                className="w-full p-3 bg-gray-100 rounded-lg"
+                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
                 placeholder="비밀번호를 입력해주세요"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                비밀번호는 8자 이상이며, 영문과 숫자를 포함해야 합니다.
+              </p>
             </div>
           </div>
 
           {/* 로그인 버튼 */}
           <button
             type="submit"
-            className="w-5/6 py-2 bg-yellow-500 text-white font-bold rounded-lg mx-auto block"
+            className="w-5/6 py-3 bg-yellow-500 text-white font-bold rounded-lg mx-auto block hover:bg-yellow-600 transition-colors"
             disabled={loading}
           >
-            {loading ? '로그인 중...' : '로그인'}
+            {loading ? '로그인 중...' : '로그인하기'}
           </button>
 
           {/* 카카오 로그인 버튼 */}
           <div className="mt-4">
+            <p className="text-center text-gray-500 text-sm mb-2">또는</p>
             <button
               type="button"
               onClick={() => {
@@ -177,9 +201,9 @@ function LoginPage() {
 
         {/* 회원가입 링크 */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600 mb-2">계정이 없으신가요?</p>
+          <p className="text-sm text-gray-600 mb-2">아직 럭키트 회원이 아니신가요?</p>
           <button
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
             onClick={() => navigate('/signup')}
           >
             회원가입하기

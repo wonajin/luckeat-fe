@@ -66,31 +66,60 @@ export const login = async (credentials) => {
     const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
     console.log('로그인 응답:', response.data)
 
-    // 로그인 성공 여부 확인
-    if (response.data && response.data.success === true) {
+    // 로그인 성공 여부 확인 (더 유연하게 처리)
+    // 1. 명시적인 success 플래그가 있는 경우 이를 확인
+    // 2. 없는 경우, HTTP 상태 코드가 200/201이고 accessToken이 있으면 성공으로 판단
+    const hasSuccessFlag = response.data && response.data.hasOwnProperty('success');
+    const isImplicitSuccess = !hasSuccessFlag && 
+                             (response.status === 200 || response.status === 201) && 
+                             response.data && 
+                             response.data.accessToken;
+    
+    if ((hasSuccessFlag && response.data.success === true) || isImplicitSuccess) {
+      console.log('로그인 성공 처리 중...');
+      
       // 토큰 저장
       if (response.data.accessToken) {
         localStorage.setItem(TOKEN_KEYS.ACCESS, response.data.accessToken)
+        console.log('액세스 토큰이 저장되었습니다.');
+      } else {
+        console.warn('응답에 액세스 토큰이 없습니다!');
       }
+      
       if (response.data.refreshToken) {
         localStorage.setItem(TOKEN_KEYS.REFRESH, response.data.refreshToken)
+        console.log('리프레시 토큰이 저장되었습니다.');
       }
 
-      // 사용자 정보 저장
+      // 사용자 정보 저장 (더 유연하게 처리)
       const userData = {
-        userId: response.data.userId,
-        email: response.data.email,
-        nickname: response.data.nickname,
-        role: response.data.role,
+        userId: response.data.userId || response.data.id || '',
+        email: response.data.email || credentials.email || '',
+        nickname: response.data.nickname || '',
+        role: response.data.role || 'BUYER', // 기본값 설정
       }
+      
       localStorage.setItem('user', JSON.stringify(userData))
+      console.log('사용자 정보가 저장되었습니다:', userData);
+      
+      // success 플래그가 없는 경우, 응답에 명시적으로 추가
+      if (!hasSuccessFlag) {
+        response.data.success = true;
+      }
     } else {
       // 로그인 실패 시 기존 토큰 제거
+      console.log('로그인 실패 처리 중...');
       localStorage.removeItem(TOKEN_KEYS.ACCESS)
       localStorage.removeItem(TOKEN_KEYS.REFRESH)
       localStorage.removeItem('user')
       
-      console.log('로그인 실패:', response.data.message || '인증 실패')
+      console.log('로그인 실패:', response.data?.message || '인증 실패')
+      
+      // success 플래그가 없는 경우, 응답에 명시적으로 추가
+      if (!hasSuccessFlag) {
+        response.data = response.data || {};
+        response.data.success = false;
+      }
     }
 
     return handleSuccessResponse(response)

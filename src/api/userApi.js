@@ -9,8 +9,6 @@ import { TOKEN_KEYS } from './apiClient'
 // 회원 가입
 export const register = async (userData) => {
   try {
-    console.log('회원가입 요청 데이터:', userData)
-
     // 복사본 생성 (원본 데이터 변경 방지)
     const requestData = { ...userData }
 
@@ -27,18 +25,11 @@ export const register = async (userData) => {
     }
 
     // 프록시를 통한 요청
-    console.log('회원가입 수정된 요청 데이터:', requestData)
     const response = await apiClient.post(API_ENDPOINTS.REGISTER, requestData)
-    console.log('회원가입 API 응답:', response)
-    console.log('회원가입 응답 데이터:', response.data)
-    console.log('회원가입 응답 상태 코드:', response.status)
 
     const result = handleSuccessResponse(response)
-    console.log('회원가입 처리된 결과:', result)
     return result
   } catch (error) {
-    console.error('회원가입 오류:', error)
-
     // 서버 오류(500)인 경우 더 자세한 메시지 제공
     if (error.response && error.response.status === 500) {
       return {
@@ -55,16 +46,8 @@ export const register = async (userData) => {
 // 로그인
 export const login = async (credentials) => {
   try {
-    console.log('로그인 요청 데이터:', credentials)
-
-    // API_ENDPOINTS 사용
-    console.log('로그인 요청 URL:', API_ENDPOINTS.LOGIN)
-    console.log('로그인 요청 전체 URL:', getApiUrl(API_ENDPOINTS.LOGIN))
-
     // 프록시를 통한 요청
-    console.log('로그인 요청 시작...')
     const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
-    console.log('로그인 응답:', response.data)
 
     // 로그인 성공 여부 확인 (더 유연하게 처리)
     // 1. 명시적인 success 플래그가 있는 경우 이를 확인
@@ -76,19 +59,13 @@ export const login = async (credentials) => {
                              response.data.accessToken;
     
     if ((hasSuccessFlag && response.data.success === true) || isImplicitSuccess) {
-      console.log('로그인 성공 처리 중...');
-      
       // 토큰 저장
       if (response.data.accessToken) {
         localStorage.setItem(TOKEN_KEYS.ACCESS, response.data.accessToken)
-        console.log('액세스 토큰이 저장되었습니다.');
-      } else {
-        console.warn('응답에 액세스 토큰이 없습니다!');
       }
       
       if (response.data.refreshToken) {
         localStorage.setItem(TOKEN_KEYS.REFRESH, response.data.refreshToken)
-        console.log('리프레시 토큰이 저장되었습니다.');
       }
 
       // 사용자 정보 저장 (더 유연하게 처리)
@@ -100,7 +77,6 @@ export const login = async (credentials) => {
       }
       
       localStorage.setItem('user', JSON.stringify(userData))
-      console.log('사용자 정보가 저장되었습니다:', userData);
       
       // success 플래그가 없는 경우, 응답에 명시적으로 추가
       if (!hasSuccessFlag) {
@@ -108,12 +84,9 @@ export const login = async (credentials) => {
       }
     } else {
       // 로그인 실패 시 기존 토큰 제거
-      console.log('로그인 실패 처리 중...');
       localStorage.removeItem(TOKEN_KEYS.ACCESS)
       localStorage.removeItem(TOKEN_KEYS.REFRESH)
       localStorage.removeItem('user')
-      
-      console.log('로그인 실패:', response.data?.message || '인증 실패')
       
       // success 플래그가 없는 경우, 응답에 명시적으로 추가
       if (!hasSuccessFlag) {
@@ -124,20 +97,6 @@ export const login = async (credentials) => {
 
     return handleSuccessResponse(response)
   } catch (error) {
-    console.error('로그인 오류:', error)
-    console.error(
-      '로그인 오류 응답:',
-      error.response ? error.response.data : '응답 없음',
-    )
-    console.error(
-      '로그인 오류 상태:',
-      error.response ? error.response.status : '상태 코드 없음',
-    )
-    console.error(
-      '로그인 요청 URL:',
-      error.config ? error.config.url : '요청 URL 없음',
-    )
-
     // 오류 발생 시 토큰 제거
     localStorage.removeItem(TOKEN_KEYS.ACCESS)
     localStorage.removeItem(TOKEN_KEYS.REFRESH)
@@ -152,10 +111,6 @@ export const logout = async () => {
   try {
     // 현재 액세스 토큰 가져오기
     const accessToken = localStorage.getItem('accessToken')
-    console.log(
-      '로그아웃 시도: 액세스 토큰 확인',
-      accessToken ? '토큰 있음' : '토큰 없음',
-    )
 
     // 헤더에 Authorization 토큰 추가
     const config = {
@@ -164,25 +119,20 @@ export const logout = async () => {
       },
     }
 
-    console.log('로그아웃 API 요청 시작:', API_ENDPOINTS.LOGOUT)
     // API_ENDPOINTS 사용
     const response = await apiClient.post(API_ENDPOINTS.LOGOUT, {}, config)
-    console.log('로그아웃 API 응답 수신:', response)
 
     // 로그아웃 성공 시 로컬 스토리지의 모든 토큰 제거
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
-    console.log('로컬 스토리지 토큰 제거 완료')
 
     return handleSuccessResponse(response)
   } catch (error) {
     // 에러가 발생해도 토큰은 제거
-    console.error('로그아웃 중 오류 발생:', error)
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
-    console.log('오류 발생 시에도 로컬 스토리지 토큰 제거 완료')
 
     return handleErrorResponse(error)
   }

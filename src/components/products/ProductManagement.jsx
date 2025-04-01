@@ -148,6 +148,9 @@ const ProductManagement = () => {
     if (!formData.description) {
       newErrors.description = '패키지 설명을 입력하세요'
       isValid = false
+    } else if (formData.description.length < 10) {
+      newErrors.description = '패키지 설명은 10글자 이상 입력해주세요'
+      isValid = false
     }
 
     setErrors(newErrors)

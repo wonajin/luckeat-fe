@@ -48,13 +48,13 @@ const StoreReservationsPage = () => {
   const { isLoggedIn, user } = useAuth()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showFilter, setShowFilter] = useState(false)
   const [filter, setFilter] = useState('ALL') // 'ALL', 'PENDING', 'CONFIRMED', 'REJECTED', 'COMPLETED'
   const [error, setError] = useState(null)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastType, setToastType] = useState('success') // 'success' or 'error'
   const [expandedReservationId, setExpandedReservationId] = useState(null)
+  const [activeFilter, setActiveFilter] = useState('ALL')
 
   // 더미 데이터 생성
   const dummyReservations = [
@@ -174,29 +174,25 @@ const StoreReservationsPage = () => {
   ]
 
   useEffect(() => {
-    if (!isLoggedIn || (user && user.role !== 'SELLER')) {
+    if (!isLoggedIn) {
       navigate('/login')
       return
     }
 
-    // 더미 데이터 설정 (API 호출 대신)
     setTimeout(() => {
       setReservations(dummyReservations)
       setLoading(false)
     }, 500)
-  }, [storeId, isLoggedIn, user, navigate])
+  }, [isLoggedIn, navigate])
 
   const handleReservationStatus = async (reservationId, status) => {
     try {
       setLoading(true)
       
-      // 더미 데이터 상태 업데이트 (API 호출 대신)
       setTimeout(() => {
-        // 업데이트된 예약 상태에 따른 메시지
         const message = status === 'CONFIRMED' ? '예약이 승인되었습니다' : '예약이 거절되었습니다'
         showToastMessage(message, 'success')
         
-        // 성공 후 목록에서 해당 예약 상태 업데이트
         setReservations(prev => 
           prev.map(reservation => 
             reservation.id === reservationId 
@@ -226,12 +222,15 @@ const StoreReservationsPage = () => {
     setExpandedReservationId(expandedReservationId === reservationId ? null : reservationId)
   }
 
-  // 예약 상태에 따른 필터링
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter)
+    setActiveFilter(newFilter)
+  }
+
   const filteredReservations = filter === 'ALL' 
     ? reservations 
     : reservations.filter(r => r.status === filter)
 
-  // 예약 상태 텍스트
   const getStatusText = (status) => {
     switch(status) {
       case 'PENDING': return '대기중'
@@ -271,7 +270,6 @@ const StoreReservationsPage = () => {
       <Header title="예약 목록" onBack={() => navigate('/business')} />
 
       <div className="flex-1 overflow-y-auto">
-        {/* 상단 정보 영역 */}
         <div className="bg-white p-4 shadow-sm">
           <h1 className="text-xl font-bold text-gray-800 mb-2">
             가게 예약 목록
@@ -281,85 +279,51 @@ const StoreReservationsPage = () => {
           </p>
         </div>
 
-        {/* 필터 버튼 */}
-        <div className="p-3 flex justify-between items-center">
-          <button
-            className="flex items-center text-sm font-medium text-gray-700"
-            onClick={() => setShowFilter(!showFilter)}
-          >
-            <svg
-              className="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+        <div className="px-3 pt-3 pb-3">
+          <div className="bg-white rounded-lg shadow-sm p-2 flex flex-wrap gap-2">
+            <button
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                activeFilter === 'ALL' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+              onClick={() => handleFilterChange('ALL')}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-              />
-            </svg>
-            필터: {filter === 'ALL' ? '전체' : getStatusText(filter)}
-          </button>
-          <button
-            className="text-sm text-[#F7B32B] font-medium"
-            onClick={() => navigate('/business')}
-          >
-            ← 사업자 페이지로 돌아가기
-          </button>
+              전체
+            </button>
+            <button
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                activeFilter === 'PENDING' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+              onClick={() => handleFilterChange('PENDING')}
+            >
+              대기중
+            </button>
+            <button
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                activeFilter === 'CONFIRMED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+              onClick={() => handleFilterChange('CONFIRMED')}
+            >
+              승인됨
+            </button>
+            <button
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                activeFilter === 'REJECTED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+              onClick={() => handleFilterChange('REJECTED')}
+            >
+              거절됨
+            </button>
+            <button
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                activeFilter === 'COMPLETED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+              onClick={() => handleFilterChange('COMPLETED')}
+            >
+              완료됨
+            </button>
+          </div>
         </div>
 
-        {/* 필터 옵션 */}
-        {showFilter && (
-          <div className="px-3 pb-3">
-            <div className="bg-white rounded-lg shadow-sm p-2 flex flex-wrap gap-2">
-              <button
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'ALL' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-                onClick={() => setFilter('ALL')}
-              >
-                전체
-              </button>
-              <button
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'PENDING' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-                onClick={() => setFilter('PENDING')}
-              >
-                대기중
-              </button>
-              <button
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'CONFIRMED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-                onClick={() => setFilter('CONFIRMED')}
-              >
-                승인됨
-              </button>
-              <button
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'REJECTED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-                onClick={() => setFilter('REJECTED')}
-              >
-                거절됨
-              </button>
-              <button
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'COMPLETED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-                onClick={() => setFilter('COMPLETED')}
-              >
-                완료됨
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 예약 목록 */}
         <div className="p-3">
           {loading ? (
             <div className="flex justify-center items-center h-32">
@@ -391,7 +355,27 @@ const StoreReservationsPage = () => {
                           </p>
                         )}
                       </div>
-                      <ReservationStatusBadge status={reservation.status} />
+                      <div className="flex items-center">
+                        <ReservationStatusBadge status={reservation.status} />
+                        <div className="ml-2 text-gray-500">
+                          <svg
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              expandedReservationId === reservation.id ? 'transform rotate-180' : ''
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
 
                     {expandedReservationId === reservation.id && (
@@ -457,7 +441,6 @@ const StoreReservationsPage = () => {
         </div>
       </div>
 
-      {/* 토스트 메시지 */}
       {showToast && (
         <div
           className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 ${

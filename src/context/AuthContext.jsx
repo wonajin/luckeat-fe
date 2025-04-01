@@ -23,8 +23,8 @@ export function AuthProvider({ children }) {
         if (accessToken && storedUser) {
           // 토큰 유효성 검사 추가
           if (isTokenExpired(accessToken)) {
-            // 토큰이 만료된 경우
-            console.log('토큰이 만료되었습니다. 로그아웃 처리합니다.')
+            // 토큰이 만료된 경우 - 사용자 친화적 메시지
+            console.log('로그인 정보가 만료되었습니다. 다시 로그인해 주세요.')
             setUser(null)
             setIsLoggedIn(false)
             localStorage.removeItem('accessToken')
@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
           setUser(JSON.parse(storedUser))
           setIsLoggedIn(true)
 
-          // 선택적으로 백엔드에서 최신 사용자 정보 요청 (refreshUser 함수와 같은 걸 만들 수 있음)
+          // 선택적으로 백엔드에서 최신 사용자 정보 요청
           try {
             const response = await userApi.getUserInfo()
             if (response.success) {
@@ -46,11 +46,11 @@ export function AuthProvider({ children }) {
               localStorage.setItem('user', JSON.stringify(response.data))
             }
           } catch (error) {
-            console.log('사용자 정보 갱신 실패:', error)
+            console.log('사용자 정보를 가져오지 못했습니다:', error)
             // API 요청 실패 시 토큰 유효성 다시 확인
             if (isTokenExpired(accessToken)) {
-              // 토큰이 만료된 경우
-              console.log('API 요청 시 토큰 만료 확인. 로그아웃 처리합니다.')
+              // 토큰이 만료된 경우 - 사용자 친화적 메시지
+              console.log('로그인 시간이 만료되었습니다. 보안을 위해 다시 로그인해 주세요.')
               setUser(null)
               setIsLoggedIn(false)
               localStorage.removeItem('accessToken')
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
           setIsLoggedIn(false)
         }
       } catch (error) {
-        console.error('인증 상태 확인 오류:', error)
+        console.error('로그인 상태 확인 중 문제가 발생했습니다:', error)
       } finally {
         setLoading(false)
       }
@@ -91,7 +91,7 @@ export function AuthProvider({ children }) {
           // 사용자 정보가 제대로 저장되었는지 확인하고, 필요한 정보가 모두 있는지 확인
           if (!userData.role) {
             console.warn(
-              '사용자 역할 정보가 없습니다. 사용자 정보 갱신을 시도합니다.',
+              '사용자 정보가 불완전합니다. 정보를 업데이트합니다.',
             )
             try {
               const userInfoResponse = await userApi.getUserInfo()
@@ -102,7 +102,7 @@ export function AuthProvider({ children }) {
                 return { success: true, user: updatedUserData }
               }
             } catch (err) {
-              console.error('사용자 정보 갱신 실패:', err)
+              console.error('사용자 정보 업데이트에 실패했습니다:', err)
             }
           }
           
@@ -111,12 +111,29 @@ export function AuthProvider({ children }) {
       }
       return {
         success: false,
-        message: response.message || '로그인에 실패했습니다.',
+        message: response.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.',
       }
     } catch (error) {
+      console.error('로그인 처리 중 오류:', error)
+      
+      // 더 친절한 오류 메시지 제공
+      let errorMessage = '로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = '아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.'
+        } else if (error.response.status === 403) {
+          errorMessage = '해당 계정은 현재 사용할 수 없습니다. 고객센터에 문의해주세요.'
+        } else if (error.response.status >= 500) {
+          errorMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        }
+      } else if (error.message && error.message.includes('Network')) {
+        errorMessage = '인터넷 연결이 불안정합니다. 네트워크 연결 상태를 확인해주세요.'
+      }
+      
       return {
         success: false,
-        message: error.message || '로그인에 실패했습니다.',
+        message: errorMessage,
       }
     } finally {
       setLoading(false)
@@ -134,19 +151,43 @@ export function AuthProvider({ children }) {
       if (response.success || response.statusCode === 201) {
         return {
           success: true,
-          message: response.message || '회원가입에 성공했습니다.',
+          message: response.message || '회원가입이 완료되었습니다! 로그인 후 이용해 주세요.',
           statusCode: response.statusCode || 201,
         }
       }
+      
+      // 실패 시 더 친절한 오류 메시지 제공
+      let errorMessage = response.message || '회원가입에 실패했습니다.'
+      if (response.message && response.message.includes('이미 존재')) {
+        if (response.message.includes('이메일')) {
+          errorMessage = '이미 가입된 이메일입니다. 다른 이메일로 시도하거나 로그인해 주세요.'
+        } else if (response.message.includes('닉네임')) {
+          errorMessage = '이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.'
+        }
+      }
+      
       return {
         success: false,
-        message: response.message || '회원가입에 실패했습니다.',
+        message: errorMessage,
       }
     } catch (error) {
       console.error('회원가입 처리 중 오류:', error)
+      
+      let errorMessage = '회원가입 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      
+      if (error.response) {
+        if (error.response.status === 400) {
+          errorMessage = '입력하신 정보에 문제가 있습니다. 모든 항목을 올바르게 입력했는지 확인해주세요.'
+        } else if (error.response.status >= 500) {
+          errorMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        }
+      } else if (error.message && error.message.includes('Network')) {
+        errorMessage = '인터넷 연결이 불안정합니다. 네트워크 연결 상태를 확인해주세요.'
+      }
+      
       return {
         success: false,
-        message: error.message || '회원가입에 실패했습니다.',
+        message: errorMessage,
       }
     } finally {
       setLoading(false)

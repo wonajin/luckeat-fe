@@ -25,12 +25,10 @@ function SignupPage() {
   const handlePasswordInput = (e) => {
     // 정규식을 사용하여 한글 입력 감지
     const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
-    
     if (isHangul) {
       // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
       return
     }
-    
     // 한글이 아닌 경우 상태 업데이트
     setPassword(e.target.value)
   }
@@ -39,75 +37,113 @@ function SignupPage() {
   const handleConfirmPasswordInput = (e) => {
     // 정규식을 사용하여 한글 입력 감지
     const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
-    
     if (isHangul) {
       // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
       return
     }
-    
     // 한글이 아닌 경우 상태 업데이트
     setConfirmPassword(e.target.value)
   }
 
   const handleSignup = async (e) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
-    console.log('회원가입 시작...')
-
-    // 간단한 유효성 검사
-    if (!email || !nickname || !password || !confirmPassword) {
-      setError('모든 필드를 입력해주세요.')
-      setLoading(false)
+    
+    // 폼 유효성 검사 강화
+    if (!email) {
+      setError('이메일을 입력해주세요.')
       return
     }
-
+    
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('유효한 이메일 형식이 아닙니다.')
+      return
+    }
+    
+    if (!nickname) {
+      setError('닉네임을 입력해주세요.')
+      return
+    }
+    
+    if (!password) {
+      setError('비밀번호를 입력해주세요.')
+      return
+    }
+    
+    // 비밀번호 길이 검사
+    if (password.length < 8) {
+      setError('비밀번호는 8자 이상이어야 합니다.')
+      return
+    }
+    
+    // 비밀번호 복잡성 검사 (최소한 하나의 문자와 숫자)
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,}$/
+    if (!passwordRegex.test(password)) {
+      setError(
+        '비밀번호는 최소 8자 이상이며, 문자와 숫자를 모두 포함해야 합니다.'
+      )
+      return
+    }
+    
     if (password !== confirmPassword) {
       setError('비밀번호가 일치하지 않습니다.')
-      setLoading(false)
       return
     }
-
-    // 비밀번호 길이와 복잡성 검사
-    if (password.length < 8 || password.length > 20) {
-      setError('비밀번호는 8자 이상, 20자 이하여야 합니다.')
-      setLoading(false)
+    
+    if (!userType) {
+      setError('회원 유형을 선택해주세요.')
       return
     }
-
-    // 회원 유형에 따라 role 값 설정 (대문자로 변환)
-    const role = userType === '사업자' ? 'SELLER' : 'BUYER'
 
     try {
-      // 회원가입 데이터 준비
+      setLoading(true)
+      
       const userData = {
         email,
-        nickname,
         password,
-        role,
+        nickname,
+        userType,
       }
-
+      
       console.log('회원가입 요청 데이터:', userData)
-
-      // 회원가입 요청
-      const result = await signup(userData)
-      console.log('회원가입 응답 결과 상세:', result)
-
-      // 성공 여부 확인 - success 또는 statusCode로 확인
-      if (result && (result.success || result.statusCode === 201)) {
-        console.log('회원가입 성공, 성공 팝업 표시')
-        setShowSuccessPopup(true) // 성공 시 팝업 표시
+      
+      const response = await signup(userData)
+      console.log('회원가입 응답:', response)
+      
+      if (response.success) {
+        // 성공 팝업 표시
+        setShowSuccessPopup(true)
+        // 폼 초기화
+        setEmail('')
+        setPassword('')
+        setConfirmPassword('')
+        setNickname('')
+        setUserType('일반')
       } else {
-        // 실패 처리
-        console.log('회원가입 실패 상세:', result)
-        setError(
-          (result && result.message) ||
-            '회원가입에 실패했습니다. 다시 시도해주세요.',
-        )
+        // 오류 메시지 개선
+        if (response.message.includes('이미 존재')) {
+          if (response.message.includes('이메일')) {
+            setError('이미 가입된 이메일입니다. 다른 이메일로 시도하거나 로그인해 주세요.')
+          } else if (response.message.includes('닉네임')) {
+            setError('이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.')
+          } else {
+            setError(response.message)
+          }
+        } else if (response.message.includes('필수')) {
+          setError('모든 필수 정보를 입력해주세요.')
+        } else {
+          setError(
+            response.message || '회원가입에 실패했습니다. 다시 시도해주세요.'
+          )
+        }
       }
-    } catch (err) {
-      console.error('회원가입 처리 중 오류 발생:', err)
-      setError('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.')
+    } catch (error) {
+      console.error('회원가입 오류:', error)
+      setError(
+        '회원가입 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      )
     } finally {
       setLoading(false)
     }
@@ -182,140 +218,139 @@ function SignupPage() {
   console.log('SignupPage 렌더링, 팝업 상태:', showSuccessPopup)
 
   return (
-    <div className="flex flex-col h-full">
-      {/* 헤더 */}
-      <Header title="회원가입" />
+    <div className="min-h-screen bg-gray-100">
+      <Navigation />
+      <Header title="회원가입" showBackButton={true} />
+      <main className="container mx-auto py-8 px-4">
+        <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+          {/* 오류 메시지 표시 - 개선된 스타일 */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-md border border-red-200">
+              <p className="font-medium">{error}</p>
+            </div>
+          )}
 
-      <div className="flex-1 p-4 overflow-y-auto">
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4">
-            {error}
-          </div>
-        )}
+          {/* 회원가입 폼 */}
+          <form onSubmit={handleSignup} className="space-y-6">
+            {/* 회원 유형 선택 */}
+            <div className="border border-red-500 rounded-lg p-3">
+              <div className="flex items-center space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="userType"
+                    value="일반"
+                    checked={userType === '일반'}
+                    onChange={() => setUserType('일반')}
+                    className="mr-2"
+                  />
+                  <span className="flex items-center">
+                    <span className="w-4 h-4 bg-yellow-500 rounded-full mr-1"></span>
+                    일반 사용자
+                  </span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="userType"
+                    value="사업자"
+                    checked={userType === '사업자'}
+                    onChange={() => setUserType('사업자')}
+                    className="mr-2"
+                  />
+                  <span>사업자</span>
+                </label>
+              </div>
+            </div>
 
-        {/* 회원가입 폼 */}
-        <form onSubmit={handleSignup} className="space-y-6 mt-4">
-          {/* 회원 유형 선택 */}
-          <div className="border border-red-500 rounded-lg p-3">
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center">
+            {/* 나머지 폼 필드들 */}
+            <div className="border rounded-lg p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  이메일 주소
+                </label>
                 <input
-                  type="radio"
-                  name="userType"
-                  value="일반"
-                  checked={userType === '일반'}
-                  onChange={() => setUserType('일반')}
-                  className="mr-2"
+                  type="email"
+                  placeholder="이메일 주소를 입력해주세요."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-3 bg-gray-100 rounded-lg"
+                  required
                 />
-                <span className="flex items-center">
-                  <span className="w-4 h-4 bg-yellow-500 rounded-full mr-1"></span>
-                  일반 사용자
-                </span>
-              </label>
-              <label className="flex items-center">
+                <p className="text-xs text-gray-500 mt-1">
+                  (예: example@example.com)
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">닉네임</label>
                 <input
-                  type="radio"
-                  name="userType"
-                  value="사업자"
-                  checked={userType === '사업자'}
-                  onChange={() => setUserType('사업자')}
-                  className="mr-2"
+                  type="text"
+                  placeholder="닉네임을 입력해주세요."
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  className="w-full p-3 bg-gray-100 rounded-lg"
+                  required
                 />
-                <span>사업자</span>
-              </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  2~10자 이내로 입력해주세요.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">비밀번호</label>
+                <input
+                  type="password"
+                  placeholder="비밀번호를 입력해주세요."
+                  value={password}
+                  onChange={handlePasswordInput}
+                  className="w-full p-3 bg-gray-100 rounded-lg"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  비밀번호는 8자 이상, 20자 이하이며, 영어 소문자, 숫자를 각각
+                  최소 1개 포함해야 합니다.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  비밀번호 확인
+                </label>
+                <input
+                  type="password"
+                  placeholder="비밀번호를 다시 입력해주세요."
+                  value={confirmPassword}
+                  onChange={handleConfirmPasswordInput}
+                  className="w-full p-3 bg-gray-100 rounded-lg"
+                  required
+                />
+              </div>
             </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg"
+              disabled={loading}
+            >
+              {loading ? '처리 중...' : '회원가입'}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-600 mb-2">이미 회원이신가요?</p>
+            <button
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+              onClick={() => navigate('/login')}
+            >
+              로그인하기
+            </button>
           </div>
-
-          {/* 나머지 폼 필드들 */}
-          <div className="border rounded-lg p-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                이메일 주소
-              </label>
-              <input
-                type="email"
-                placeholder="이메일 주소를 입력해주세요."
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 bg-gray-100 rounded-lg"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                (예: example@example.com)
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">닉네임</label>
-              <input
-                type="text"
-                placeholder="닉네임을 입력해주세요."
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                className="w-full p-3 bg-gray-100 rounded-lg"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                2~10자 이내로 입력해주세요.
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">비밀번호</label>
-              <input
-                type="password"
-                placeholder="비밀번호를 입력해주세요."
-                value={password}
-                onChange={handlePasswordInput}
-                className="w-full p-3 bg-gray-100 rounded-lg"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                비밀번호는 8자 이상, 20자 이하이며, 영어 소문자, 숫자를 각각
-                최소 1개 포함해야 합니다.
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                비밀번호 확인
-              </label>
-              <input
-                type="password"
-                placeholder="비밀번호를 다시 입력해주세요."
-                value={confirmPassword}
-                onChange={handleConfirmPasswordInput}
-                className="w-full p-3 bg-gray-100 rounded-lg"
-                required
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg"
-            disabled={loading}
-          >
-            {loading ? '처리 중...' : '회원가입'}
-          </button>
-        </form>
-
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600 mb-2">이미 회원이신가요?</p>
-          <button
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
-            onClick={() => navigate('/login')}
-          >
-            로그인하기
-          </button>
         </div>
-      </div>
-      
+      </main>
 
       {/* 회원가입 성공 팝업 - renderSuccessPopup 함수 사용 */}
       {renderSuccessPopup()}
-
-      <Navigation />
     </div>
   )
 }

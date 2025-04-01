@@ -1,9 +1,4 @@
 import apiClient from './apiClient'
-import {
-  handleSuccessResponse,
-  handleErrorResponse,
-} from '../utils/apiMessages'
-import { API_ENDPOINTS } from '../config/apiConfig'
 
 /**
  * 예약 생성
@@ -11,139 +6,186 @@ import { API_ENDPOINTS } from '../config/apiConfig'
  * @param {object} reservationData - 예약 데이터 (productId, quantity, isZerowaste)
  * @returns {Promise<object>} 예약 생성 결과
  */
-export const createReservation = async (reservationData) => {
+export const createReservation = async (storeId, reservationData) => {
   try {
     const response = await apiClient.post(
-      API_ENDPOINTS.RESERVATIONS,
+      `/api/v1/reservation/stores/${storeId}`,
       reservationData,
     )
-    return handleSuccessResponse(response)
+    return {
+      success: true,
+      data: response.data,
+    }
   } catch (error) {
-    return handleErrorResponse(error)
+    console.error('예약 생성 오류:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || '예약 생성에 실패했습니다.',
+    }
   }
 }
 
 /**
- * 예약 상태 변경 (승인/거절/완료)
+ * 예약 상태 변경 (확정/거절)
  * @param {object} statusData - 상태 변경 데이터 (reservationId, status)
  * @returns {Promise<object>} 상태 변경 결과
  */
 export const updateReservationStatus = async (statusData) => {
   try {
-    const { reservationId, status } = statusData
+
     const response = await apiClient.post(
-      `${API_ENDPOINTS.RESERVATIONS}/${reservationId}/status`,
-      { status },
+      '/api/v1/reservation/status',
+      statusData,
     )
-    return handleSuccessResponse(response)
+    return {
+      success: true,
+      data: response.data,
+    }
   } catch (error) {
-    return handleErrorResponse(error)
+    console.error('예약 상태 변경 오류:', error)
+    return {
+      success: false,
+      message:
+        error.response?.data?.message || '예약 상태 변경에 실패했습니다.',
+    }
   }
 }
 
 /**
- * 예약 취소 (고객용)
+ * 예약 취소 
  * @param {number} reservationId - 예약 ID
  * @returns {Promise<object>} 취소 결과
  */
 export const cancelReservation = async (reservationId) => {
   try {
-    const response = await apiClient.post(
-      `${API_ENDPOINTS.RESERVATIONS}/${reservationId}/cancel`,
+    const response = await apiClient.delete(
+      `/api/v1/reservation/${reservationId}`,
     )
-    return handleSuccessResponse(response)
+    return {
+      success: true,
+      data: response.data,
+    }
   } catch (error) {
-    return handleErrorResponse(error)
+    console.error('예약 취소 오류:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || '예약 취소에 실패했습니다.',
+    }
   }
 }
 
 /**
- * 가게별 예약 목록 조회
+ * 가게사장 예약 목록 조회
  * @param {number} storeId - 가게 ID
  * @returns {Promise<object>} 예약 목록
  */
 export const getStoreReservations = async (storeId) => {
   try {
     const response = await apiClient.get(
-      `${API_ENDPOINTS.STORES}/${storeId}/reservations`,
+      `/api/v1/reservation/stores/${storeId}`,
     )
-    return handleSuccessResponse(response)
+    return {
+      success: true,
+      data: response.data,
+    }
   } catch (error) {
-    return handleErrorResponse(error)
+    console.error('가게사장 예약 목록 조회 오류:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || '예약 목록 조회에 실패했습니다.',
+      data: [],
+    }
   }
 }
 
 /**
- * 가게별 대기중인 예약 목록 조회
+ * 가게사장 예약 펜딩 목록 조회
  * @param {number} storeId - 가게 ID
  * @returns {Promise<object>} 대기중인 예약 목록
  */
 export const getStorePendingReservations = async (storeId) => {
   try {
     const response = await apiClient.get(
-      `${API_ENDPOINTS.STORES}/${storeId}/reservations/pending`,
+      `/api/v1/reservation/stores/pending/${storeId}`,
     )
-    return handleSuccessResponse(response)
+    return {
+      success: true,
+      data: response.data,
+    }
   } catch (error) {
-    return handleErrorResponse(error)
+    console.error('가게 펜딩 목록 조회 오류:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || '펜딩 예약 목록 조회에 실패했습니다.',
+      data: [],
+    }
   }
 }
 
 /**
- * 사용자별 예약 목록 조회
+ * 고객 예약 목록 조회
  * @param {number} userId - 사용자 ID
  * @returns {Promise<object>} 예약 목록
  */
 export const getUserReservations = async (userId) => {
   try {
-    // userId가 'me'이면 현재 로그인한 사용자 본인의 예약을 조회
-    // 그 외에는 특정 사용자의 예약을 조회
-    const endpoint =
-      userId === 'me'
-        ? `${API_ENDPOINTS.USERS}/me/reservations`
-        : `${API_ENDPOINTS.USERS}/${userId}/reservations`
-
-    const response = await apiClient.get(endpoint)
-    return handleSuccessResponse(response)
+    const response = await apiClient.get(`/api/v1/reservation/${userId}`)
+    return {
+      success: true,
+      data: response.data,
+    }
   } catch (error) {
-    return handleErrorResponse(error)
+    console.error('고객 예약 목록 조회 오류:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || '예약 목록 조회에 실패했습니다.',
+      data: [],
+    }
   }
 }
 
-/**
- * 예약 상세 조회
- * @param {number} reservationId - 예약 ID
- * @returns {Promise<object>} 예약 상세 정보
- */
-export const getReservationDetail = async (reservationId) => {
-  try {
-    const response = await apiClient.get(
-      `${API_ENDPOINTS.RESERVATIONS}/${reservationId}`,
-    )
-    return handleSuccessResponse(response)
-  } catch (error) {
-    return handleErrorResponse(error)
-  }
-}
 
 /**
- * 사용자별 완료된 예약 목록 조회 (환경 기여도 계산용)
+ * 사용자별 완료된 예약 목록 조회 
  * @param {number} userId - 사용자 ID
  * @returns {Promise<object>} 완료된 예약 목록
  */
-export const getUserCompletedReservations = async (userId) => {
+export const getUserCompletedReservations = async () => {
   try {
-    // userId가 'me'이면 현재 로그인한 사용자 본인의 예약을 조회
-    // 그 외에는 특정 사용자의 예약을 조회
-    const endpoint =
-      userId === 'me'
-        ? `${API_ENDPOINTS.USERS}/me/reservations/completed`
-        : `${API_ENDPOINTS.USERS}/${userId}/reservations/completed`
-
-    const response = await apiClient.get(endpoint)
-    return handleSuccessResponse(response)
+     // 'me'를 사용하여 현재 사용자의 모든 예약을 가져옴
+     const userId = 'me'
+     const response = await apiClient.get(`/api/v1/reservation/${userId}`)
+ 
+     if (response.data) {
+       // 서버 응답에서 완료된 예약만 필터링
+       // 'COMPLETED', 'PICKED_UP' 등 완료 상태인 예약만 필터링
+       const completedOrders = response.data.filter(
+         (order) =>
+           order.status === 'COMPLETED' ||
+           order.status === 'PICKED_UP' ||
+           order.status === 'DONE'
+       )
+ 
+       return {
+         success: true,
+         data: { 
+           completedOrders 
+         }
+       }
+     }
+ 
+     return {
+       success: true,
+      data: { completedOrders: [] }
+    }
   } catch (error) {
-    return handleErrorResponse(error)
+    console.error('완료된 예약 목록 조회 오류:', error)
+    return {
+      success: false,
+        message:
+          error.response?.data?.message || '완료된 예약 목록 조회에 실패했습니다.',
+        data: { completedOrders: [] }
+      }
   }
 }
 
@@ -152,18 +194,23 @@ export const getUserCompletedReservations = async (userId) => {
  * @param {number} userId - 사용자 ID
  * @returns {Promise<object>} 환경 기여 통계 데이터
  */
-export const getUserEcoStats = async (userId) => {
+export const getUserEcoStats = async () => {
   try {
-    // userId가 'me'이면 현재 로그인한 사용자 본인의 통계를 조회
-    // 그 외에는 특정 사용자의 통계를 조회
-    const endpoint =
-      userId === 'me'
-        ? `${API_ENDPOINTS.USERS}/me/eco-stats`
-        : `${API_ENDPOINTS.USERS}/${userId}/eco-stats`
-
-    const response = await apiClient.get(endpoint)
-    return handleSuccessResponse(response)
+    const response = await apiClient.get('/api/v1/reservation/user/eco-stats')
+    return {
+      success: true,
+      data: response.data,
+    }
   } catch (error) {
-    return handleErrorResponse(error)
+    console.error('환경 기여 통계 조회 오류:', error)
+    return {
+      success: false,
+      message:
+        error.response?.data?.message || '환경 기여 통계 조회에 실패했습니다.',
+      data: {
+        completedOrders: [],
+        totalSaved: 0,
+      },
+    }
   }
 }

@@ -5,9 +5,9 @@ import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import { getStores } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
-import homepageImage from '../assets/images/Homepage_1.png'
-import homepageImage2 from '../assets/images/Homepagr_2.png'
-import homepageImage3 from '../assets/images/Hompage_2.jpg'
+import banner01 from '../assets/images/럭킷배너01.png'
+import banner02 from '../assets/images/럭킷배너02.png'
+import banner03 from '../assets/images/럭킷배너03.png'
 import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
@@ -17,7 +17,7 @@ function HomePage() {
   const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-  const [locationFilter, setLocationFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
@@ -31,39 +31,68 @@ function HomePage() {
   const [displayedStores, setDisplayedStores] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const storesPerPage = 5
+  const [autoSlide, setAutoSlide] = useState(true)
+  const autoSlideInterval = useRef(null)
+  const [slideDirection, setSlideDirection] = useState('right')
 
   const cardNews = [
     {
       id: 1,
-      image: homepageImage,
+      image: banner01,
       link: '/intro',
     },
     {
       id: 2,
-      image: homepageImage2,
+      image: banner02,
       link: '/jeju-special',
     },
     {
       id: 3,
-      image: homepageImage3,
+      image: banner03,
       link: '/partner',
     },
   ]
 
-  const locationOptions = [
-    { id: 'nearby', name: '내 주변', icon: '📍' },
-    { id: 'jeju-city', name: '제주시', icon: '🏙️' },
-    { id: 'seogwipo', name: '서귀포', icon: '🌊' },
-    { id: 'aewol', name: '애월', icon: '☕' },
-    { id: 'hamdeok', name: '함덕', icon: '🏖️' },
+  const categoryOptions = [
+    { id: 'korean', name: '한식', icon: '🍚' },
+    { id: 'japanese', name: '일식', icon: '🍱' },
+    { id: 'chinese', name: '중식', icon: '🥢' },
+    { id: 'western', name: '양식', icon: '🍝' },
+    { id: 'cafe', name: '카페/베이커리', icon: '🍞' },
+    { id: 'salad', name: '샐러드/청과', icon: '🥗' },
   ]
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
+    setSlideDirection('right')
     setCurrentSlide((prev) => (prev === cardNews.length - 1 ? 0 : prev + 1))
+  }, [cardNews.length])
+
+  const prevSlide = useCallback(() => {
+    setSlideDirection('left')
+    setCurrentSlide((prev) => (prev === 0 ? cardNews.length - 1 : prev - 1))
+  }, [cardNews.length])
+
+  // 자동 슬라이드 설정
+  useEffect(() => {
+    if (autoSlide) {
+      autoSlideInterval.current = setInterval(nextSlide, 5000) // 5초마다 다음 슬라이드로
+    }
+    return () => {
+      if (autoSlideInterval.current) {
+        clearInterval(autoSlideInterval.current)
+      }
+    }
+  }, [autoSlide, nextSlide])
+
+  // 마우스 호버 시 자동 슬라이드 일시 정지
+  const handleMouseEnter = () => {
+    setShowArrows(true)
+    setAutoSlide(false)
   }
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? cardNews.length - 1 : prev - 1))
+  const handleMouseLeave = () => {
+    setShowArrows(false)
+    setAutoSlide(true)
   }
 
   useEffect(() => {
@@ -76,8 +105,8 @@ function HomePage() {
           params.isDiscountOpen = true
         }
 
-        if (locationFilter !== '내 주변') {
-          params.location = locationFilter
+        if (categoryFilter) {
+          params.category = categoryFilter
         }
 
         try {
@@ -107,7 +136,7 @@ function HomePage() {
     }
 
     fetchData()
-  }, [showDiscountOnly, locationFilter])
+  }, [showDiscountOnly, categoryFilter])
 
   console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
 
@@ -115,14 +144,17 @@ function HomePage() {
     if (!storeListRef.current) return
 
     const { scrollTop, scrollHeight, clientHeight } = storeListRef.current
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100
+    const isNearBottom =
+      scrollTop + clientHeight >= scrollHeight - 100 &&
+      !loading &&
+      displayedStores.length < filteredStores.length
 
-    if (isNearBottom && !loading && displayedStores.length < filteredStores.length) {
+    if (isNearBottom) {
       const nextPage = currentPage + 1
       const startIndex = (nextPage - 1) * storesPerPage
       const endIndex = startIndex + storesPerPage
       const newStores = filteredStores.slice(0, endIndex)
-      
+
       setDisplayedStores(newStores)
       setCurrentPage(nextPage)
     }
@@ -176,22 +208,10 @@ function HomePage() {
       })
     }
 
-    if (locationFilter && locationFilter !== '내 주변') {
+    if (categoryFilter) {
       result = result.filter((store) => {
-        const address = (store.address || '').toLowerCase()
-        
-        switch(locationFilter) {
-          case '제주시':
-            return address.includes('제주시')
-          case '서귀포':
-            return address.includes('서귀포')
-          case '애월':
-            return address.includes('애월')
-          case '함덕':
-            return address.includes('함덕')
-          default:
-            return true
-        }
+        const storeCategory = (store.category || '').toLowerCase()
+        return storeCategory === categoryFilter.toLowerCase()
       })
     }
 
@@ -236,7 +256,7 @@ function HomePage() {
 
     console.log('정렬 후 최종 가게 수:', result.length)
     setFilteredStores(result)
-  }, [searchQuery, sortOption, stores, locationFilter])
+  }, [searchQuery, sortOption, stores, categoryFilter])
 
   // filteredStores가 업데이트될 때마다 표시할 가게 목록 업데이트
   useEffect(() => {
@@ -253,8 +273,8 @@ function HomePage() {
     console.log('첫 번째 가게 키:', Object.keys(stores[0]))
   }
 
-  const handleLocationSelect = (location) => {
-    setLocationFilter(locationFilter === location ? '' : location)
+  const handleCategorySelect = (category) => {
+    setCategoryFilter(categoryFilter === category ? '' : category)
   }
 
   const handleStoreClick = (store) => {
@@ -287,7 +307,7 @@ function HomePage() {
           {isLoggedIn ? (
             <div className="flex space-x-2">
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={async () => {
                   await logout()
                   navigate(0)
@@ -299,14 +319,14 @@ function HomePage() {
           ) : (
             <div className="flex space-x-2">
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={() => navigate('/login')}
               >
                 로그인
               </button>
               <span className="text-gray-300">|</span>
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={() => navigate('/signup')}
               >
                 회원가입
@@ -316,24 +336,41 @@ function HomePage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden pb-16" ref={storeListRef} onScroll={handleScroll}>
+      <div
+        className="flex-1 overflow-hidden pb-16"
+        ref={storeListRef}
+        onScroll={handleScroll}
+      >
         <div className="px-4 py-2 border-b">
-          <SearchBar 
-            initialValue={searchQuery}
-            onSearch={setSearchQuery}
-          />
+          <SearchBar initialValue={searchQuery} onSearch={setSearchQuery} />
         </div>
 
         <div
           className="relative px-4 py-4 border-b"
-          onMouseEnter={() => setShowArrows(true)}
-          onMouseLeave={() => setShowArrows(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <div className="relative w-full h-48 overflow-hidden rounded-lg">
             {cardNews.map((card, index) => (
               <div
                 key={card.id}
-                className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                className={`absolute top-0 left-0 w-full h-full transition-all duration-700 ease-in-out transform ${
+                  index === currentSlide
+                    ? 'translate-x-0 opacity-100 z-10'
+                    : slideDirection === 'right'
+                      ? index ===
+                        (currentSlide === 0
+                          ? cardNews.length - 1
+                          : currentSlide - 1)
+                        ? '-translate-x-full opacity-0 z-0'
+                        : 'translate-x-full opacity-0 z-0'
+                      : index ===
+                          (currentSlide === cardNews.length - 1
+                            ? 0
+                            : currentSlide + 1)
+                        ? 'translate-x-full opacity-0 z-0'
+                        : '-translate-x-full opacity-0 z-0'
+                }`}
                 onClick={() => handleCardClick(card.link)}
               >
                 <img
@@ -341,29 +378,23 @@ function HomePage() {
                   alt={card.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 p-5 flex flex-col justify-center items-center">
-                  <h1 className="text-white text-3xl font-bold text-center mb-2">
-                    {card.title}
-                  </h1>
-                  <p className="text-white text-xl opacity-90 text-center">
-                    {card.description}
-                  </p>
-                </div>
               </div>
             ))}
-            
+
             <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
               {cardNews.map((_, index) => (
                 <button
                   key={index}
                   className={`w-2 h-2 rounded-full ${
-                    index === currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'
+                    index === currentSlide
+                      ? 'bg-white'
+                      : 'bg-white bg-opacity-50'
                   }`}
                   onClick={() => setCurrentSlide(index)}
                 />
               ))}
             </div>
-            
+
             {showArrows && (
               <>
                 <button
@@ -416,22 +447,24 @@ function HomePage() {
         </div>
 
         <div className="px-4 py-3 border-b">
-          <h3 className="text-base font-medium mb-2">어디로 가시나요?</h3>
+          <h3 className="text-base font-medium mb-2">
+            어떤 음식을 찾으시나요?
+          </h3>
           <div className="flex justify-between">
-            {locationOptions.map((option) => (
+            {categoryOptions.map((option) => (
               <button
                 key={option.id}
-                onClick={() => handleLocationSelect(option.name)}
+                onClick={() => handleCategorySelect(option.name)}
                 className={`flex flex-col items-center justify-center ${
-                  locationFilter === option.name 
-                    ? 'text-yellow-600' 
+                  categoryFilter === option.name
+                    ? 'text-yellow-600'
                     : 'text-gray-600'
                 }`}
               >
-                <div 
+                <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
-                    locationFilter === option.name
-                      ? 'bg-yellow-100 border-2 border-yellow-400' 
+                    categoryFilter === option.name
+                      ? 'bg-yellow-100 border-2 border-yellow-400'
                       : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
@@ -524,7 +557,8 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {locationFilter === '내 주변' ? '내 주변' : locationFilter || '전체'} 가게 목록 ({filteredStores.length})
+              {categoryFilter ? `${categoryFilter} 맛집` : '전체 맛집'} (
+              {filteredStores.length})
             </h2>
           </div>
 
@@ -551,15 +585,27 @@ function HomePage() {
                     />
                   </div>
                   <div className="flex-1 ml-3">
-                    <h3 className="font-bold truncate" title={store.storeName || store.name || '이름 없음'}>
-                      {(store.storeName || store.name || '이름 없음').length > 20 
-                        ? (store.storeName || store.name || '이름 없음').substring(0, 20) + '...'
-                        : (store.storeName || store.name || '이름 없음')}
+                    <h3
+                      className="font-bold truncate"
+                      title={store.storeName || store.name || '이름 없음'}
+                    >
+                      {(store.storeName || store.name || '이름 없음').length >
+                      20
+                        ? (
+                            store.storeName ||
+                            store.name ||
+                            '이름 없음'
+                          ).substring(0, 20) + '...'
+                        : store.storeName || store.name || '이름 없음'}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate" title={store.address || '주소 정보 없음'}>
+                    <p
+                      className="text-sm text-gray-500 truncate"
+                      title={store.address || '주소 정보 없음'}
+                    >
                       {(store.address || '주소 정보 없음').length > 20
-                        ? (store.address || '주소 정보 없음').substring(0, 20) + '...'
-                        : (store.address || '주소 정보 없음')}
+                        ? (store.address || '주소 정보 없음').substring(0, 20) +
+                          '...'
+                        : store.address || '주소 정보 없음'}
                     </p>
                     <div className="flex items-center">
                       <div className="flex items-center text-sm text-yellow-500 mr-2">

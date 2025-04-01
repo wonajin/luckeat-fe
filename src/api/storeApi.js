@@ -145,18 +145,18 @@ export const getStoreById = async (storeId) => {
 export const updateStore = async (storeId, storeData, storeImage) => {
   try {
     // 이미지 처리 (이미지 파일이 있는 경우에만)
-    let processedData = storeData;
+    let processedData = storeData
     if (storeImage) {
-      console.log('가게 이미지 업로드 시작:', storeImage.name);
+      console.log('가게 이미지 업로드 시작:', storeImage.name)
       processedData = await processImageData(
         storeData,
         storeImage,
         'storeImg',
-        'stores'
-      );
-      console.log('이미지 처리 후 데이터:', processedData.storeImg);
+        'stores',
+      )
+      console.log('이미지 처리 후 데이터:', processedData.storeImg)
     }
-    
+
     // API 호출
     const response = await apiClient.put(`/api/v1/stores/${storeId}`, {
       storeName: processedData.storeName,
@@ -175,17 +175,18 @@ export const updateStore = async (storeId, storeData, storeImage) => {
       avgRating: processedData.avgRating || 0,
       avgRatingGoogle: processedData.avgRatingGoogle || 0,
       googlePlaceId: processedData.googlePlaceId || '',
-    });
-    
+    })
+
     return {
       success: true,
       data: response.data,
     }
   } catch (error) {
-    console.error('가게 정보 수정 오류:', error);
+    console.error('가게 정보 수정 오류:', error)
     return {
       success: false,
-      message: error.response?.data?.message || '가게 정보 수정에 실패했습니다.',
+      message:
+        error.response?.data?.message || '가게 정보 수정에 실패했습니다.',
     }
   }
 }
@@ -247,5 +248,18 @@ export const getMyStore = async () => {
       message: errorMessage,
       error: error.message,
     }
+  }
+}
+
+// 상품 상세 정보 조회
+export const getProductById = async (storeId, productId) => {
+  try {
+    const response = await axios.get(
+      `/api/v1/stores/${storeId}/products/${productId}`,
+    )
+    return response.data
+  } catch (error) {
+    console.error('상품 정보 조회 실패:', error)
+    throw error
   }
 }

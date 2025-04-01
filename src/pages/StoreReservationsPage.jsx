@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
-import { formatDate, formatTime } from '../utils/dateUtils'
+import { formatDateTime } from '../utils/dateUtils'
 import { 
   getStoreReservations,
   updateReservationStatus,
@@ -281,14 +281,13 @@ const StoreReservationsPage = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-gray-800">
-                          {reservation.customerName || '고객'}
+                          {reservation.userNickname || reservation.customerName || '고객'}
                         </h3>
                         <p className="text-sm text-gray-500 mt-1">
-                          럭키트 {reservation.quantity || 1}개
+                          {reservation.productName || '상품'} {reservation.quantity || 1}개
                         </p>
                         <p className="text-sm text-gray-500">
-                          {formatDate(reservation.createdAt)}
-                          {formatTime(reservation.createdAt)}
+                          {formatDateTime(reservation.createdAt)}
                         </p>
                         {reservation.isZeroWaste && (
                           <p className="text-xs text-green-600 font-medium mt-1">

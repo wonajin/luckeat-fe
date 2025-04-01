@@ -24,7 +24,7 @@ function EditStorePage() {
     description: '',
     businessNumber: '',
     businessHours: '',
-    reviewSummary: '',
+    pickupTime: '',
     avgRating: 0,
     avgRatingGoogle: 0,
     googlePlaceId: '',
@@ -37,6 +37,11 @@ function EditStorePage() {
     openTime: '09:00',
     closeTime: '18:00',
   })
+  const [pickupTimeRange, setPickupTimeRange] = useState({
+    startTime: '09:00',
+    endTime: '17:30',
+  })
+  const [showPickupTimePicker, setShowPickupTimePicker] = useState(false)
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -57,7 +62,7 @@ function EditStorePage() {
             description: response.data.description || '',
             businessNumber: response.data.businessNumber || '',
             businessHours: response.data.businessHours || '',
-            reviewSummary: response.data.reviewSummary || '',
+            pickupTime: response.data.pickupTime || '',
             avgRating: response.data.avgRating || 0,
             avgRatingGoogle: response.data.avgRatingGoogle || 0,
             googlePlaceId: response.data.googlePlaceId || '',
@@ -69,6 +74,16 @@ function EditStorePage() {
               setTimeRange({
                 openTime: times[0],
                 closeTime: times[1]
+              })
+            }
+          }
+          
+          if (response.data.pickupTime) {
+            const pickupTimes = response.data.pickupTime.split(' - ')
+            if (pickupTimes.length === 2) {
+              setPickupTimeRange({
+                startTime: pickupTimes[0],
+                endTime: pickupTimes[1]
               })
             }
           }
@@ -138,6 +153,16 @@ function EditStorePage() {
     setLoading(true)
 
     try {
+      // 시간 유효성 검사
+      const startTime = new Date(`2000-01-01T${pickupTimeRange.startTime}`)
+      const endTime = new Date(`2000-01-01T${pickupTimeRange.endTime}`)
+      
+      if (startTime >= endTime) {
+        setError('픽업 시작 시간은 종료 시간보다 빨라야 합니다.')
+        setLoading(false)
+        return
+      }
+      
       // 수정된 데이터를 서버에 전송
       const dataToSubmit = {
         ...formData,
@@ -148,7 +173,7 @@ function EditStorePage() {
         // 설명이 비어있으면 공백 문자 하나를 보냅니다. 서버의 유효성 검사를 통과하기 위함
         description: formData.description === '' ? ' ' : formData.description,
         contactNumber: formData.contactNumber || store.contactNumber || '',
-        reviewSummary: store.reviewSummary || '',
+        pickupTime: `${pickupTimeRange.startTime} - ${pickupTimeRange.endTime}`,
         avgRating: store.avgRating || 0,
         avgRatingGoogle: store.avgRatingGoogle || 0,
         googlePlaceId: store.googlePlaceId || '',
@@ -193,6 +218,43 @@ function EditStorePage() {
       businessHours: updatedBusinessHours,
     }))
   }
+  
+  const handlePickupTimeChange = (e) => {
+    const { name, value } = e.target
+    setPickupTimeRange((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+    
+    // 픽업 시간 형식을 "09:00 - 17:30" 형태로 formData에 저장
+    const updatedPickupTime = name === 'startTime'
+      ? `${value} - ${pickupTimeRange.endTime}`
+      : `${pickupTimeRange.startTime} - ${value}`
+      
+    setFormData((prev) => ({
+      ...prev,
+      pickupTime: updatedPickupTime,
+    }))
+  }
+  
+  const togglePickupTimePicker = () => {
+    setShowPickupTimePicker(!showPickupTimePicker)
+  }
+
+  // 시간 옵션 생성 (30분 간격)
+  const generateTimeOptions = () => {
+    const options = []
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const formattedHour = hour.toString().padStart(2, '0')
+        const formattedMinute = minute.toString().padStart(2, '0')
+        options.push(`${formattedHour}:${formattedMinute}`)
+      }
+    }
+    return options
+  }
+  
+  const timeOptions = generateTimeOptions()
 
   if (loading) {
     return (
@@ -375,24 +437,6 @@ function EditStorePage() {
                   />
                 </div>
 
-                {/* 리뷰 요약 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    리뷰 요약
-                  </label>
-                  <div className="bg-gray-50 p-4 border rounded-lg text-gray-700">
-                    {store?.reviewSummary ? (
-                      <p className="text-sm leading-relaxed">
-                        {store.reviewSummary}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-gray-500">
-                        리뷰 요약 정보가 없습니다.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
                 {/* 영업시간 */}
                 <div className="flex flex-col gap-2 mb-6">
                   <label className="text-gray-700 font-medium">업무 시간</label>
@@ -415,6 +459,31 @@ function EditStorePage() {
                   </div>
                   <p className="text-sm text-gray-500">
                     현재 설정: {formData.businessHours || '미설정'}
+                  </p>
+                </div>
+
+                {/* 픽업 시간 */}
+                <div className="flex flex-col gap-2 mb-6">
+                  <label className="text-gray-700 font-medium">픽업 가능 시간</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      name="startTime"
+                      value={pickupTimeRange.startTime}
+                      onChange={handlePickupTimeChange}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 w-1/2"
+                    />
+                    <span className="text-gray-500">-</span>
+                    <input
+                      type="time"
+                      name="endTime"
+                      value={pickupTimeRange.endTime}
+                      onChange={handlePickupTimeChange}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 w-1/2"
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    현재 설정: {formData.pickupTime || '미설정'}
                   </p>
                 </div>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
@@ -42,194 +42,173 @@ const ReservationStatusBadge = ({ status }) => {
   )
 }
 
-const UserReservationsPage = () => {
+const StoreReservationsPage = () => {
+  const { storeId } = useParams()
   const navigate = useNavigate()
   const { isLoggedIn, user } = useAuth()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [showFilter, setShowFilter] = useState(false)
-  const [filter, setFilter] = useState('ALL') // 'ALL', 'PENDING', 'CONFIRMED', 'CANCELED', 'COMPLETED', 'REJECTED'
+  const [filter, setFilter] = useState('ALL') // 'ALL', 'PENDING', 'CONFIRMED', 'REJECTED', 'COMPLETED'
   const [error, setError] = useState(null)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastType, setToastType] = useState('success') // 'success' or 'error'
   const [expandedReservationId, setExpandedReservationId] = useState(null)
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
-  const [reservationToCancel, setReservationToCancel] = useState(null)
 
-  // 더미 데이터
+  // 더미 데이터 생성
   const dummyReservations = [
     {
       id: 1,
-      storeName: '맛있는 베이커리',
-      storeId: 101,
-      productName: '크로와상 키트',
+      customerName: '김고객',
+      phone: '010-1234-5678',
       quantity: 2,
-      reservationDate: '2023-05-20',
+      reservationDate: '2023-05-15',
       reservationTime: '18:00',
-      createdAt: '2023-05-15T14:30:00',
+      createdAt: '2023-05-14T14:30:00',
       status: 'PENDING',
-      price: 15000,
       isZeroWaste: true
     },
     {
       id: 2,
-      storeName: '행복한 떡집',
-      storeId: 102,
-      productName: '찹쌀떡 키트',
+      customerName: '박손님',
+      phone: '010-2345-6789',
       quantity: 1,
-      reservationDate: '2023-05-21',
+      reservationDate: '2023-05-15',
       reservationTime: '19:30',
-      createdAt: '2023-05-16T15:45:00',
+      notes: '문 앞에 놓아주세요',
+      createdAt: '2023-05-14T15:45:00',
       status: 'CONFIRMED',
-      price: 8000,
       isZeroWaste: false
     },
     {
       id: 3,
-      storeName: '신선한 샐러드',
-      storeId: 103,
-      productName: '야채 샐러드 키트',
+      customerName: '이방문',
+      phone: '010-3456-7890',
       quantity: 3,
-      reservationDate: '2023-05-18',
+      reservationDate: '2023-05-16',
       reservationTime: '12:00',
       createdAt: '2023-05-14T16:20:00',
       status: 'COMPLETED',
-      price: 12000,
       isZeroWaste: true
     },
     {
       id: 4,
-      storeName: '맛있는 베이커리',
-      storeId: 101,
-      productName: '식빵 키트',
+      customerName: '최손님',
+      phone: '010-4567-8901',
       quantity: 2,
       reservationDate: '2023-05-16',
       reservationTime: '17:30',
-      createdAt: '2023-05-10T17:10:00',
+      createdAt: '2023-05-14T17:10:00',
       status: 'REJECTED',
-      price: 10000,
       isZeroWaste: false
     },
     {
       id: 5,
-      storeName: '홈메이드 파스타',
-      storeId: 104,
-      productName: '까르보나라 키트',
+      customerName: '정방문',
+      phone: '010-5678-9012',
       quantity: 1,
-      reservationDate: '2023-05-22',
+      reservationDate: '2023-05-16',
       reservationTime: '18:45',
-      createdAt: '2023-05-17T18:05:00',
-      status: 'CANCELED',
-      price: 14000,
+      notes: '친환경 용기 준비해주세요',
+      createdAt: '2023-05-14T18:05:00',
+      status: 'PENDING',
       isZeroWaste: true
     },
     // 추가 데이터 (스크롤 테스트용)
     {
       id: 6,
-      storeName: '분식왕',
-      storeId: 105,
-      productName: '떡볶이 키트',
+      customerName: '강고객',
+      phone: '010-6789-0123',
       quantity: 2,
-      reservationDate: '2023-05-23',
-      reservationTime: '12:00',
-      createdAt: '2023-05-18T10:10:00',
+      reservationDate: '2023-05-17',
+      reservationTime: '13:00',
+      createdAt: '2023-05-15T09:10:00',
       status: 'PENDING',
-      price: 9000,
       isZeroWaste: true
     },
     {
       id: 7,
-      storeName: '맛있는 베이커리',
-      storeId: 101,
-      productName: '치아바타 키트',
-      quantity: 1,
-      reservationDate: '2023-05-24',
+      customerName: '윤손님',
+      phone: '010-7890-1234',
+      quantity: 3,
+      reservationDate: '2023-05-17',
       reservationTime: '14:30',
-      createdAt: '2023-05-18T11:20:00',
+      createdAt: '2023-05-15T10:20:00',
       status: 'CONFIRMED',
-      price: 12000,
       isZeroWaste: false
     },
     {
       id: 8,
-      storeName: '신선한 초밥',
-      storeId: 106,
-      productName: '연어초밥 키트',
-      quantity: 3,
-      reservationDate: '2023-05-25',
-      reservationTime: '18:00',
-      createdAt: '2023-05-18T14:30:00',
+      customerName: '임방문',
+      phone: '010-8901-2345',
+      quantity: 1,
+      reservationDate: '2023-05-17',
+      reservationTime: '16:00',
+      createdAt: '2023-05-15T11:30:00',
       status: 'PENDING',
-      price: 25000,
       isZeroWaste: true
     },
     {
       id: 9,
-      storeName: '이탈리안 피자',
-      storeId: 107,
-      productName: '마르게리타 피자 키트',
-      quantity: 1,
-      reservationDate: '2023-05-25',
-      reservationTime: '19:00',
-      createdAt: '2023-05-19T09:45:00',
-      status: 'CONFIRMED',
-      price: 18000,
+      customerName: '한손님',
+      phone: '010-9012-3456',
+      quantity: 2,
+      reservationDate: '2023-05-18',
+      reservationTime: '12:30',
+      createdAt: '2023-05-15T13:40:00',
+      status: 'PENDING',
       isZeroWaste: false
     },
     {
       id: 10,
-      storeName: '데일리 커피',
-      storeId: 108,
-      productName: '케이크 키트',
-      quantity: 2,
-      reservationDate: '2023-05-26',
-      reservationTime: '10:00',
-      createdAt: '2023-05-19T15:55:00',
-      status: 'PENDING',
-      price: 16000,
+      customerName: '오방문',
+      phone: '010-0123-4567',
+      quantity: 4,
+      reservationDate: '2023-05-18',
+      reservationTime: '18:30',
+      createdAt: '2023-05-15T14:50:00',
+      status: 'CONFIRMED',
       isZeroWaste: true
     }
   ]
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn || (user && user.role !== 'SELLER')) {
       navigate('/login')
       return
     }
 
-    // API 호출 대신 더미 데이터 사용
+    // 더미 데이터 설정 (API 호출 대신)
     setTimeout(() => {
       setReservations(dummyReservations)
       setLoading(false)
     }, 500)
-  }, [isLoggedIn, user, navigate])
+  }, [storeId, isLoggedIn, user, navigate])
 
-  const handleCancelReservation = async () => {
-    if (!reservationToCancel) return
-
+  const handleReservationStatus = async (reservationId, status) => {
     try {
       setLoading(true)
       
-      // API 호출 대신 더미 상태 변경
+      // 더미 데이터 상태 업데이트 (API 호출 대신)
       setTimeout(() => {
-        // 예약 취소 로직
+        // 업데이트된 예약 상태에 따른 메시지
+        const message = status === 'CONFIRMED' ? '예약이 승인되었습니다' : '예약이 거절되었습니다'
+        showToastMessage(message, 'success')
+        
+        // 성공 후 목록에서 해당 예약 상태 업데이트
         setReservations(prev => 
           prev.map(reservation => 
-            reservation.id === reservationToCancel.id 
-              ? { ...reservation, status: 'CANCELED' }
+            reservation.id === reservationId 
+              ? { ...reservation, status: status }
               : reservation
           )
         )
-        
-        showToastMessage('예약이 취소되었습니다', 'success')
-        setShowCancelConfirm(false)
-        setReservationToCancel(null)
         setLoading(false)
       }, 500)
     } catch (error) {
-      console.error('예약 취소 중 오류:', error)
-      showToastMessage('예약 취소 중 오류가 발생했습니다', 'error')
+      console.error('예약 상태 변경 중 오류:', error)
+      showToastMessage('예약 상태 변경 중 오류가 발생했습니다', 'error')
       setLoading(false)
     }
   }
@@ -247,29 +226,18 @@ const UserReservationsPage = () => {
     setExpandedReservationId(expandedReservationId === reservationId ? null : reservationId)
   }
 
-  const openCancelConfirm = (reservation) => {
-    setReservationToCancel(reservation)
-    setShowCancelConfirm(true)
-  }
-
-  const closeCancelConfirm = () => {
-    setShowCancelConfirm(false)
-    setReservationToCancel(null)
-  }
-
   // 예약 상태에 따른 필터링
   const filteredReservations = filter === 'ALL' 
     ? reservations 
     : reservations.filter(r => r.status === filter)
 
-  // 예약 상태 텍스트 변환
+  // 예약 상태 텍스트
   const getStatusText = (status) => {
     switch(status) {
       case 'PENDING': return '대기중'
       case 'CONFIRMED': return '승인됨'
       case 'REJECTED': return '거절됨'
       case 'COMPLETED': return '완료됨'
-      case 'CANCELED': return '취소됨'
       default: return '상태 미정'
     }
   }
@@ -277,7 +245,7 @@ const UserReservationsPage = () => {
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        <Header title="나의 예약" onBack={() => navigate('/mypage')} />
+        <Header title="예약 목록" onBack={() => navigate('/business')} />
         <div className="flex-1 flex justify-center items-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#F7B32B]"></div>
         </div>
@@ -289,7 +257,7 @@ const UserReservationsPage = () => {
   if (error) {
     return (
       <div className="flex flex-col h-full">
-        <Header title="나의 예약" onBack={() => navigate('/mypage')} />
+        <Header title="예약 목록" onBack={() => navigate('/business')} />
         <div className="flex-1 flex justify-center items-center">
           <p className="text-red-500">{error}</p>
         </div>
@@ -300,13 +268,13 @@ const UserReservationsPage = () => {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <Header title="나의 예약" onBack={() => navigate('/mypage')} />
+      <Header title="예약 목록" onBack={() => navigate('/business')} />
 
       <div className="flex-1 overflow-y-auto">
         {/* 상단 정보 영역 */}
         <div className="bg-white p-4 shadow-sm">
           <h1 className="text-xl font-bold text-gray-800 mb-2">
-            나의 예약 목록
+            가게 예약 목록
           </h1>
           <p className="text-sm text-gray-600">
             모든 예약 내역을 확인하고 관리할 수 있습니다.
@@ -334,6 +302,12 @@ const UserReservationsPage = () => {
               />
             </svg>
             필터: {filter === 'ALL' ? '전체' : getStatusText(filter)}
+          </button>
+          <button
+            className="text-sm text-[#F7B32B] font-medium"
+            onClick={() => navigate('/business')}
+          >
+            ← 사업자 페이지로 돌아가기
           </button>
         </div>
 
@@ -367,11 +341,11 @@ const UserReservationsPage = () => {
               </button>
               <button
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'CANCELED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+                  filter === 'REJECTED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
                 }`}
-                onClick={() => setFilter('CANCELED')}
+                onClick={() => setFilter('REJECTED')}
               >
-                취소됨
+                거절됨
               </button>
               <button
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -381,21 +355,17 @@ const UserReservationsPage = () => {
               >
                 완료됨
               </button>
-              <button
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'REJECTED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-                onClick={() => setFilter('REJECTED')}
-              >
-                거절됨
-              </button>
             </div>
           </div>
         )}
 
         {/* 예약 목록 */}
         <div className="p-3">
-          {filteredReservations.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#F7B32B]"></div>
+            </div>
+          ) : filteredReservations.length > 0 ? (
             <div className="space-y-4">
               {filteredReservations.map((reservation) => (
                 <div
@@ -407,17 +377,17 @@ const UserReservationsPage = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-gray-800">
-                          {reservation.storeName}
+                          {reservation.customerName || '고객'}
                         </h3>
                         <p className="text-sm text-gray-500 mt-1">
-                          {reservation.productName} {reservation.quantity}개
+                          럭키트 {reservation.quantity || 1}개
                         </p>
                         <p className="text-sm text-gray-500">
-                          {formatDate(reservation.reservationDate)} {formatTime(reservation.reservationTime)}
+                          {formatDate(reservation.createdAt)} {formatTime(reservation.createdAt)}
                         </p>
                         {reservation.isZeroWaste && (
                           <p className="text-xs text-green-600 font-medium mt-1">
-                            제로웨이스트 (포장용기 지참)
+                            제로웨이스트 손님 (포장용기 지참)
                           </p>
                         )}
                       </div>
@@ -432,8 +402,8 @@ const UserReservationsPage = () => {
                             <span className="text-gray-600">{reservation.id}</span>
                           </p>
                           <p className="text-sm">
-                            <span className="font-medium text-gray-700">가격:</span>{' '}
-                            <span className="text-gray-600">{reservation.price.toLocaleString()}원</span>
+                            <span className="font-medium text-gray-700">연락처:</span>{' '}
+                            <span className="text-gray-600">{reservation.phone || '정보 없음'}</span>
                           </p>
                           {reservation.isZeroWaste && (
                             <p className="text-sm">
@@ -441,43 +411,36 @@ const UserReservationsPage = () => {
                               <span className="text-green-600">포장용기 지참</span>
                             </p>
                           )}
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약일:</span>{' '}
-                            <span className="text-gray-600">
-                              {formatDate(reservation.reservationDate)} {formatTime(reservation.reservationTime)}
-                            </span>
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약시간:</span>{' '}
-                            <span className="text-gray-600">{formatTime(reservation.reservationTime)}</span>
-                          </p>
+                          {reservation.notes && (
+                            <p className="text-sm">
+                              <span className="font-medium text-gray-700">요청사항:</span>{' '}
+                              <span className="text-gray-600">{reservation.notes}</span>
+                            </p>
+                          )}
                         </div>
 
                         {reservation.status === 'PENDING' && (
-                          <div className="mt-4">
+                          <div className="mt-4 flex space-x-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                openCancelConfirm(reservation)
+                                handleReservationStatus(reservation.id, 'REJECTED')
                               }}
-                              className="w-full py-2 bg-[#F7B32B] hover:bg-[#E09D18] text-white rounded-lg transition"
+                              className="flex-1 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition"
                             >
-                              예약 취소
+                              거절
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleReservationStatus(reservation.id, 'CONFIRMED')
+                              }}
+                              className="flex-1 py-2 bg-[#F7B32B] hover:bg-[#E09D18] text-white rounded-lg transition"
+                            >
+                              승인
                             </button>
                           </div>
                         )}
-
-                        <div className="mt-4">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              navigate(`/store/${reservation.storeId}`)
-                            }}
-                            className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"
-                          >
-                            가게 정보 보기
-                          </button>
-                        </div>
                       </div>
                     )}
                   </div>
@@ -493,32 +456,6 @@ const UserReservationsPage = () => {
           )}
         </div>
       </div>
-
-      {/* 취소 확인 모달 */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-sm p-5">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">예약 취소 확인</h3>
-            <p className="text-gray-500 mb-5">
-              정말로 예약을 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={closeCancelConfirm}
-                className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleCancelReservation}
-                className="flex-1 py-2 bg-[#F7B32B] hover:bg-[#E09D18] text-white rounded-lg transition"
-              >
-                확인
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 토스트 메시지 */}
       {showToast && (
@@ -536,4 +473,4 @@ const UserReservationsPage = () => {
   )
 }
 
-export default UserReservationsPage
+export default StoreReservationsPage 

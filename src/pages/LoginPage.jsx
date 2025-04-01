@@ -1,71 +1,72 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import kakaoLoginImage from '../assets/images/kakao_login_medium_wide.png'
 import { API_DIRECT_URL } from '../config/apiConfig'
 
-const LoginPage = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const { login, isLoggedIn } = useAuth()
+function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { login } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
   const [sessionMessage, setSessionMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
+  // 리다이렉션된 경우 메시지 표시
   useEffect(() => {
-    // 세션 만료 또는 로그인 필요 메시지가 있는 경우 표시
-    const message = location.state?.message
-    if (message) {
-      setSessionMessage(message)
-      // state를 초기화하여 새로고침 시 메시지가 다시 나타나지 않도록 함
-      window.history.replaceState({}, document.title)
+    if (location.state?.message) {
+      setSessionMessage(location.state.message)
     }
+  }, [location.state])
 
-    // 이미 로그인되어 있으면 홈으로 리다이렉트
-    if (isLoggedIn) {
-      navigate('/')
+  // 한글 입력을 막는 함수
+  const handlePasswordInput = (e) => {
+    // 정규식을 사용하여 한글 입력 감지
+    const isHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(e.target.value)
+    
+    if (isHangul) {
+      // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
+      return
     }
-  }, [isLoggedIn, navigate, location.state])
-
-  const validateEmail = (email) => {
-    return email.includes('@')
+    
+    // 한글이 아닌 경우 상태 업데이트
+    setPassword(e.target.value)
   }
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
-    setErrorMessage('')
-    
-    // 유효성 검사
+    setError('')
+    setSessionMessage('')
+
+    // 간단한 유효성 검사
     if (!email || !password) {
-      setErrorMessage('이메일과 비밀번호를 모두 입력해주세요.')
+      setError('이메일과 비밀번호를 모두 입력해주세요.')
       return
     }
-
-    if (!validateEmail(email)) {
-      setErrorMessage('유효한 이메일 형식을 입력해주세요.')
-      return
-    }
-
-    setIsLoading(true)
 
     try {
-      const result = await login(email, password)
-      
+      setLoading(true)
+      const result = await login({ email, password })
+
       if (result.success) {
-        // 로그인 성공 - 홈페이지로 리다이렉트
-        navigate('/')
+        // 로그인 성공 시 사용자 역할에 따라 리다이렉션
+        if (result.user && result.user.role === 'SELLER') {
+          navigate('/business')
+        } else {
+          navigate('/')
+        }
       } else {
-        // 로그인 실패 메시지
-        setErrorMessage(result.message || '아이디 또는 비밀번호가 일치하지 않습니다.')
+        setError(result.message || '로그인에 실패했습니다.')
       }
     } catch (error) {
-      setErrorMessage('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      console.error('로그인 오류:', error)
+      setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -81,30 +82,19 @@ const LoginPage = () => {
             className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded"
             role="alert"
           >
-            <p className="font-medium">{sessionMessage}</p>
-            <p className="text-sm mt-1">로그인 후 이용해주세요.</p>
+            <p>{sessionMessage}</p>
           </div>
         )}
 
         {/* 오류 메시지 */}
-        {errorMessage && (
+        {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4 mb-4">
-            <p className="font-medium">로그인 오류</p>
-            {errorMessage.split('\n').map((line, index) => (
-              <p key={index}>{line}</p>
-            ))}
+            {error}
           </div>
         )}
 
-        {/* 로그인 안내 */}
-        <div className="mb-6 text-center">
-          <p className="text-gray-600">
-            럭키트 서비스를 이용하시려면 로그인해주세요.
-          </p>
-        </div>
-
         {/* 로그인 폼 */}
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+        <form onSubmit={handleLogin} className="space-y-6 mt-4">
           {/* 로그인 필드들 */}
           <div className="border rounded-lg p-4 space-y-4">
             {/* 이메일 입력 */}
@@ -117,47 +107,38 @@ const LoginPage = () => {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                className="w-full p-3 bg-gray-100 rounded-lg"
                 placeholder="이메일 주소를 입력해주세요"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                가입 시 사용한 이메일을 입력하세요.
-              </p>
             </div>
 
             {/* 비밀번호 입력 */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                비밀번호
-              </label>
+              <label className="block text-sm font-medium mb-1">비밀번호</label>
               <input
                 type="password"
                 id="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                onChange={handlePasswordInput}
+                className="w-full p-3 bg-gray-100 rounded-lg"
                 placeholder="비밀번호를 입력해주세요"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                비밀번호는 8자 이상이며, 영문과 숫자를 포함해야 합니다.
-              </p>
             </div>
           </div>
 
           {/* 로그인 버튼 */}
           <button
             type="submit"
-            className="w-5/6 py-3 bg-yellow-500 text-white font-bold rounded-lg mx-auto block hover:bg-yellow-600 transition-colors"
-            disabled={isLoading}
+            className="w-5/6 py-2 bg-yellow-500 text-white font-bold rounded-lg mx-auto block"
+            disabled={loading}
           >
-            {isLoading ? '로그인 중...' : '로그인하기'}
+            {loading ? '로그인 중...' : '로그인'}
           </button>
 
           {/* 카카오 로그인 버튼 */}
           <div className="mt-4">
-            <p className="text-center text-gray-500 text-sm mb-2">또는</p>
             <button
               type="button"
               onClick={() => {
@@ -178,9 +159,9 @@ const LoginPage = () => {
 
         {/* 회원가입 링크 */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600 mb-2">아직 럭키트 회원이 아니신가요?</p>
+          <p className="text-sm text-gray-600 mb-2">계정이 없으신가요?</p>
           <button
-            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
             onClick={() => navigate('/signup')}
           >
             회원가입하기

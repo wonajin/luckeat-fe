@@ -166,11 +166,11 @@ function EditStorePage() {
       // 수정된 데이터를 서버에 전송
       const dataToSubmit = {
         ...formData,
-        // 기존 데이터에서 가져와야 하는 값들
-        storeName: store.storeName,
-        address: store.address,
-        businessNumber: store.businessNumber,
-        // 설명이 비어있으면 공백 문자 하나를 보냅니다. 서버의 유효성 검사를 통과하기 위함
+        storeName: formData.storeName || store.storeName,
+        address: formData.address || store.address,
+        businessNumber: formData.businessNumber || store.businessNumber,
+        categoryId: store.categoryId,
+        businessHours: formData.businessHours || store.businessHours,
         description: formData.description === '' ? ' ' : formData.description,
         contactNumber: formData.contactNumber || store.contactNumber || '',
         pickupTime: `${pickupTimeRange.startTime} - ${pickupTimeRange.endTime}`,
@@ -182,6 +182,7 @@ function EditStorePage() {
       // 디버깅을 위해 전송 데이터 로깅
       console.log('수정 요청 데이터:', dataToSubmit)
       console.log('이미지 파일 존재 여부:', storeImageFile ? true : false)
+      console.log('store.pickupTime:', store.pickupTime)
       
       // 이미지 파일이 있는 경우 업로드 처리
       const response = await updateStore(store.id, dataToSubmit, storeImageFile)
@@ -405,9 +406,11 @@ function EditStorePage() {
                   </label>
                   <input
                     type="text"
-                    value={store?.storeName || '정보 없음'}
-                    disabled
-                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
+                    name="storeName"
+                    value={formData.storeName}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    placeholder={store?.storeName || '정보 없음'}
                   />
                 </div>
 
@@ -418,9 +421,11 @@ function EditStorePage() {
                   </label>
                   <input
                     type="text"
-                    value={store?.address || '정보 없음'}
-                    disabled
-                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    placeholder={store?.address || '정보 없음'}
                   />
                 </div>
 
@@ -431,34 +436,29 @@ function EditStorePage() {
                   </label>
                   <input
                     type="text"
-                    value={store?.businessNumber || '정보 없음'}
-                    disabled
-                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
+                    name="businessNumber"
+                    value={formData.businessNumber}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    placeholder={store?.businessNumber || '정보 없음'}
                   />
                 </div>
 
-                {/* 영업시간 */}
-                <div className="flex flex-col gap-2 mb-6">
-                  <label className="text-gray-700 font-medium">업무 시간</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="time"
-                      name="openTime"
-                      value={timeRange.openTime}
-                      onChange={handleTimeChange}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 w-1/2"
-                    />
-                    <span className="text-gray-500">-</span>
-                    <input
-                      type="time"
-                      name="closeTime"
-                      value={timeRange.closeTime}
-                      onChange={handleTimeChange}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 w-1/2"
-                    />
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    현재 설정: {formData.businessHours || '미설정'}
+                {/* 운영시간 */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    운영시간
+                  </label>
+                  <textarea
+                    name="businessHours"
+                    value={formData.businessHours}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    rows="3"
+                    placeholder={store?.businessHours || '운영시간을 입력해주세요'}
+                  />
+                  <p className="text-sm text-gray-500 mt-2">
+                    예시) 09:00 - 18:00
                   </p>
                 </div>
 

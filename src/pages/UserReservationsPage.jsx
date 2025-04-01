@@ -5,6 +5,7 @@ import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDate, formatTime } from '../utils/dateUtils'
 import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
+import { getUserReservations, updateReservationStatus } from '../api/reservationApi'
 
 const ReservationStatusBadge = ({ status }) => {
   const { bgColor, textColor } = getStatusStyle(status)
@@ -32,152 +33,62 @@ const UserReservationsPage = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [reservationToCancel, setReservationToCancel] = useState(null)
 
-  // 더미 데이터
-  const dummyReservations = [
-    {
-      id: 1,
-      storeName: '맛있는 베이커리',
-      storeId: 101,
-      productName: '크로와상 키트',
-      quantity: 2,
-      reservationDate: '2023-05-20',
-      reservationTime: '18:00',
-      createdAt: '2023-05-15T14:30:00',
-      status: RESERVATION_STATUS.PENDING,
-      price: 15000,
-      isZeroWaste: true
-    },
-    {
-      id: 2,
-      storeName: '행복한 떡집',
-      storeId: 102,
-      productName: '찹쌀떡 키트',
-      quantity: 1,
-      reservationDate: '2023-05-21',
-      reservationTime: '19:30',
-      createdAt: '2023-05-16T15:45:00',
-      status: RESERVATION_STATUS.CONFIRMED,
-      price: 8000,
-      isZeroWaste: false
-    },
-    {
-      id: 3,
-      storeName: '신선한 샐러드',
-      storeId: 103,
-      productName: '야채 샐러드 키트',
-      quantity: 3,
-      reservationDate: '2023-05-18',
-      reservationTime: '12:00',
-      createdAt: '2023-05-14T16:20:00',
-      status: RESERVATION_STATUS.COMPLETED,
-      price: 12000,
-      isZeroWaste: true
-    },
-    {
-      id: 4,
-      storeName: '맛있는 베이커리',
-      storeId: 101,
-      productName: '식빵 키트',
-      quantity: 2,
-      reservationDate: '2023-05-16',
-      reservationTime: '17:30',
-      createdAt: '2023-05-10T17:10:00',
-      status: RESERVATION_STATUS.REJECTED,
-      price: 10000,
-      isZeroWaste: false
-    },
-    {
-      id: 5,
-      storeName: '홈메이드 파스타',
-      storeId: 104,
-      productName: '까르보나라 키트',
-      quantity: 1,
-      reservationDate: '2023-05-22',
-      reservationTime: '18:45',
-      createdAt: '2023-05-17T18:05:00',
-      status: RESERVATION_STATUS.CANCELED,
-      price: 14000,
-      isZeroWaste: true
-    },
-    // 추가 데이터 (스크롤 테스트용)
-    {
-      id: 6,
-      storeName: '분식왕',
-      storeId: 105,
-      productName: '떡볶이 키트',
-      quantity: 2,
-      reservationDate: '2023-05-23',
-      reservationTime: '12:00',
-      createdAt: '2023-05-18T10:10:00',
-      status: RESERVATION_STATUS.PENDING,
-      price: 9000,
-      isZeroWaste: true
-    },
-    {
-      id: 7,
-      storeName: '맛있는 베이커리',
-      storeId: 101,
-      productName: '치아바타 키트',
-      quantity: 1,
-      reservationDate: '2023-05-24',
-      reservationTime: '14:30',
-      createdAt: '2023-05-18T11:20:00',
-      status: RESERVATION_STATUS.CONFIRMED,
-      price: 12000,
-      isZeroWaste: false
-    },
-    {
-      id: 8,
-      storeName: '신선한 초밥',
-      storeId: 106,
-      productName: '연어초밥 키트',
-      quantity: 3,
-      reservationDate: '2023-05-25',
-      reservationTime: '18:00',
-      createdAt: '2023-05-18T14:30:00',
-      status: RESERVATION_STATUS.PENDING,
-      price: 25000,
-      isZeroWaste: true
-    },
-    {
-      id: 9,
-      storeName: '이탈리안 피자',
-      storeId: 107,
-      productName: '마르게리타 피자 키트',
-      quantity: 1,
-      reservationDate: '2023-05-25',
-      reservationTime: '19:00',
-      createdAt: '2023-05-19T09:45:00',
-      status: RESERVATION_STATUS.CONFIRMED,
-      price: 18000,
-      isZeroWaste: false
-    },
-    {
-      id: 10,
-      storeName: '데일리 커피',
-      storeId: 108,
-      productName: '케이크 키트',
-      quantity: 2,
-      reservationDate: '2023-05-26',
-      reservationTime: '10:00',
-      createdAt: '2023-05-19T15:55:00',
-      status: RESERVATION_STATUS.PENDING,
-      price: 16000,
-      isZeroWaste: true
-    }
-  ]
-
+  // 더미 데이터 대신 API 호출로 대체
   useEffect(() => {
     if (!isLoggedIn) {
       navigate('/login')
       return
     }
 
-    // API 호출 대신 더미 데이터 사용
-    setTimeout(() => {
-      setReservations(dummyReservations)
-      setLoading(false)
-    }, 500)
+    const fetchReservations = async () => {
+      try {
+        setLoading(true)
+        // 현재 로그인한 사용자의 ID를 가져와 API 호출에 사용
+        // user 객체에서 id를 추출하거나 없을 경우 임시 더미 데이터 사용
+        if (user && user.id) {
+          const response = await getUserReservations(user.id)
+          
+          if (response.success) {
+            // 실제 데이터가 있는 경우 사용
+            setReservations(response.data || [])
+          } else {
+            setError(response.message || '예약 정보를 가져오는데 실패했습니다.')
+            // 에러 발생 시 화면에 "잘못된 요청" 대신 더 구체적인 오류 메시지 표시
+            console.error('API 오류 응답:', response)
+          }
+        } else {
+          // 사용자 ID가 없는 경우(로그인 안됨 또는 미완성 프로필) 더미 데이터 표시
+          console.warn('사용자 ID가 없어 더미 데이터를 표시합니다.')
+          // 임시 더미 데이터 (실제 백엔드 연동 시 제거 필요)
+          const dummyData = [
+            {
+              id: 1,
+              userId: 1,
+              storeId: 101,
+              productId: 201,
+              storeName: '맛있는 베이커리',
+              productName: '크로와상 키트',
+              quantity: 2,
+              totalPrice: 15000,
+              price: 15000,
+              reservationDate: '2023-05-20',
+              reservationTime: '18:00',
+              status: 'PENDING',
+              isZerowaste: true,
+              createdAt: '2023-05-15T14:30:00Z'
+            }
+          ]
+          setReservations(dummyData)
+        }
+      } catch (error) {
+        console.error('예약 목록 조회 오류:', error)
+        setError('예약 정보를 가져오는데 문제가 발생했습니다.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchReservations()
   }, [isLoggedIn, user, navigate])
 
   const handleCancelReservation = async () => {
@@ -186,9 +97,16 @@ const UserReservationsPage = () => {
     try {
       setLoading(true)
       
-      // API 호출 대신 더미 상태 변경
-      setTimeout(() => {
-        // 예약 취소 로직
+      // 예약 상태 변경 API 호출 (CANCELED 상태로 변경)
+      const statusData = {
+        reservationId: reservationToCancel.id,
+        status: RESERVATION_STATUS.CANCELED
+      }
+      
+      const response = await updateReservationStatus(statusData)
+      
+      if (response.success) {
+        // 예약 상태 업데이트
         setReservations(prev => 
           prev.map(reservation => 
             reservation.id === reservationToCancel.id 
@@ -198,13 +116,15 @@ const UserReservationsPage = () => {
         )
         
         showToastMessage('예약이 취소되었습니다', 'success')
-        setShowCancelConfirm(false)
-        setReservationToCancel(null)
-        setLoading(false)
-      }, 500)
+      } else {
+        showToastMessage(response.message || '예약 취소에 실패했습니다', 'error')
+      }
     } catch (error) {
       console.error('예약 취소 중 오류:', error)
       showToastMessage('예약 취소 중 오류가 발생했습니다', 'error')
+    } finally {
+      setShowCancelConfirm(false)
+      setReservationToCancel(null)
       setLoading(false)
     }
   }

@@ -27,6 +27,13 @@ function MyPage() {
   const [loading, setLoading] = useState(true)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
+  // 사용자 역할 체크
+  useEffect(() => {
+    if (user && user.role === 'SELLER') {
+      navigate('/business')
+    }
+  }, [user, navigate])
+
   // 사용자 정보와 리뷰 목록 가져오기
   useEffect(() => {
     const fetchUserData = async () => {
@@ -68,9 +75,6 @@ function MyPage() {
           // 모든 주문 합치기 (화면에 표시용)
           const allCompletedOrders = [...completedOrders, ...confirmedOrders]
           setCompletedOrders(allCompletedOrders)
-          
-          // 주문 건수와 환경 지표를 API 응답 데이터 기준으로 업데이트하는 코드 제거
-          // 백엔드의 totalProductCount 값을 계속 사용
         }
       } catch (error) {
         console.error('사용자 데이터 로딩 중 오류:', error)

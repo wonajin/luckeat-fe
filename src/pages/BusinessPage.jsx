@@ -22,6 +22,13 @@ function BusinessPage() {
   const [toastType, setToastType] = useState('success') // 'success' or 'error'
   const [reservationStatuses, setReservationStatuses] = useState({}) // 예약 상태 저장
 
+  // 사용자 역할 체크
+  useEffect(() => {
+    if (user && user.role === 'BUYER') {
+      navigate('/mypage')
+    }
+  }, [user, navigate])
+
   // 예약 더미 데이터
   const dummyReservations = [
     {

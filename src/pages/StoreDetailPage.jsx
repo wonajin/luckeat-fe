@@ -341,9 +341,9 @@ function StoreDetailPage() {
 
   // 예약 처리 함수
   const handleMakeReservation = async () => {
-    // 상품 ID가 없으면 예약 불가
-    if (!productInfo?.id) {
-      toast.error('예약할 상품 정보가 없습니다.')
+    // 상품 ID가 없거나 상품이 매진됐으면 예약 불가
+    if (!productInfo?.id || !productInfo?.isOpen) {
+      toast.error('예약할 수 없는 상품입니다.')
       return
     }
 
@@ -611,7 +611,7 @@ function StoreDetailPage() {
         {/* 상품 정보 섹션 */}
         <div ref={productsRef} id="products-section" className="p-3">
           <h3 className="font-bold mb-2 text-lg">럭키트 정보</h3>
-          <div className="border rounded-lg p-3 mb-4 relative">
+          <div className={`border rounded-lg p-3 mb-4 relative ${!productInfo?.isOpen ? 'overflow-hidden' : ''}`}>
             {productLoading ? (
               <div className="text-center py-4">상품 정보를 불러오는 중...</div>
             ) : productError ? (
@@ -620,66 +620,81 @@ function StoreDetailPage() {
               </div>
             ) : productInfo ? (
               <>
-                <div className="flex items-center mb-2">
-                  <h4 className="font-bold">{productInfo.productName}</h4>
-                  <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
-                    럭키트
-                  </span>
-                </div>
-
-                <div className="p-2 bg-gray-50 rounded-md mb-3">
-                  <p className="text-sm text-gray-700">
-                    {productInfo.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center mb-3">
-                  <span className="text-sm text-gray-600">
-                    남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span>
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <div className="mr-4">
-                        <p className="text-sm line-through text-gray-400">
-                          {productInfo.originalPrice.toLocaleString()}원
-                        </p>
-                        <p className="text-lg font-bold">
-                          {productInfo.discountedPrice.toLocaleString()}원
-                        </p>
-                      </div>
-                      <span className="text-red-500 font-bold">
-                        {Math.floor(
-                          (1 -
-                            productInfo.discountedPrice /
-                              productInfo.originalPrice) *
-                            100,
-                        )}
-                        % 할인
-                      </span>
-                    </div>
+                <div className={`${!productInfo.isOpen ? 'blur-[2px]' : ''}`}>
+                  <div className="flex items-center mb-2">
+                    <h4 className="font-bold">{productInfo.productName}</h4>
+                    <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                      럭키트
+                    </span>
                   </div>
 
-                  <div className="w-24 h-24 bg-gray-200 rounded-md flex-shrink-0">
-                    <img
-                      src={productInfo.productImg || bakerDefaultImage}
-                      alt={productInfo.productName}
-                      className="w-full h-full object-cover rounded-md"
-                      onError={(e) => {
-                        e.target.src = bakerDefaultImage
-                      }}
-                    />
+                  <div className="p-2 bg-gray-50 rounded-md mb-3">
+                    <p className="text-sm text-gray-700">
+                      {productInfo.description}
+                    </p>
+                  </div>
+
+                  {productInfo.isOpen && (
+                    <div className="flex items-center mb-3">
+                      <span className="text-sm text-gray-600">
+                        남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span>
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex">
+                    <div className="flex-1">
+                      <div className="flex items-center">
+                        <div className="mr-4">
+                          <p className="text-sm line-through text-gray-400">
+                            {productInfo.originalPrice.toLocaleString()}원
+                          </p>
+                          <p className="text-lg font-bold">
+                            {productInfo.discountedPrice.toLocaleString()}원
+                          </p>
+                        </div>
+                        <span className="text-red-500 font-bold">
+                          {Math.floor(
+                            (1 -
+                              productInfo.discountedPrice /
+                                productInfo.originalPrice) *
+                            100,
+                          )}
+                          % 할인
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-24 h-24 bg-gray-200 rounded-md flex-shrink-0 relative">
+                      <img
+                        src={productInfo.productImg || bakerDefaultImage}
+                        alt={productInfo.productName}
+                        className="w-full h-full object-cover rounded-md"
+                        onError={(e) => {
+                          e.target.src = bakerDefaultImage
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <button
-                  className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg mt-4"
-                  onClick={handleReservationClick}
+                  className={`w-full py-3 font-bold rounded-lg mt-4 ${
+                    productInfo.isOpen 
+                      ? 'bg-yellow-500 text-white' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                  onClick={productInfo.isOpen ? handleReservationClick : undefined}
+                  disabled={!productInfo.isOpen}
                 >
-                  럭키트 예약하기
+                  {productInfo.isOpen ? '럭키트 예약하기' : '매진된 상품입니다'}
                 </button>
+                
+                {!productInfo.isOpen && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 z-10">
+                    <span className="font-bold text-white text-2xl">매진</span>
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-center py-4">

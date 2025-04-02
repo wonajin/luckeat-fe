@@ -44,6 +44,8 @@ function StoreDetailPage() {
   const [reservationResult, setReservationResult] = useState(null) // 예약 결과 정보 저장
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showSellerModal, setShowSellerModal] = useState(false) // 사업자 안내 모달 상태 추가
+  const [modalQuantity, setModalQuantity] = useState(1)
+  const [stockError, setStockError] = useState('')
 
   // Google Maps 이미지 URL인지 확인하는 함수
   const isGoogleMapsImage = (url) => {
@@ -348,13 +350,20 @@ function StoreDetailPage() {
       return
     }
 
+    // 재고 체크
+    if (modalQuantity > productInfo.productCount) {
+      setStockError(`재고가 부족합니다. (현재 재고: ${productInfo.productCount}개)`)
+      return
+    }
+
     try {
       setReservationLoading(true)
+      setStockError('')
       
       // 예약 데이터 구성
       const reservationData = {
         productId: productInfo.id,
-        quantity: quantity,
+        quantity: modalQuantity,
         isZerowaste: isZerowaste
       }
       
@@ -375,7 +384,7 @@ function StoreDetailPage() {
           productId: productInfo.id,
           productName: productInfo.productName,
           productPrice: productInfo.discountedPrice,
-          quantity: quantity,
+          quantity: modalQuantity,
           isZerowaste: isZerowaste,
           reservationId: result.data.reservationId || 'success',
         })
@@ -420,6 +429,13 @@ function StoreDetailPage() {
     navigate('/login')
     setShowLoginModal(false)
   }
+
+  // 모달이 열릴 때마다 수량을 1로 초기화
+  useEffect(() => {
+    if (showPhonePopup) {
+      setModalQuantity(1)
+    }
+  }, [showPhonePopup])
 
   if (loading) {
     return (
@@ -662,7 +678,7 @@ function StoreDetailPage() {
                           </p>
                         </div>
                         <span className="text-red-500 font-bold">
-                          {Math.floor(
+                          {Math.round(
                             (1 -
                               productInfo.discountedPrice /
                                 productInfo.originalPrice) *
@@ -927,25 +943,31 @@ function StoreDetailPage() {
             <div className="flex items-center justify-center space-x-4 mb-3">
               <button 
                 className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none"
-                onClick={decreaseQuantity}
+                onClick={() => setModalQuantity(prev => prev - 1)}
+                disabled={modalQuantity <= 1}
               >
                 -
               </button>
-              <div className="text-xl font-bold">{quantity}</div>
+              <div className="text-xl font-bold">{modalQuantity}</div>
               <button 
                 className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none"
-                onClick={increaseQuantity}
+                onClick={() => setModalQuantity(prev => prev + 1)}
+                disabled={modalQuantity >= productInfo?.productCount}
               >
                 +
               </button>
             </div>
+
+            {stockError && (
+              <p className="text-red-500 text-sm text-center mb-3">{stockError}</p>
+            )}
 
             <div className="flex items-center mb-3">
               <input
                 type="checkbox"
                 id="bring-container"
                 checked={isZerowaste}
-                onChange={toggleZerowaste}
+                onChange={() => setIsZerowaste(!isZerowaste)}
                 className="w-4 h-4 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
               />
               <label

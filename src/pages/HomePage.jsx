@@ -346,6 +346,7 @@ function HomePage() {
     // "전체" 카테고리 처리
     if (category === '전체') {
       setCategoryFilter('전체')
+      setSearchQuery('') // 검색어 초기화 추가
       return
     }
     
@@ -353,6 +354,7 @@ function HomePage() {
     if (categoryFilter === category) {
       console.log('카테고리 해제, 전체로 돌아감');
       setCategoryFilter('전체')
+      setSearchQuery('') // 검색어 초기화 추가
     } else {
       console.log('카테고리 설정:', category);
       setCategoryFilter(category)
@@ -377,24 +379,27 @@ function HomePage() {
     console.log('검색어 변경됨:', query);
     setSearchQuery(query);
     
-    // 검색어가 있을 경우 현재 데이터에서 즉시 필터링 적용
-    if (query && query.trim() !== '') {
-      console.log('클라이언트 측 검색 필터링 적용:', query);
-      
-      // 현재 표시된 가게 목록에서 검색어로 필터링
-      const filteredResults = stores.filter(store => {
-        const storeName = store.storeName || store.name || '';
-        return storeName.toLowerCase().includes(query.toLowerCase());
-      });
-      
-      console.log('검색 필터링 결과:', filteredResults.length, '개 항목');
-      setFilteredStores(filteredResults);
-      setDisplayedStores(filteredResults);
-      setTotalStoreCount(filteredResults.length);
-    } else {
-      // 검색어가 없는 경우 기존 필터만 적용
+    // 검색어가 비었을 때 (사용자가 검색어를 지웠을 때)
+    if (!query || query.trim() === '') {
+      console.log('검색어가 비어있음. 카테고리 필터만 적용하여 데이터 다시 불러오기');
+      setSearchQuery('');
       fetchStores(1, true);
+      return;
     }
+    
+    // 검색어가 있을 경우 현재 데이터에서 즉시 필터링 적용
+    console.log('클라이언트 측 검색 필터링 적용:', query);
+    
+    // 현재 표시된 가게 목록에서 검색어로 필터링
+    const filteredResults = stores.filter(store => {
+      const storeName = store.storeName || store.name || '';
+      return storeName.toLowerCase().includes(query.toLowerCase());
+    });
+    
+    console.log('검색 필터링 결과:', filteredResults.length, '개 항목');
+    setFilteredStores(filteredResults);
+    setDisplayedStores(filteredResults);
+    setTotalStoreCount(filteredResults.length);
   };
 
   return (
@@ -402,7 +407,13 @@ function HomePage() {
       <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-30">
         <h1
           className="text-2xl font-bold text-yellow-500"
-          onClick={() => navigate(0)}
+          onClick={() => {
+            setCategoryFilter('전체');
+            setSearchQuery('');
+            setShowDiscountOnly(false);
+            setSortOption('가까운 순');
+            navigate(0);
+          }}
         >
           <img src={luckeatLogo} alt="럭킷" className="h-6" />
         </h1>

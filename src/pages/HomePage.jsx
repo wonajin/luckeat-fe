@@ -5,10 +5,11 @@ import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import { getStores } from '../api/storeApi'
 import defaultImage from '../assets/images/luckeat-default.png'
-import homepageImage from '../assets/images/Homepage_1.png'
-import homepageImage2 from '../assets/images/Homepagr_2.png'
-import homepageImage3 from '../assets/images/Hompage_2.jpg'
+import banner01 from '../assets/images/럭킷배너01.png'
+import banner02 from '../assets/images/럭킷배너02.png'
+import banner03 from '../assets/images/럭킷배너03.png'
 import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
+import luckeatLogo from '../assets/images/luckeat-logo.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 
@@ -17,125 +18,289 @@ function HomePage() {
   const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-  const [locationFilter, setLocationFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
   const [sortOption, setSortOption] = useState('가까운 순')
   const [showSortOptions, setShowSortOptions] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const sortOptionsRef = useRef(null)
   const storeListRef = useRef(null)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showArrows, setShowArrows] = useState(false)
   const [displayedStores, setDisplayedStores] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
-  const storesPerPage = 5
+  const storesPerPage = 10 // 한 번에 로드할 가게 수 증가
+  const [hasMore, setHasMore] = useState(true) // 더 로드할 데이터 여부
+  const [totalStoreCount, setTotalStoreCount] = useState(0) // 전체 가게 수 추가
+  const [autoSlide, setAutoSlide] = useState(true)
+  const autoSlideInterval = useRef(null)
+  const [slideDirection, setSlideDirection] = useState('right')
+  const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net/api/v1'
 
   const cardNews = [
     {
       id: 1,
-      image: homepageImage,
+      image: banner01,
       link: '/intro',
     },
     {
       id: 2,
-      image: homepageImage2,
+      image: banner02,
       link: '/jeju-special',
     },
     {
       id: 3,
-      image: homepageImage3,
+      image: banner03,
       link: '/partner',
     },
   ]
 
-  const locationOptions = [
-    { id: 'nearby', name: '내 주변', icon: '📍' },
-    { id: 'jeju-city', name: '제주시', icon: '🏙️' },
-    { id: 'seogwipo', name: '서귀포', icon: '🌊' },
-    { id: 'aewol', name: '애월', icon: '☕' },
-    { id: 'hamdeok', name: '함덕', icon: '🏖️' },
+  const categoryOptions = [
+    { id: 1, name: '한식', icon: '🍚' },
+    { id: 2, name: '일식', icon: '🍱' },
+    { id: 3, name: '중식', icon: '🥢' },
+    { id: 4, name: '양식', icon: '🍝' },
+    { id: 5, name: '카페/베이커리', icon: '🍞' },
+    { id: 6, name: '샐러드/청과', icon: '🥗' },
   ]
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
+    setSlideDirection('right')
     setCurrentSlide((prev) => (prev === cardNews.length - 1 ? 0 : prev + 1))
-  }
+  }, [cardNews.length])
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
+    setSlideDirection('left')
     setCurrentSlide((prev) => (prev === 0 ? cardNews.length - 1 : prev - 1))
-  }
+  }, [cardNews.length])
 
+  // 자동 슬라이드 설정
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-
-        const params = {}
-        if (showDiscountOnly) {
-          params.isDiscountOpen = true
-        }
-
-        if (locationFilter !== '내 주변') {
-          params.location = locationFilter
-        }
-
-        try {
-          const storesData = await getStores(params)
-          console.log('가게 데이터 API 응답:', storesData)
-
-          const storesList = Array.isArray(storesData)
-            ? storesData
-            : storesData?.data || []
-          console.log('처리된 가게 목록:', storesList)
-
-          setStores(storesList)
-          setFilteredStores(storesList)
-        } catch (storeError) {
-          console.error('가게 데이터 로딩 중 오류:', storeError)
-          setStores([])
-          setFilteredStores([])
-        }
-
-        setLoading(false)
-      } catch (error) {
-        console.error('데이터 로딩 중 오류 발생:', error)
-        setLoading(false)
-        setStores([])
-        setFilteredStores([])
+    if (autoSlide) {
+      autoSlideInterval.current = setInterval(nextSlide, 5000) // 5초마다 다음 슬라이드로
+    }
+    return () => {
+      if (autoSlideInterval.current) {
+        clearInterval(autoSlideInterval.current)
       }
     }
+  }, [autoSlide, nextSlide])
 
-    fetchData()
-  }, [showDiscountOnly, locationFilter])
+  // 마우스 호버 시 자동 슬라이드 일시 정지
+  const handleMouseEnter = () => {
+    setShowArrows(true)
+    setAutoSlide(false)
+  }
 
-  console.log('현재 상태 - 로딩:', loading, '데이터:', stores)
+  const handleMouseLeave = () => {
+    setShowArrows(false)
+    setAutoSlide(true)
+  }
 
-  const handleScroll = useCallback(() => {
-    if (!storeListRef.current) return
+  // 서버에서 페이지별로 데이터 가져오기
+  const fetchStores = useCallback(async (page = 1, reset = false) => {
+    try {
+      if (page === 1) {
+        setLoading(true)
+      } else {
+        setLoadingMore(true)
+      }
 
-    const { scrollTop, scrollHeight, clientHeight } = storeListRef.current
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100
+      let url = `${API_BASE_URL}/stores`
+      let queryParams = new URLSearchParams()
 
-    if (isNearBottom && !loading && displayedStores.length < filteredStores.length) {
-      const nextPage = currentPage + 1
-      const startIndex = (nextPage - 1) * storesPerPage
-      const endIndex = startIndex + storesPerPage
-      const newStores = filteredStores.slice(0, endIndex)
-      
-      setDisplayedStores(newStores)
-      setCurrentPage(nextPage)
+      // 페이지네이션 파라미터 추가
+      queryParams.append('page', page)
+      queryParams.append('size', storesPerPage)
+
+      // 할인 중인 가게만 보기 필터
+      if (showDiscountOnly) {
+        queryParams.append('isDiscountOpen', 'true')
+      }
+
+      // 카테고리 필터링
+      if (categoryFilter) {
+        const category = categoryOptions.find(opt => opt.name === categoryFilter)
+        if (category) {
+          console.log('카테고리 필터 적용:', category.name, category.id);
+          queryParams.append('categoryId', category.id)
+        } else {
+          console.log('카테고리를 찾을 수 없음:', categoryFilter);
+        }
+      }
+
+      // 검색어 필터링
+      if (searchQuery) {
+        queryParams.append('query', searchQuery)
+      }
+
+      // 정렬 옵션
+      let sortBy = '';
+      switch (sortOption) {
+        case '가까운 순':
+          sortBy = 'distance';
+          break;
+        case '리뷰 많은 순':
+          sortBy = 'reviewCount';
+          break;
+        case '공유 많은 순':
+          sortBy = 'shareCount';
+          break;
+        case '별점 높은 순':
+          sortBy = 'avgRating';
+          break;
+        default:
+          sortBy = 'distance';
+      }
+      queryParams.append('sort', sortBy);
+
+      console.log('요청 URL:', url + (queryParams.toString() ? `?${queryParams.toString()}` : ''));
+
+      // 쿼리 파라미터가 있으면 URL에 추가
+      if (queryParams.toString()) {
+        url += `?${queryParams.toString()}`
+      }
+
+      try {
+        const response = await fetch(url)
+        const data = await response.json()
+        
+        // 응답 데이터 로깅
+        console.log('API 응답 데이터 길이:', data.length);
+        
+        // 데이터가 없거나 배열이 아닌 경우 처리
+        if (!data || !Array.isArray(data)) {
+          if (page === 1) {
+            setStores([])
+            setDisplayedStores([])
+            setFilteredStores([])
+            setTotalStoreCount(0) // 가게가 없는 경우 개수 0으로 설정
+          }
+          setHasMore(false)
+          return
+        }
+        
+        // 페이지가 1이거나 reset이 true면 데이터 초기화
+        if (page === 1 || reset) {
+          setStores(data)
+          
+          // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
+          let filteredData = [...data];
+          if (categoryFilter) {
+            const category = categoryOptions.find(opt => opt.name === categoryFilter);
+            if (category) {
+              console.log('클라이언트 측 카테고리 필터링 적용:', category.name, category.id);
+              filteredData = filteredData.filter(store => {
+                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0]);
+                console.log('가게 카테고리 ID 확인:', store.storeName, storeCategoryId);
+                return String(storeCategoryId) === String(category.id);
+              });
+              console.log('필터링 후 가게 수:', filteredData.length);
+            }
+          }
+          
+          setDisplayedStores(filteredData)
+          setFilteredStores(filteredData)
+          // 첫 페이지인 경우 전체 가게 수를 현재 받은 데이터의 개수로 설정
+          setTotalStoreCount(filteredData.length)
+        } else {
+          // 이미 로드된 데이터에 추가
+          setStores(prev => [...prev, ...data])
+          
+          // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
+          let filteredData = [...data];
+          if (categoryFilter) {
+            const category = categoryOptions.find(opt => opt.name === categoryFilter);
+            if (category) {
+              console.log('클라이언트 측 카테고리 필터링 적용(추가 데이터):', category.name, category.id);
+              filteredData = filteredData.filter(store => {
+                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0]);
+                return String(storeCategoryId) === String(category.id);
+              });
+            }
+          }
+          
+          const updatedFilteredData = [...filteredStores, ...filteredData];
+          setDisplayedStores(prev => [...prev, ...filteredData])
+          setFilteredStores(updatedFilteredData)
+          // 총 가게 수 업데이트 (필터링된 데이터로 계산)
+          setTotalStoreCount(updatedFilteredData.length)
+        }
+
+        // 받은 데이터가 요청한 size보다 적으면 더 이상 데이터가 없는 것으로 간주
+        setHasMore(data.length === storesPerPage)
+        setCurrentPage(page)
+      } catch (error) {
+        console.error('API 호출 오류:', error);
+        // 오류 발생 시 조용히 처리하고 사용자에게 오류 메시지 표시
+        if (page === 1) {
+          setStores([])
+          setDisplayedStores([])
+          setFilteredStores([])
+        }
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error('fetchStores 오류:', error);
+      // 전체 오류 처리
+      if (page === 1) {
+        setStores([])
+        setDisplayedStores([])
+        setFilteredStores([])
+      }
+      setHasMore(false)
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
     }
-  }, [currentPage, loading, filteredStores, displayedStores.length])
+  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, API_BASE_URL]);
 
-  // 스크롤 이벤트 리스너 등록
+  // 초기 데이터 로드 및 필터 변경 시 데이터 다시 로드
   useEffect(() => {
-    const scrollContainer = storeListRef.current
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll)
-      return () => scrollContainer.removeEventListener('scroll', handleScroll)
+    console.log('필터 변경됨:', { categoryFilter, searchQuery, showDiscountOnly, sortOption });
+    // 필터가 변경되면 페이지를 1로 초기화하고 데이터 다시 로드
+    setCurrentPage(1) // 페이지 리셋
+    setDisplayedStores([]) // 표시된 가게 초기화
+    setStores([]) // 저장된 가게 초기화
+    setFilteredStores([]) // 필터링된 가게도 초기화
+    setHasMore(true) // 더 불러올 데이터가 있다고 가정
+    fetchStores(1, true)
+  }, [fetchStores, showDiscountOnly, categoryFilter, searchQuery, sortOption]);
+
+  // 스크롤 이벤트 핸들러 최적화 (디바운싱 적용)
+  const handleScroll = useCallback(() => {
+    if (!storeListRef.current || loading || loadingMore || !hasMore) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = storeListRef.current;
+    
+    // 스크롤이 하단에 도달했는지 확인 (약간의 버퍼 추가)
+    if (scrollTop + clientHeight >= scrollHeight - 300) {
+      fetchStores(currentPage + 1);
     }
-  }, [handleScroll])
+  }, [currentPage, loading, loadingMore, hasMore, fetchStores]);
+
+  // 스크롤 이벤트 리스너 등록 (디바운싱 적용)
+  useEffect(() => {
+    const scrollContainer = storeListRef.current;
+    if (!scrollContainer) return;
+
+    let timer;
+    const debouncedHandleScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        handleScroll();
+      }, 100); // 100ms 디바운싱
+    };
+
+    scrollContainer.addEventListener('scroll', debouncedHandleScroll);
+    return () => {
+      clearTimeout(timer);
+      scrollContainer.removeEventListener('scroll', debouncedHandleScroll);
+    };
+  }, [handleScroll]);
 
   const scrollToTop = () => {
     if (storeListRef.current) {
@@ -162,111 +327,25 @@ function HomePage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!stores || stores.length === 0) return
-
-    let result = [...stores]
-    console.log('필터링 전 가게 수:', result.length)
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter((store) => {
-        const storeName = store.storeName || store.name || ''
-        return storeName.toLowerCase().includes(query)
-      })
+  const handleCategorySelect = (category) => {
+    console.log('카테고리 선택:', category);
+    // 이미 선택된 카테고리를 다시 클릭하면 해제
+    if (categoryFilter === category) {
+      console.log('카테고리 해제');
+      setCategoryFilter('')
+    } else {
+      console.log('카테고리 설정:', category);
+      setCategoryFilter(category)
     }
-
-    if (locationFilter && locationFilter !== '내 주변') {
-      result = result.filter((store) => {
-        const address = (store.address || '').toLowerCase()
-        
-        switch(locationFilter) {
-          case '제주시':
-            return address.includes('제주시')
-          case '서귀포':
-            return address.includes('서귀포')
-          case '애월':
-            return address.includes('애월')
-          case '함덕':
-            return address.includes('함덕')
-          default:
-            return true
-        }
-      })
-    }
-
-    if (sortOption === '가까운 순') {
-      result.sort((a, b) => {
-        const distanceA =
-          typeof a.distance === 'string'
-            ? parseFloat(a.distance.replace(/[^0-9.]/g, ''))
-            : parseFloat(a.distance || 0)
-        const distanceB =
-          typeof b.distance === 'string'
-            ? parseFloat(b.distance.replace(/[^0-9.]/g, ''))
-            : parseFloat(b.distance || 0)
-        return distanceA - distanceB
-      })
-    } else if (sortOption === '리뷰 많은 순') {
-      result.sort((a, b) => {
-        const reviewsA = a.reviewCount || 0
-        const reviewsB = b.reviewCount || 0
-        return reviewsB - reviewsA
-      })
-    } else if (sortOption === '공유 많은 순') {
-      result.sort((a, b) => {
-        const shareCountA = a.shareCount || 0
-        const shareCountB = b.shareCount || 0
-        return shareCountB - shareCountA
-      })
-    } else if (sortOption === '별점 높은 순') {
-      result.sort((a, b) => {
-        const ratingA = a.avgRatingGoogle || 0
-        const ratingB = b.avgRatingGoogle || 0
-
-        if (ratingB === ratingA) {
-          const reviewsA = a.reviewCount || 0
-          const reviewsB = b.reviewCount || 0
-          return reviewsB - reviewsA
-        }
-
-        return ratingB - ratingA
-      })
-    }
-
-    console.log('정렬 후 최종 가게 수:', result.length)
-    setFilteredStores(result)
-  }, [searchQuery, sortOption, stores, locationFilter])
-
-  // filteredStores가 업데이트될 때마다 표시할 가게 목록 업데이트
-  useEffect(() => {
-    const initialStores = filteredStores.slice(0, storesPerPage)
-    setDisplayedStores(initialStores)
-    setCurrentPage(1)
-  }, [filteredStores])
-
-  console.log('현재 stores 데이터:', stores)
-  console.log('현재 filteredStores 데이터:', filteredStores)
-
-  if (stores && stores.length > 0) {
-    console.log('첫 번째 가게 데이터 구조:', stores[0])
-    console.log('첫 번째 가게 키:', Object.keys(stores[0]))
-  }
-
-  const handleLocationSelect = (location) => {
-    setLocationFilter(locationFilter === location ? '' : location)
   }
 
   const handleStoreClick = (store) => {
-    console.log('가게 선택:', store)
     const storeId = store.id || store.storeId
 
     if (!storeId) {
-      console.error('가게 ID가 없습니다:', store)
       return
     }
 
-    console.log(`가게 상세 페이지로 이동: /store/${storeId}`)
     navigate(`/store/${storeId}`)
   }
 
@@ -281,13 +360,13 @@ function HomePage() {
           className="text-2xl font-bold text-yellow-500"
           onClick={() => navigate(0)}
         >
-          제빵사
+          <img src={luckeatLogo} alt="럭킷" className="h-6" />
         </h1>
         <div className="absolute right-4 text-sm">
           {isLoggedIn ? (
             <div className="flex space-x-2">
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={async () => {
                   await logout()
                   navigate(0)
@@ -299,14 +378,14 @@ function HomePage() {
           ) : (
             <div className="flex space-x-2">
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={() => navigate('/login')}
               >
                 로그인
               </button>
               <span className="text-gray-300">|</span>
               <button
-                className="text-gray-700"
+                className="text-xs text-gray-700"
                 onClick={() => navigate('/signup')}
               >
                 회원가입
@@ -316,54 +395,66 @@ function HomePage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden pb-16" ref={storeListRef} onScroll={handleScroll}>
+      <div
+        className="flex-1 overflow-hidden pb-16"
+        ref={storeListRef}
+        onScroll={handleScroll}
+      >
         <div className="px-4 py-2 border-b">
-          <SearchBar 
-            initialValue={searchQuery}
-            onSearch={setSearchQuery}
-          />
+          <SearchBar initialValue={searchQuery} onSearch={setSearchQuery} />
         </div>
 
         <div
           className="relative px-4 py-4 border-b"
-          onMouseEnter={() => setShowArrows(true)}
-          onMouseLeave={() => setShowArrows(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <div className="relative w-full h-48 overflow-hidden rounded-lg">
             {cardNews.map((card, index) => (
               <div
                 key={card.id}
-                className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                className={`absolute top-0 left-0 w-full h-full transition-all duration-700 ease-in-out transform ${
+                  index === currentSlide
+                    ? 'translate-x-0 opacity-100 z-10'
+                    : slideDirection === 'right'
+                      ? index ===
+                        (currentSlide === 0
+                          ? cardNews.length - 1
+                          : currentSlide - 1)
+                        ? '-translate-x-full opacity-0 z-0'
+                        : 'translate-x-full opacity-0 z-0'
+                      : index ===
+                          (currentSlide === cardNews.length - 1
+                            ? 0
+                            : currentSlide + 1)
+                        ? 'translate-x-full opacity-0 z-0'
+                        : '-translate-x-full opacity-0 z-0'
+                }`}
                 onClick={() => handleCardClick(card.link)}
               >
                 <img
                   src={card.image}
                   alt={card.title}
                   className="w-full h-full object-cover"
+                  loading="lazy" // 이미지 지연 로딩
                 />
-                <div className="absolute inset-0 p-5 flex flex-col justify-center items-center">
-                  <h1 className="text-white text-3xl font-bold text-center mb-2">
-                    {card.title}
-                  </h1>
-                  <p className="text-white text-xl opacity-90 text-center">
-                    {card.description}
-                  </p>
-                </div>
               </div>
             ))}
-            
+
             <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
               {cardNews.map((_, index) => (
                 <button
                   key={index}
                   className={`w-2 h-2 rounded-full ${
-                    index === currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'
+                    index === currentSlide
+                      ? 'bg-white'
+                      : 'bg-white bg-opacity-50'
                   }`}
                   onClick={() => setCurrentSlide(index)}
                 />
               ))}
             </div>
-            
+
             {showArrows && (
               <>
                 <button
@@ -416,22 +507,24 @@ function HomePage() {
         </div>
 
         <div className="px-4 py-3 border-b">
-          <h3 className="text-base font-medium mb-2">어디로 가시나요?</h3>
+          <h3 className="text-base font-medium mb-2">
+            어떤 음식을 찾으시나요?
+          </h3>
           <div className="flex justify-between">
-            {locationOptions.map((option) => (
+            {categoryOptions.map((option) => (
               <button
                 key={option.id}
-                onClick={() => handleLocationSelect(option.name)}
+                onClick={() => handleCategorySelect(option.name)}
                 className={`flex flex-col items-center justify-center ${
-                  locationFilter === option.name 
-                    ? 'text-yellow-600' 
+                  categoryFilter === option.name
+                    ? 'text-yellow-600'
                     : 'text-gray-600'
                 }`}
               >
-                <div 
+                <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
-                    locationFilter === option.name
-                      ? 'bg-yellow-100 border-2 border-yellow-400' 
+                    categoryFilter === option.name
+                      ? 'bg-yellow-100 border-2 border-yellow-400'
                       : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
@@ -524,13 +617,16 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {locationFilter === '내 주변' ? '내 주변' : locationFilter || '전체'} 가게 목록 ({filteredStores.length})
+              {categoryFilter ? `${categoryFilter} 맛집` : '전체 맛집'} (
+              {totalStoreCount.toString().replace('*', '')}
+              )
             </h2>
           </div>
 
           {loading ? (
             <div className="flex justify-center items-center py-8">
-              <p>로딩 중...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-500"></div>
+              <p className="ml-2">가게 정보를 불러오는 중...</p>
             </div>
           ) : displayedStores && displayedStores.length > 0 ? (
             <>
@@ -545,21 +641,34 @@ function HomePage() {
                       src={store.storeImg || storeDefaultImage}
                       alt={store.storeName || store.name || '가게 이미지'}
                       className="w-full h-full object-cover"
+                      loading="lazy" // 이미지 지연 로딩 적용
                       onError={(e) => {
                         e.target.src = storeDefaultImage
                       }}
                     />
                   </div>
                   <div className="flex-1 ml-3">
-                    <h3 className="font-bold truncate" title={store.storeName || store.name || '이름 없음'}>
-                      {(store.storeName || store.name || '이름 없음').length > 20 
-                        ? (store.storeName || store.name || '이름 없음').substring(0, 20) + '...'
-                        : (store.storeName || store.name || '이름 없음')}
+                    <h3
+                      className="font-bold truncate"
+                      title={store.storeName || store.name || '이름 없음'}
+                    >
+                      {(store.storeName || store.name || '이름 없음').length >
+                      20
+                        ? (
+                            store.storeName ||
+                            store.name ||
+                            '이름 없음'
+                          ).substring(0, 20) + '...'
+                        : store.storeName || store.name || '이름 없음'}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate" title={store.address || '주소 정보 없음'}>
+                    <p
+                      className="text-sm text-gray-500 truncate"
+                      title={store.address || '주소 정보 없음'}
+                    >
                       {(store.address || '주소 정보 없음').length > 20
-                        ? (store.address || '주소 정보 없음').substring(0, 20) + '...'
-                        : (store.address || '주소 정보 없음')}
+                        ? (store.address || '주소 정보 없음').substring(0, 20) +
+                          '...'
+                        : store.address || '주소 정보 없음'}
                     </p>
                     <div className="flex items-center">
                       <div className="flex items-center text-sm text-yellow-500 mr-2">
@@ -580,15 +689,33 @@ function HomePage() {
                   </div>
                 </div>
               ))}
-              {displayedStores.length < filteredStores.length && (
+              {loadingMore && (
                 <div className="flex justify-center items-center py-4">
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-yellow-500 mr-2"></div>
                   <p className="text-gray-500">더 많은 가게 불러오는 중...</p>
+                </div>
+              )}
+              {!loadingMore && !hasMore && displayedStores.length > 0 && (
+                <div className="flex justify-center items-center py-4">
+                  <p className="text-gray-500">더 이상 표시할 가게가 없습니다</p>
                 </div>
               )}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-gray-500">
               <p>표시할 가게가 없습니다.</p>
+              {categoryFilter || searchQuery || showDiscountOnly ? (
+                <button 
+                  className="mt-2 text-blue-500 underline"
+                  onClick={() => {
+                    setCategoryFilter('');
+                    setSearchQuery('');
+                    setShowDiscountOnly(false);
+                  }}
+                >
+                  필터 초기화하기
+                </button>
+              ) : null}
             </div>
           )}
         </div>
@@ -600,7 +727,8 @@ function HomePage() {
         <Navigation />
       </div>
 
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{
+        __html: `
         /* 스크롤바 숨기기 위한 스타일 */
         .flex-1 {
           -ms-overflow-style: none; /* IE and Edge */
@@ -610,7 +738,9 @@ function HomePage() {
         .flex-1::-webkit-scrollbar {
           display: none; /* Chrome, Safari, Opera */
         }
-      `}</style>
+        `
+      }}
+      />
     </div>
   )
 }

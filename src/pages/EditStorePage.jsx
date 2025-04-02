@@ -24,7 +24,7 @@ function EditStorePage() {
     description: '',
     businessNumber: '',
     businessHours: '',
-    reviewSummary: '',
+    pickupTime: '',
     avgRating: 0,
     avgRatingGoogle: 0,
     googlePlaceId: '',
@@ -33,6 +33,23 @@ function EditStorePage() {
   const [toastMessage, setToastMessage] = useState('')
   const [imagePreview, setImagePreview] = useState('')
   const [storeImageFile, setStoreImageFile] = useState(null)
+  const [timeRange, setTimeRange] = useState({
+    openTime: '09:00',
+    closeTime: '18:00',
+  })
+  const [pickupTimeRange, setPickupTimeRange] = useState({
+    startTime: '09:00',
+    endTime: '17:30',
+  })
+  const [showPickupTimePicker, setShowPickupTimePicker] = useState(false)
+  const [errors, setErrors] = useState({
+    storeName: '',
+    address: '',
+    businessNumber: '',
+    contactNumber: '',
+    description: '',
+    pickupTime: ''
+  })
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -53,12 +70,31 @@ function EditStorePage() {
             description: response.data.description || '',
             businessNumber: response.data.businessNumber || '',
             businessHours: response.data.businessHours || '',
-            reviewSummary: response.data.reviewSummary || '',
+            pickupTime: response.data.pickupTime || '',
             avgRating: response.data.avgRating || 0,
             avgRatingGoogle: response.data.avgRatingGoogle || 0,
             googlePlaceId: response.data.googlePlaceId || '',
           })
           setImagePreview(response.data.storeImg || '')
+          if (response.data.businessHours) {
+            const times = response.data.businessHours.split(' - ')
+            if (times.length === 2) {
+              setTimeRange({
+                openTime: times[0],
+                closeTime: times[1]
+              })
+            }
+          }
+          
+          if (response.data.pickupTime) {
+            const pickupTimes = response.data.pickupTime.split(' - ')
+            if (pickupTimes.length === 2) {
+              setPickupTimeRange({
+                startTime: pickupTimes[0],
+                endTime: pickupTimes[1]
+              })
+            }
+          }
         } else {
           setError('가게 정보를 불러오는데 실패했습니다.')
         }
@@ -123,45 +159,151 @@ function EditStorePage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    
+    // 에러 초기화
+    const newErrors = {}
+    let hasError = false
 
     try {
-      // 수정된 데이터를 서버에 전송
+      // 사업자 번호 유효성 검사
+      const businessNumberRegex = /^\d{3}-\d{2}-\d{5}$/
+      if (formData.businessNumber && !businessNumberRegex.test(formData.businessNumber)) {
+        newErrors.businessNumber = '사업자 번호는 XXX-XX-XXXXX 형식으로 입력해주세요.'
+        hasError = true
+      }
+
+      // 연락처 유효성 검사
+      const phoneRegex = /^(0\d{1,2}-\d{3,4}-\d{4})$/
+      if (formData.contactNumber && !phoneRegex.test(formData.contactNumber)) {
+        newErrors.contactNumber = '연락처는 0XX-XXXX-XXXX 또는 0X-XXXX-XXXX 형식으로 입력해주세요.'
+        hasError = true
+      }
+
+      // 가게 소개 길이 검사
+      if (formData.description && formData.description.length > 1000) {
+        newErrors.description = '가게 소개는 1000자 이하로 입력해주세요.'
+        hasError = true
+      }
+
+      // 필수 입력 필드 검사
+      if (!formData.storeName.trim()) {
+        newErrors.storeName = '가게명은 필수 입력 항목입니다.'
+        hasError = true
+      } else if (formData.storeName.length > 255) {
+        newErrors.storeName = '가게명은 255자 이하로 입력해주세요.'
+        hasError = true
+      }
+
+      if (!formData.address.trim()) {
+        newErrors.address = '주소는 필수 입력 항목입니다.'
+        hasError = true
+      } else if (formData.address.length < 5 || formData.address.length > 255) {
+        newErrors.address = '주소는 5-255자 사이로 입력해주세요.'
+        hasError = true
+      }
+
+      // 시간 유효성 검사
+      const startTime = new Date(`2000-01-01T${pickupTimeRange.startTime}`)
+      const endTime = new Date(`2000-01-01T${pickupTimeRange.endTime}`)
+      
+      if (startTime >= endTime) {
+        newErrors.pickupTime = '픽업 시작 시간은 종료 시간보다 빨라야 합니다.'
+        hasError = true
+      }
+
+      // 에러가 있으면 제출하지 않음
+      if (hasError) {
+        setErrors(newErrors)
+        setLoading(false)
+        return
+      }
+
+      // 모든 유효성 검사를 통과한 경우 데이터 제출
       const dataToSubmit = {
         ...formData,
-        // 기존 데이터에서 가져와야 하는 값들
-        storeName: store.storeName,
-        address: store.address,
-        businessNumber: store.businessNumber,
-        // 설명이 비어있으면 공백 문자 하나를 보냅니다. 서버의 유효성 검사를 통과하기 위함
+        storeName: formData.storeName || store.storeName,
+        address: formData.address || store.address,
+        businessNumber: formData.businessNumber || store.businessNumber,
+        categoryId: store.categoryId,
+        businessHours: formData.businessHours || store.businessHours,
         description: formData.description === '' ? ' ' : formData.description,
         contactNumber: formData.contactNumber || store.contactNumber || '',
-        reviewSummary: store.reviewSummary || '',
+        pickupTime: `${pickupTimeRange.startTime} - ${pickupTimeRange.endTime}`,
         avgRating: store.avgRating || 0,
         avgRatingGoogle: store.avgRatingGoogle || 0,
         googlePlaceId: store.googlePlaceId || '',
       }
 
-      // 디버깅을 위해 전송 데이터 로깅
-      console.log('수정 요청 데이터:', dataToSubmit)
-      console.log('이미지 파일 존재 여부:', storeImageFile ? true : false)
-      
-      // 이미지 파일이 있는 경우 업로드 처리
       const response = await updateStore(store.id, dataToSubmit, storeImageFile)
       if (response.success) {
-        showToastMessage('가게 정보가 성공적으로 수정되었습니다.')
-        setTimeout(() => {
-          navigate('/business')
-        }, 1500)
+        navigate('/business')
       } else {
         setError(response.message || '가게 정보 수정에 실패했습니다.')
+        showToastMessage(response.message || '가게 정보 수정에 실패했습니다.')
       }
     } catch (error) {
       setError('가게 정보 수정 중 오류가 발생했습니다.')
+      showToastMessage('가게 정보 수정 중 오류가 발생했습니다.')
       console.error('가게 정보 수정 중 오류:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  const handleTimeChange = (e) => {
+    const { name, value } = e.target
+    setTimeRange((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+    
+    // 업무 시간 형식을 "09:00 - 18:00" 형태로 formData에 저장
+    const updatedBusinessHours = name === 'openTime'
+      ? `${value} - ${timeRange.closeTime}`
+      : `${timeRange.openTime} - ${value}`
+      
+    setFormData((prev) => ({
+      ...prev,
+      businessHours: updatedBusinessHours,
+    }))
+  }
+  
+  const handlePickupTimeChange = (e) => {
+    const { name, value } = e.target
+    setPickupTimeRange((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+    
+    // 픽업 시간 형식을 "09:00 - 17:30" 형태로 formData에 저장
+    const updatedPickupTime = name === 'startTime'
+      ? `${value} - ${pickupTimeRange.endTime}`
+      : `${pickupTimeRange.startTime} - ${value}`
+      
+    setFormData((prev) => ({
+      ...prev,
+      pickupTime: updatedPickupTime,
+    }))
+  }
+  
+  const togglePickupTimePicker = () => {
+    setShowPickupTimePicker(!showPickupTimePicker)
+  }
+
+  // 시간 옵션 생성 (30분 간격)
+  const generateTimeOptions = () => {
+    const options = []
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const formattedHour = hour.toString().padStart(2, '0')
+        const formattedMinute = minute.toString().padStart(2, '0')
+        options.push(`${formattedHour}:${formattedMinute}`)
+      }
+    }
+    return options
+  }
+  
+  const timeOptions = generateTimeOptions()
 
   if (loading) {
     return (
@@ -193,29 +335,6 @@ function EditStorePage() {
 
       <div className="flex-1 overflow-y-auto">
         <form onSubmit={handleSubmit}>
-          {/* 안내 문구 */}
-          <div className="bg-blue-50 border-b border-blue-100 p-4">
-            <div className="flex items-start">
-              <svg
-                className="h-5 w-5 text-blue-400 mt-0.5 mr-2"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <p className="text-sm text-blue-700">
-                가게 정보는 구글 맵에서 가져오는 데이터입니다.
-                <br />
-                주소, 영업시간 등 기본 정보 변경이 필요하시다면 구글 맵에서 수정해 주세요.
-              </p>
-            </div>
-          </div>
-
           {/* 가게 이미지 */}
           <div className="relative h-44 mx-4 mt-4">
             {imagePreview ? (
@@ -312,10 +431,17 @@ function EditStorePage() {
                   </label>
                   <input
                     type="text"
-                    value={store?.storeName || '정보 없음'}
-                    disabled
-                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
+                    name="storeName"
+                    value={formData.storeName}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent ${
+                      errors.storeName ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder={store?.storeName || '정보 없음'}
                   />
+                  {errors.storeName && (
+                    <p className="mt-1 text-sm text-red-500">{errors.storeName}</p>
+                  )}
                 </div>
 
                 {/* 주소 */}
@@ -325,10 +451,17 @@ function EditStorePage() {
                   </label>
                   <input
                     type="text"
-                    value={store?.address || '정보 없음'}
-                    disabled
-                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent ${
+                      errors.address ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder={store?.address || '정보 없음'}
                   />
+                  {errors.address && (
+                    <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                  )}
                 </div>
 
                 {/* 사업자번호 */}
@@ -338,43 +471,60 @@ function EditStorePage() {
                   </label>
                   <input
                     type="text"
-                    value={store?.businessNumber || '정보 없음'}
-                    disabled
-                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
+                    name="businessNumber"
+                    value={formData.businessNumber}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent ${
+                      errors.businessNumber ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder={store?.businessNumber || '정보 없음'}
                   />
+                  {errors.businessNumber && (
+                    <p className="mt-1 text-sm text-red-500">{errors.businessNumber}</p>
+                  )}
                 </div>
 
-                {/* 리뷰 요약 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    리뷰 요약
-                  </label>
-                  <div className="bg-gray-50 p-4 border rounded-lg text-gray-700">
-                    {store?.reviewSummary ? (
-                      <p className="text-sm leading-relaxed">
-                        {store.reviewSummary}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-gray-500">
-                        리뷰 요약 정보가 없습니다.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* 영업시간 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    영업시간
+                {/* 운영시간 */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    운영시간
                   </label>
                   <textarea
                     name="businessHours"
-                    value={store?.businessHours || '정보 없음'}
-                    disabled
-                    className="w-full p-3 bg-gray-50 border rounded-lg text-gray-500 cursor-not-allowed"
+                    value={formData.businessHours}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
                     rows="3"
-                    placeholder="영업시간을 입력해주세요"
+                    placeholder={store?.businessHours || '운영시간을 입력해주세요'}
                   />
+                  <p className="text-sm text-gray-500 mt-2">
+                    예시) 09:00 - 18:00
+                  </p>
+                </div>
+
+                {/* 픽업 시간 */}
+                <div className="flex flex-col gap-2 mb-6">
+                  <label className="text-gray-700 font-medium">픽업 가능 시간</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      name="startTime"
+                      value={pickupTimeRange.startTime}
+                      onChange={handlePickupTimeChange}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 w-1/2"
+                    />
+                    <span className="text-gray-500">-</span>
+                    <input
+                      type="time"
+                      name="endTime"
+                      value={pickupTimeRange.endTime}
+                      onChange={handlePickupTimeChange}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 w-1/2"
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    현재 설정: {store?.pickupTime || '미설정'}
+                  </p>
                 </div>
 
                 {/* 가게 소개 */}
@@ -402,9 +552,14 @@ function EditStorePage() {
                     name="contactNumber"
                     value={formData.contactNumber}
                     onChange={handleInputChange}
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent"
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#F7B32B] focus:border-transparent ${
+                      errors.contactNumber ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="연락처를 입력해주세요"
                   />
+                  {errors.contactNumber && (
+                    <p className="mt-1 text-sm text-red-500">{errors.contactNumber}</p>
+                  )}
                 </div>
               </div>
             </div>

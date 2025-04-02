@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import luckeatLogo from '../../assets/images/luckeat-logo.png'
 
 function Header({ title }) {
   const navigate = useNavigate()
@@ -19,7 +20,7 @@ function Header({ title }) {
         className="text-2xl font-bold text-yellow-500 w-full text-center"
         onClick={() => navigate('/')}
       >
-        제빵사
+        <img src={luckeatLogo} alt="럭킷" className="h-6 mx-auto" />
       </h1>
     </header>
   )

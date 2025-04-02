@@ -17,6 +17,8 @@ import ReviewManagementPage from './pages/ReviewManagementPage'
 import BusinessPage from './pages/BusinessPage'
 import ProductManagementPage from './pages/ProductManagementPage'
 import EditStorePage from './pages/EditStorePage'
+import StoreReservationsPage from './pages/StoreReservationsPage'
+import UserReservationsPage from './pages/UserReservationsPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
@@ -67,7 +69,7 @@ function AuthWrapper({ children }) {
           replace: true,
           state: {
             from: location.pathname,
-            message: '로그인이 필요하거나 세션이 만료되었습니다.',
+            message: '로그인이 필요하거나 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.',
           },
         })
       }
@@ -93,6 +95,8 @@ function AppRoutes() {
         <Route path="/edit-profile" element={<EditProfilePage />} />
         <Route path="/store/:storeId/products" element={<ProductManagementPage />} />
         <Route path="/edit-store" element={<EditStorePage />} />
+        <Route path="/store/:storeId/reservation" element={<StoreReservationsPage />} />
+        <Route path="/reservation" element={<UserReservationsPage />} />
       </Routes>
     </AuthWrapper>
   )

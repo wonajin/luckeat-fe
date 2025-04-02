@@ -23,8 +23,8 @@ export function AuthProvider({ children }) {
         if (accessToken && storedUser) {
           // 토큰 유효성 검사 추가
           if (isTokenExpired(accessToken)) {
-            // 토큰이 만료된 경우
-            console.log('토큰이 만료되었습니다. 로그아웃 처리합니다.')
+            // 토큰이 만료된 경우 - 사용자 친화적 메시지
+            console.log('로그인 정보가 만료되었습니다. 다시 로그인해 주세요.')
             setUser(null)
             setIsLoggedIn(false)
             localStorage.removeItem('accessToken')
@@ -35,36 +35,62 @@ export function AuthProvider({ children }) {
           }
 
           // 저장된 사용자 정보가 있으면 바로 설정
-          setUser(JSON.parse(storedUser))
-          setIsLoggedIn(true)
-
-          // 선택적으로 백엔드에서 최신 사용자 정보 요청 (refreshUser 함수와 같은 걸 만들 수 있음)
           try {
-            const response = await userApi.getUserInfo()
-            if (response.success) {
-              setUser(response.data)
-              localStorage.setItem('user', JSON.stringify(response.data))
+            const userData = JSON.parse(storedUser)
+            // 기본값 설정으로 데이터 보완
+            const completeUserData = {
+              userId: userData.userId || '',
+              email: userData.email || '',
+              nickname: userData.nickname || '사용자',
+              role: userData.role || 'BUYER',
+              ...userData, // 기존 데이터 유지
             }
-          } catch (error) {
-            console.log('사용자 정보 갱신 실패:', error)
-            // API 요청 실패 시 토큰 유효성 다시 확인
-            if (isTokenExpired(accessToken)) {
-              // 토큰이 만료된 경우
-              console.log('API 요청 시 토큰 만료 확인. 로그아웃 처리합니다.')
-              setUser(null)
-              setIsLoggedIn(false)
-              localStorage.removeItem('accessToken')
-              localStorage.removeItem('refreshToken')
-              localStorage.removeItem('user')
+            setUser(completeUserData)
+            setIsLoggedIn(true)
+
+            // 선택적으로 백엔드에서 최신 사용자 정보 요청
+            try {
+              const response = await userApi.getUserInfo()
+              if (response.success) {
+                console.log('사용자 정보 업데이트 성공:', response.data);
+                setUser(response.data)
+                localStorage.setItem('user', JSON.stringify(response.data))
+              }
+            } catch (error) {
+              console.log('사용자 정보를 가져오지 못했습니다:', error)
+              // API 요청 실패 시 토큰 유효성 다시 확인
+              if (isTokenExpired(accessToken)) {
+                // 토큰이 만료된 경우 - 사용자 친화적 메시지
+                console.log('로그인 시간이 만료되었습니다. 보안을 위해 다시 로그인해 주세요.')
+                setUser(null)
+                setIsLoggedIn(false)
+                localStorage.removeItem('accessToken')
+                localStorage.removeItem('refreshToken')
+                localStorage.removeItem('user')
+              }
             }
+          } catch (parseError) {
+            console.error('사용자 정보 파싱 오류:', parseError);
+            // 잘못된 형식이지만 로그인은 유지
+            setUser({
+              userId: '',
+              email: '',
+              nickname: '사용자',
+              role: 'BUYER'
+            })
+            setIsLoggedIn(true)
           }
         } else {
           // 토큰이나 사용자 정보가 없는 경우 로그아웃 상태로 설정
+          console.log('로그인 정보가 없습니다.');
           setUser(null)
           setIsLoggedIn(false)
         }
       } catch (error) {
-        console.error('인증 상태 확인 오류:', error)
+        console.error('로그인 상태 확인 중 문제가 발생했습니다:', error)
+        // 오류 발생 시 로그아웃 상태로 설정
+        setUser(null)
+        setIsLoggedIn(false)
       } finally {
         setLoading(false)
       }
@@ -83,40 +109,119 @@ export function AuthProvider({ children }) {
         // 로그인 성공 시 이미 userApi.login에서 로컬 스토리지에 사용자 정보와 토큰을 저장함
         // 저장된 사용자 정보 가져오기
         const storedUser = localStorage.getItem('user')
-        if (storedUser) {
-          const userData = JSON.parse(storedUser)
-          setUser(userData)
-          setIsLoggedIn(true)
-          
-          // 사용자 정보가 제대로 저장되었는지 확인하고, 필요한 정보가 모두 있는지 확인
-          if (!userData.role) {
-            console.warn(
-              '사용자 역할 정보가 없습니다. 사용자 정보 갱신을 시도합니다.',
-            )
+        const accessToken = localStorage.getItem('accessToken')
+        
+        // 토큰과 사용자 정보가 모두 있는지 확인
+        if (storedUser && accessToken) {
+          try {
+            const userData = JSON.parse(storedUser)
+            // 필수 정보가 없을 경우 기본값 보완
+            const completeUserData = {
+              userId: userData.userId || '',
+              email: userData.email || credentials.email || '',
+              nickname: userData.nickname || '사용자',
+              role: userData.role || 'BUYER',
+              ...userData // 기존 데이터 유지
+            };
+            
+            setUser(completeUserData)
+            setIsLoggedIn(true)
+            
+            // 최신 사용자 정보 가져오기 시도
             try {
+              console.log('최신 사용자 정보 요청 중...');
               const userInfoResponse = await userApi.getUserInfo()
               if (userInfoResponse.success) {
                 const updatedUserData = userInfoResponse.data
+                console.log('최신 사용자 정보 수신:', updatedUserData);
                 setUser(updatedUserData)
                 localStorage.setItem('user', JSON.stringify(updatedUserData))
                 return { success: true, user: updatedUserData }
+              } else {
+                console.log('사용자 정보 업데이트 불필요.');
+                // 로컬에 저장된 정보로 계속 진행
+                return { success: true, user: completeUserData }
               }
             } catch (err) {
-              console.error('사용자 정보 갱신 실패:', err)
+              console.error('사용자 정보 업데이트에 실패했습니다:', err)
+              // 오류가 발생해도 로그인은 성공한 것으로 처리
+              return { success: true, user: completeUserData }
             }
+          } catch (parseError) {
+            console.error('사용자 정보 파싱 오류:', parseError);
+            // 잘못된 사용자 정보 형식이더라도 기본 정보로 로그인 시도
+            const basicUserData = {
+              userId: '',
+              email: credentials.email || '',
+              nickname: '사용자',
+              role: 'BUYER'
+            };
+            
+            setUser(basicUserData)
+            setIsLoggedIn(true)
+            localStorage.setItem('user', JSON.stringify(basicUserData))
+            
+            return { success: true, user: basicUserData }
+          }
+        } else {
+          // 토큰이나 사용자 정보가 없는 경우
+          console.error('로그인 정보가 없습니다. 자동 복구 시도 중...')
+          
+          // API에서 성공으로 응답했지만 토큰이 저장되지 않은 경우
+          if (response.data && response.data.accessToken) {
+            localStorage.setItem('accessToken', response.data.accessToken)
+            
+            if (response.data.refreshToken) {
+              localStorage.setItem('refreshToken', response.data.refreshToken)
+            }
+            
+            // 최소한의 사용자 정보 구성
+            const minimalUserData = {
+              userId: response.data.userId || '',
+              email: credentials.email || '',
+              nickname: response.data.nickname || '사용자',
+              role: response.data.role || 'BUYER'
+            };
+            
+            localStorage.setItem('user', JSON.stringify(minimalUserData))
+            setUser(minimalUserData)
+            setIsLoggedIn(true)
+            
+            return { success: true, user: minimalUserData }
           }
           
-          return { success: true, user: userData }
+          return {
+            success: false,
+            message: '로그인 정보를 저장하지 못했습니다. 다시 로그인해주세요.',
+          }
         }
       }
+      
       return {
         success: false,
-        message: response.message || '로그인에 실패했습니다.',
+        message: response.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.',
       }
     } catch (error) {
+      console.error('로그인 처리 중 오류:', error)
+      
+      // 더 친절한 오류 메시지 제공
+      let errorMessage = '로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = '아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.'
+        } else if (error.response.status === 403) {
+          errorMessage = '해당 계정은 현재 사용할 수 없습니다. 고객센터에 문의해주세요.'
+        } else if (error.response.status >= 500) {
+          errorMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        }
+      } else if (error.message && error.message.includes('Network')) {
+        errorMessage = '인터넷 연결이 불안정합니다. 네트워크 연결 상태를 확인해주세요.'
+      }
+      
       return {
         success: false,
-        message: error.message || '로그인에 실패했습니다.',
+        message: errorMessage,
       }
     } finally {
       setLoading(false)
@@ -134,19 +239,43 @@ export function AuthProvider({ children }) {
       if (response.success || response.statusCode === 201) {
         return {
           success: true,
-          message: response.message || '회원가입에 성공했습니다.',
+          message: response.message || '회원가입이 완료되었습니다! 로그인 후 이용해 주세요.',
           statusCode: response.statusCode || 201,
         }
       }
+      
+      // 실패 시 더 친절한 오류 메시지 제공
+      let errorMessage = response.message || '회원가입에 실패했습니다.'
+      if (response.message && response.message.includes('이미 존재')) {
+        if (response.message.includes('이메일')) {
+          errorMessage = '이미 가입된 이메일입니다. 다른 이메일로 시도하거나 로그인해 주세요.'
+        } else if (response.message.includes('닉네임')) {
+          errorMessage = '이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.'
+        }
+      }
+      
       return {
         success: false,
-        message: response.message || '회원가입에 실패했습니다.',
+        message: errorMessage,
       }
     } catch (error) {
       console.error('회원가입 처리 중 오류:', error)
+      
+      let errorMessage = '회원가입 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      
+      if (error.response) {
+        if (error.response.status === 400) {
+          errorMessage = '입력하신 정보에 문제가 있습니다. 모든 항목을 올바르게 입력했는지 확인해주세요.'
+        } else if (error.response.status >= 500) {
+          errorMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        }
+      } else if (error.message && error.message.includes('Network')) {
+        errorMessage = '인터넷 연결이 불안정합니다. 네트워크 연결 상태를 확인해주세요.'
+      }
+      
       return {
         success: false,
-        message: error.message || '회원가입에 실패했습니다.',
+        message: errorMessage,
       }
     } finally {
       setLoading(false)
@@ -273,20 +402,61 @@ export function AuthProvider({ children }) {
 
   // 현재 인증 상태를 확인하는 함수
   const checkCurrentAuthStatus = () => {
-    // 액세스 토큰 유효성 검사
-    const isValid = hasValidAccessToken()
-
-    // 유효하지 않은 경우 로그아웃 처리
-    if (!isValid && isLoggedIn) {
-      setUser(null)
-      setIsLoggedIn(false)
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
-      return false
+    try {
+      // 액세스 토큰 유효성 검사
+      const accessToken = localStorage.getItem('accessToken')
+      const storedUser = localStorage.getItem('user')
+      
+      // 토큰이 없거나 사용자 정보가 없으면 무효한 것으로 간주
+      if (!accessToken || !storedUser) {
+        console.log('인증 상태 확인: 토큰 또는 사용자 정보 없음');
+        return false;
+      }
+      
+      // 토큰 만료 확인
+      const isExpired = isTokenExpired(accessToken);
+      if (isExpired) {
+        console.log('인증 상태 확인: 토큰 만료됨');
+        // 세션이 만료된 경우 로그아웃 처리
+        if (isLoggedIn) {
+          console.log('만료된 세션 정리 중...');
+          setUser(null)
+          setIsLoggedIn(false)
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+          localStorage.removeItem('user')
+        }
+        return false;
+      }
+      
+      // 토큰 형식 확인
+      const isValid = hasValidAccessToken();
+      if (!isValid) {
+        console.log('인증 상태 확인: 유효하지 않은 토큰 형식');
+        // 유효하지 않은 경우 로그아웃 처리
+        if (isLoggedIn) {
+          setUser(null)
+          setIsLoggedIn(false)
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+          localStorage.removeItem('user')
+        }
+        return false;
+      }
+      
+      // 사용자 정보 확인
+      try {
+        JSON.parse(storedUser);
+        // 여기까지 왔다면 모든 검증 통과
+        return true;
+      } catch (e) {
+        console.error('인증 상태 확인: 사용자 정보 형식 오류', e);
+        return false;
+      }
+    } catch (error) {
+      console.error('인증 상태 확인 중 오류 발생:', error);
+      return false;
     }
-
-    return isValid
   }
 
   return (

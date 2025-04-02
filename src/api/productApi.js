@@ -1,10 +1,9 @@
 import apiClient from './apiClient'
-import { processImageData, uploadImage } from './uploadApi'
 
 // 가게의 상품 목록 조회
 export const getStoreProducts = async (storeId) => {
   try {
-    const response = await apiClient.get(`/stores/${storeId}/products`)
+    const response = await apiClient.get(`/api/v1/stores/${storeId}/products`)
     return response.data
   } catch (error) {
     console.error('상품 목록 조회 오류:', error)
@@ -12,78 +11,54 @@ export const getStoreProducts = async (storeId) => {
   }
 }
 
-// 상품 등록 (이미지 업로드 지원)
-export const createProduct = async (storeId, productData, productImage) => {
+// 상품 등록
+export const createProduct = async (storeId, productData) => {
   try {
-    console.log('상품 등록 시작:', storeId);
-    console.log('상품 데이터:', {
-      productId: productData.productId,
+    const data = {
       productName: productData.productName,
-      originalPrice: productData.originalPrice,
-      discountedPrice: productData.discountedPrice
-    });
+      originalPrice: parseInt(productData.originalPrice),
+      discountedPrice: parseInt(productData.discountedPrice),
+      description: productData.description || '',
+      productCount: parseInt(productData.stock), // stock을 productCount로 변경
+      is_open: true // isOpen 추가
+    }
     
-    // 이미지 처리 및 업로드
-    const processedData = await processImageData(
-      productData,
-      productImage,
-      'productImg',
-      'products'
-    );
-    
-    console.log('상품 등록 요청 데이터:', processedData);
-    
-    // 상품 등록 API 호출
-    const response = await apiClient.post(`/stores/${storeId}/products`, processedData);
-    console.log('상품 등록 응답:', response.data);
-    return response.data;
+    const response = await apiClient.post(`/api/v1/stores/${storeId}/products`, data)
+    return response.data
   } catch (error) {
-    console.error('상품 등록 오류:', error)
+    console.error('상품 등록 에러:', error)
     throw error
   }
 }
 
-// 상품 수정 (이미지 업로드 지원)
-export const updateProduct = async (storeId, productId, productData, productImage) => {
+// 상품 수정 
+export const updateProduct = async (storeId, productId, productData) => {
   try {
-    console.log('상품 수정 시작:', storeId, productId);
-    console.log('상품 데이터:', {
+    const data = {
       productName: productData.productName,
-      originalPrice: productData.originalPrice,
-      discountedPrice: productData.discountedPrice,
-      productImg: productData.productImg
-    });
+      originalPrice: parseInt(productData.originalPrice),
+      discountedPrice: parseInt(productData.discountedPrice),
+      description: productData.description || '',
+      productCount: parseInt(productData.stock) // stock을 productCount로 변경
+    }
     
-    // 이미지 처리 및 업로드
-    const processedData = await processImageData(
-      productData,
-      productImage,
-      'productImg',
-      'products'
-    );
-    
-    console.log('상품 수정 요청 데이터:', processedData);
-    
-    // 상품 수정 API 호출 - 상대 경로 사용
-    const endpoint = `/stores/${storeId}/products/${productId}`;
-    const response = await apiClient.put(endpoint, processedData);
-    console.log('상품 수정 응답:', response.data);
-    return response.data;
+    const response = await apiClient.put(`/api/v1/stores/${storeId}/products/${productId}`, data)
+    return response.data
   } catch (error) {
-    console.error('상품 수정 오류:', error)
+    console.error('상품 수정 에러:', error)
     throw error
   }
 }
 
-// 상품 상태 수정 (활성화/비활성화)
-export const updateProductStatus = async (storeId, productId, isOpen) => {
+// 상품 수량 수정
+export const updateProductCount = async (storeId, productId, count) => {
   try {
-    const response = await apiClient.patch(`/stores/${storeId}/products/${productId}/status`, {
-      isOpen: isOpen
+    const response = await apiClient.patch(`/api/v1/stores/${storeId}/products/${productId}/count`, {
+      count: count
     })
     return response.data
   } catch (error) {
-    console.error('상품 상태 수정 오류:', error)
+    console.error('상품 수량 수정 오류:', error)
     throw error
   }
 }
@@ -91,10 +66,23 @@ export const updateProductStatus = async (storeId, productId, isOpen) => {
 // 상품 삭제
 export const deleteProduct = async (storeId, productId) => {
   try {
-    const response = await apiClient.delete(`/stores/${storeId}/products/${productId}`)
+    const response = await apiClient.delete(`/api/v1/stores/${storeId}/products/${productId}`)
     return response.data
   } catch (error) {
     console.error('상품 삭제 오류:', error)
+    throw error
+  }
+}
+
+// 상품 상태 업데이트
+export const updateProductStatus = async (storeId, productId, isOpen) => {
+  try {
+    const response = await apiClient.patch(`/api/v1/stores/${storeId}/products/${productId}/status`, {
+      isOpen: isOpen
+    })
+    return response.data
+  } catch (error) {
+    console.error('상품 상태 업데이트 오류:', error)
     throw error
   }
 }

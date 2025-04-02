@@ -15,7 +15,7 @@ import { useAuth } from '../context/AuthContext'
 function StoreDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, logout } = useAuth()
   const [activeTab, setActiveTab] = useState('map')
   const [store, setStore] = useState(null)
   const [showPhonePopup, setShowPhonePopup] = useState(false)
@@ -43,6 +43,7 @@ function StoreDetailPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false) // 성공 모달 상태 추가
   const [reservationResult, setReservationResult] = useState(null) // 예약 결과 정보 저장
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showSellerModal, setShowSellerModal] = useState(false) // 사업자 안내 모달 상태 추가
 
   // Google Maps 이미지 URL인지 확인하는 함수
   const isGoogleMapsImage = (url) => {
@@ -404,6 +405,13 @@ function StoreDetailPage() {
       setShowLoginModal(true)
       return
     }
+
+    // 사업자 예약 제한
+    if (user && user.role === 'SELLER') {
+      setShowSellerModal(true)
+      return
+    }
+
     setShowPhonePopup(true)
   }
 
@@ -1133,6 +1141,61 @@ function StoreDetailPage() {
               <button
                 className="w-full py-2 text-gray-600 font-medium"
                 onClick={() => setShowLoginModal(false)}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 사업자 안내 모달 */}
+      {showSellerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">사업자 안내</h3>
+              <button
+                onClick={() => setShowSellerModal(false)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="text-center mb-4">
+              <p className="text-gray-600">
+                사업자 계정으로는 예약이 불가능합니다.
+                <br />
+                일반 사용자 계정으로 로그인해주세요.
+              </p>
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <button
+                className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg"
+                onClick={async () => {
+                  await logout()
+                  setShowSellerModal(false)
+                  navigate('/login')
+                }}
+              >
+                로그인하기
+              </button>
+              <button
+                className="w-full py-2 text-gray-600 font-medium"
+                onClick={() => setShowSellerModal(false)}
               >
                 취소
               </button>

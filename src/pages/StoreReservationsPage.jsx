@@ -4,7 +4,7 @@ import Header from '../components/layout/Header'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDateTime } from '../utils/dateUtils'
-import { 
+import {
   getStoreReservations,
   updateReservationStatus,
 } from '../api/reservationApi'
@@ -81,7 +81,7 @@ const StoreReservationsPage = () => {
     try {
       setLoading(true)
       const response = await getStoreReservations(storeId)
-      
+
       if (response.success) {
         // 최신순으로 정렬 (createdAt 기준 내림차순)
         const sortedReservations = [...response.data].sort((a, b) => {
@@ -105,22 +105,23 @@ const StoreReservationsPage = () => {
   const handleReservationStatus = async (reservationId, status) => {
     try {
       setLoading(true)
-      
+
       const statusData = {
         reservationId,
         status,
       }
-      
+
       const response = await updateReservationStatus(statusData)
-      
+
       if (response.success) {
-        const message = status === 'CONFIRMED'
-          ? '예약이 승인되었습니다'
-          : '예약이 거절되었습니다'
-        
+        const message =
+          status === 'CONFIRMED'
+            ? '예약이 승인되었습니다'
+            : '예약이 거절되었습니다'
+
         const toastType = status === 'CONFIRMED' ? 'success' : 'error'
         showToastMessage(message, toastType)
-        
+
         setReservations((prev) =>
           prev.map((reservation) =>
             reservation.id === reservationId
@@ -162,9 +163,10 @@ const StoreReservationsPage = () => {
     setActiveFilter(newFilter)
   }
 
-  const filteredReservations = filter === 'ALL'
-    ? reservations
-    : reservations.filter((r) => r.status === filter)
+  const filteredReservations =
+    filter === 'ALL'
+      ? reservations
+      : reservations.filter((r) => r.status === filter)
 
   const getStatusText = (status) => {
     switch (status) {
@@ -280,20 +282,23 @@ const StoreReservationsPage = () => {
                   <div className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-bold text-gray-800">
-                          {reservation.userNickname || reservation.customerName || '고객'}
+                        <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                          {reservation.userNickname ||
+                            reservation.customerName ||
+                            '고객'}
+                          {reservation.isZerowaste && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                              제로웨이스트
+                            </span>
+                          )}
                         </h3>
                         <p className="text-sm text-gray-500 mt-1">
-                          {reservation.productName || '상품'} {reservation.quantity || 1}개
+                          {reservation.productName || '상품'}{' '}
+                          {reservation.quantity || 1}개
                         </p>
                         <p className="text-sm text-gray-500">
                           {formatDateTime(reservation.createdAt)}
                         </p>
-                        {reservation.isZeroWaste && (
-                          <p className="text-xs text-green-600 font-medium mt-1">
-                            제로웨이스트 손님 (포장용기 지참)
-                          </p>
-                        )}
                       </div>
                       <div className="flex items-center">
                         <ReservationStatusBadge status={reservation.status} />
@@ -331,24 +336,6 @@ const StoreReservationsPage = () => {
                               {reservation.id}
                             </span>
                           </p>
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">
-                              연락처:
-                            </span>{' '}
-                            <span className="text-gray-600">
-                              {reservation.phone || '정보 없음'}
-                            </span>
-                          </p>
-                          {reservation.isZeroWaste && (
-                            <p className="text-sm">
-                              <span className="font-medium text-green-700">
-                                제로웨이스트:
-                              </span>{' '}
-                              <span className="text-green-600">
-                                포장용기 지참
-                              </span>
-                            </p>
-                          )}
                           {reservation.notes && (
                             <p className="text-sm">
                               <span className="font-medium text-gray-700">

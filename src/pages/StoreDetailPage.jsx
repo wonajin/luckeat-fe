@@ -738,7 +738,9 @@ function StoreDetailPage() {
               <span className="block mb-1 font-bold">🏷️ 영업시간</span>
               <div className="mt-2 ml-2">
                 {store.businessHours ? (
-                  <p className="py-1">{store.businessHours}</p>
+                  <div className="py-1 whitespace-pre-line">
+                    {store.businessHours.replace(/\\n/g, '\n')}
+                  </div>
                 ) : (
                   <p className="py-1 text-gray-500">영업시간 정보가 없습니다.</p>
                 )}

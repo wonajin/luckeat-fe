@@ -52,12 +52,22 @@ const UserReservationsPage = () => {
       setLoading(true)
       setError(null) // 에러 상태 초기화
       
-      if (!user || !user.id) {
+      // 로컬 스토리지에서 사용자 정보 확인
+      const userString = localStorage.getItem('user')
+      if (!userString) {
         setError('로그인이 필요합니다.')
         return
       }
+      
+      const userData = JSON.parse(userString)
+      const userId = userData.userId || userData.id
+      
+      if (!userId) {
+        setError('유효한 사용자 ID를 찾을 수 없습니다.')
+        return
+      }
 
-      const response = await getUserReservations(user.id)
+      const response = await getUserReservations(userId)
       
       if (!response) {
         setError('서버 응답이 없습니다.')

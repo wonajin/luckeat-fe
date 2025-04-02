@@ -138,7 +138,7 @@ function LoginPage() {
           </button>
 
           {/* 카카오 로그인 버튼 */}
-          <div className="mt-4">
+          {/* <div className="mt-4">
             <button
               type="button"
               onClick={() => {
@@ -154,7 +154,7 @@ function LoginPage() {
                 />
               </div>
             </button>
-          </div>
+          </div> */}
         </form>
 
         {/* 회원가입 링크 */}

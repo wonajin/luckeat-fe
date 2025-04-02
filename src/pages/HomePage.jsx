@@ -18,7 +18,7 @@ function HomePage() {
   const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('전체')
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
@@ -59,6 +59,7 @@ function HomePage() {
   ]
 
   const categoryOptions = [
+    { id: 'all', name: '전체', icon: '🔍' },
     { id: 1, name: '한식', icon: '🍚' },
     { id: 2, name: '일식', icon: '🍱' },
     { id: 3, name: '중식', icon: '🥢' },
@@ -122,7 +123,7 @@ function HomePage() {
       }
 
       // 카테고리 필터링
-      if (categoryFilter) {
+      if (categoryFilter && categoryFilter !== '전체') {
         const category = categoryOptions.find(opt => opt.name === categoryFilter)
         if (category) {
           console.log('카테고리 필터 적용:', category.name, category.id);
@@ -189,7 +190,9 @@ function HomePage() {
           
           // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
           let filteredData = [...data];
-          if (categoryFilter) {
+          
+          // 카테고리 필터링
+          if (categoryFilter && categoryFilter !== '전체') {
             const category = categoryOptions.find(opt => opt.name === categoryFilter);
             if (category) {
               console.log('클라이언트 측 카테고리 필터링 적용:', category.name, category.id);
@@ -202,6 +205,16 @@ function HomePage() {
             }
           }
           
+          // 검색어 필터링 - 클라이언트 측에서도 적용
+          if (searchQuery && searchQuery.trim() !== '') {
+            console.log('클라이언트 측 검색어 필터링 적용:', searchQuery);
+            filteredData = filteredData.filter(store => {
+              const storeName = store.storeName || store.name || '';
+              return storeName.toLowerCase().includes(searchQuery.toLowerCase());
+            });
+            console.log('검색 필터링 후 가게 수:', filteredData.length);
+          }
+          
           setDisplayedStores(filteredData)
           setFilteredStores(filteredData)
           // 첫 페이지인 경우 전체 가게 수를 현재 받은 데이터의 개수로 설정
@@ -212,7 +225,7 @@ function HomePage() {
           
           // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
           let filteredData = [...data];
-          if (categoryFilter) {
+          if (categoryFilter && categoryFilter !== '전체') {
             const category = categoryOptions.find(opt => opt.name === categoryFilter);
             if (category) {
               console.log('클라이언트 측 카테고리 필터링 적용(추가 데이터):', category.name, category.id);
@@ -329,10 +342,17 @@ function HomePage() {
 
   const handleCategorySelect = (category) => {
     console.log('카테고리 선택:', category);
-    // 이미 선택된 카테고리를 다시 클릭하면 해제
+    
+    // "전체" 카테고리 처리
+    if (category === '전체') {
+      setCategoryFilter('전체')
+      return
+    }
+    
+    // 이미 선택된 카테고리를 다시 클릭하면 해제하고 전체로 돌아감
     if (categoryFilter === category) {
-      console.log('카테고리 해제');
-      setCategoryFilter('')
+      console.log('카테고리 해제, 전체로 돌아감');
+      setCategoryFilter('전체')
     } else {
       console.log('카테고리 설정:', category);
       setCategoryFilter(category)
@@ -352,6 +372,30 @@ function HomePage() {
   const handleCardClick = (link) => {
     navigate(link)
   }
+
+  const handleSearch = (query) => {
+    console.log('검색어 변경됨:', query);
+    setSearchQuery(query);
+    
+    // 검색어가 있을 경우 현재 데이터에서 즉시 필터링 적용
+    if (query && query.trim() !== '') {
+      console.log('클라이언트 측 검색 필터링 적용:', query);
+      
+      // 현재 표시된 가게 목록에서 검색어로 필터링
+      const filteredResults = stores.filter(store => {
+        const storeName = store.storeName || store.name || '';
+        return storeName.toLowerCase().includes(query.toLowerCase());
+      });
+      
+      console.log('검색 필터링 결과:', filteredResults.length, '개 항목');
+      setFilteredStores(filteredResults);
+      setDisplayedStores(filteredResults);
+      setTotalStoreCount(filteredResults.length);
+    } else {
+      // 검색어가 없는 경우 기존 필터만 적용
+      fetchStores(1, true);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full relative">
@@ -401,7 +445,7 @@ function HomePage() {
         onScroll={handleScroll}
       >
         <div className="px-4 py-2 border-b">
-          <SearchBar initialValue={searchQuery} onSearch={setSearchQuery} />
+          <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
         </div>
 
         <div
@@ -510,29 +554,47 @@ function HomePage() {
           <h3 className="text-base font-medium mb-2">
             어떤 음식을 찾으시나요?
           </h3>
-          <div className="flex justify-between">
-            {categoryOptions.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => handleCategorySelect(option.name)}
-                className={`flex flex-col items-center justify-center ${
-                  categoryFilter === option.name
-                    ? 'text-yellow-600'
-                    : 'text-gray-600'
-                }`}
-              >
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between gap-1">
+              {categoryOptions.slice(0, 4).map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleCategorySelect(option.name)}
+                  className={`px-2 py-2 rounded-full flex items-center justify-center gap-1 ${
                     categoryFilter === option.name
-                      ? 'bg-yellow-100 border-2 border-yellow-400'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
+                      ? 'bg-yellow-400 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  } transition-colors`}
+                  style={{ 
+                    minWidth: '80px',
+                    width: '80px'
+                  }}
                 >
-                  <span className="text-lg">{option.icon}</span>
-                </div>
-                <span className="text-xs font-medium">{option.name}</span>
-              </button>
-            ))}
+                  <span>{option.icon}</span>
+                  <span className="text-sm font-medium">{option.name}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-between gap-1">
+              {categoryOptions.slice(4).map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleCategorySelect(option.name)}
+                  className={`px-2 py-2 rounded-full flex items-center justify-center gap-1 ${
+                    categoryFilter === option.name
+                      ? 'bg-yellow-400 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  } transition-colors`}
+                  style={{ 
+                    minWidth: '80px',
+                    width: option.name === '카페/베이커리' ? '120px' : option.name === '샐러드/청과' ? '120px' : '90px'
+                  }}
+                >
+                  <span>{option.icon}</span>
+                  <span className="text-sm font-medium">{option.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -708,12 +770,12 @@ function HomePage() {
                 <button 
                   className="mt-2 text-blue-500 underline"
                   onClick={() => {
-                    setCategoryFilter('');
+                    setCategoryFilter('전체');
                     setSearchQuery('');
                     setShowDiscountOnly(false);
                   }}
                 >
-                  필터 초기화하기
+                  전체 카테고리보기
                 </button>
               ) : null}
             </div>

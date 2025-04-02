@@ -307,15 +307,19 @@ const ProductManagement = () => {
                           {product.productName}
                         </h3>
                       </div>
-                      <div>
-                        <span className={`inline-block text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                          product.isOpen 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          재고: {product.productCount || 1}개
-                        </span>
-                      </div>
+                      <button
+                        onClick={() => toggleProductStatus(product)}
+                        className="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none transition-colors"
+                        style={{
+                          backgroundColor: product.isOpen ? '#4ADE80' : '#D1D5DB'
+                        }}
+                      >
+                        <span
+                          className={`inline-block w-4 h-4 transform transition-transform bg-white rounded-full ${
+                            product.isOpen ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
                     </div>
                     
                     <div className="mt-4">
@@ -330,34 +334,30 @@ const ProductManagement = () => {
                           {Math.round((1 - product.discountedPrice / product.originalPrice) * 100)}% 할인
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700 mt-2">
-                        {product.description}
-                      </p>
                     </div>
 
-                    <div className="flex justify-end space-x-2 mt-4">
-                      <button
-                        onClick={() => toggleProductStatus(product)}
-                        className={`text-xs px-3 py-1 rounded ${
-                          product.isOpen
-                            ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                            : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                        }`}
-                      >
-                        {product.isOpen ? '활성화' : '비활성화'}
-                      </button>
-                      <button
-                        onClick={() => openEditModal(product)}
-                        className="text-xs px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => openDeleteConfirm(product)}
-                        className="text-xs px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded"
-                      >
-                        삭제
-                      </button>
+                    <div className="flex justify-between items-center mt-4">
+                      <span className={`inline-block text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                        product.isOpen 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        재고: {product.productCount || 1}개
+                      </span>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="text-xs px-3 py-1 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => openDeleteConfirm(product)}
+                          className="text-xs px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded"
+                        >
+                          삭제
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

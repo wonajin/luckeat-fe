@@ -775,7 +775,7 @@ function HomePage() {
                     setShowDiscountOnly(false);
                   }}
                 >
-                  필터 초기화하기
+                  전체 카테고리보기
                 </button>
               ) : null}
             </div>

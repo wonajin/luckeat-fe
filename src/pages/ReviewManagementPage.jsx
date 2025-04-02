@@ -434,9 +434,11 @@ function ReviewManagementPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       <Header title="리뷰 관리" onBack={handleBack} />
-      <div className="p-4 flex-1 overflow-y-auto">
+      
+      {/* 콘텐츠 영역 (흐릿하게 표시) */}
+      <div className="p-4 flex-1 overflow-y-auto blur-sm pointer-events-none">
         <h2 className="text-xl font-bold mb-4">나의 리뷰</h2>
 
         {/* 작성 가능한 리뷰 섹션 */}
@@ -450,10 +452,7 @@ function ReviewManagementPage() {
             <div className="space-y-4">
               {writableStores.map((store) => (
                 <div key={store.id} className="border rounded overflow-hidden">
-                  <div
-                    className="p-4 flex justify-between items-center cursor-pointer"
-                    onClick={() => toggleReviewForm(store.id)}
-                  >
+                  <div className="p-4 flex justify-between items-center cursor-pointer">
                     <div>
                       <p className="font-semibold">{store.name}</p>
                       <p className="text-sm text-gray-500">
@@ -462,7 +461,7 @@ function ReviewManagementPage() {
                     </div>
                     <button className="text-gray-700 flex items-center">
                       리뷰쓰기
-                      <span
+                      <span 
                         className={`ml-1 transform transition-transform ${expandedStoreId === store.id ? 'rotate-180' : ''}`}
                       >
                         ▼
@@ -652,6 +651,19 @@ function ReviewManagementPage() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* COMING SOON 오버레이 */}
+      <div 
+        className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none" 
+        style={{ top: '56px', bottom: '56px' }}
+      >
+        <div className="text-center">
+          <h2 className="text-4xl font-bold text-[#F7B32B] mb-2">
+            COMING SOON
+          </h2>
+          <p className="text-xl text-gray-700">리뷰 기능이 곧 출시됩니다!</p>
         </div>
       </div>
 

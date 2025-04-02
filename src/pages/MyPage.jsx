@@ -9,7 +9,6 @@ import { getUserCompletedReservations } from '../api/reservationApi'
 import { 
   calculateSavedCO2,
   calculatePlantedTrees,
-  calculateSavedMoney,
   formatCurrency,
 } from '../utils/ecoUtils'
 import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
@@ -38,6 +37,20 @@ function MyPage() {
         const userResponse = await getUserInfo()
         if (userResponse.success) {
           setUserData(userResponse.data)
+          
+          // 백엔드에서 제공하는 정보 활용 - totalProductCount로 환경 지표 계산
+          const totalSavedMoney = userResponse.data.totalSavedMoney || 0
+          const totalProductCount = userResponse.data.totalProductCount || 0
+          
+          // 환경 지표 계산은 백엔드의 totalProductCount 값으로 계산
+          const savedCO2 = calculateSavedCO2(totalProductCount)
+          const plantedTrees = calculatePlantedTrees(savedCO2)
+          
+          setEcoStats({
+            savedMoney: totalSavedMoney,
+            savedCO2,
+            plantedTrees
+          })
         }
 
         // 사용자 리뷰 가져오기
@@ -49,32 +62,15 @@ function MyPage() {
         // 사용자의 완료된 주문 가져오기
         const ordersResponse = await getUserCompletedReservations()
         if (ordersResponse && ordersResponse.success) {
-          const orders = ordersResponse.data.completedOrders || []
-          setCompletedOrders(orders)
+          // 완료된 주문과 확정된 주문 모두 저장
+          const completedOrders = ordersResponse.data.completedOrders || []
+          const confirmedOrders = ordersResponse.data.confirmedOrders || []
+          // 모든 주문 합치기 (화면에 표시용)
+          const allCompletedOrders = [...completedOrders, ...confirmedOrders]
+          setCompletedOrders(allCompletedOrders)
           
-          // 환경 지표 계산을 위한 데이터 매핑
-          const mappedOrders = orders.map((order) => ({
-            originalPrice: order.originalPrice || order.product?.price || 0,
-            discountPrice: 
-              order.discountPrice || 
-              order.product?.price - 
-                (order.product?.price * (order.product?.discountRate || 0)) / 
-                  100 || 
-              0,
-            quantity: order.quantity || 1
-          }))
-          
-          // 환경 지표 계산
-          const savedMoney = calculateSavedMoney(mappedOrders)
-          const orderCount = orders.length
-          const savedCO2 = calculateSavedCO2(orderCount)
-          const plantedTrees = calculatePlantedTrees(savedCO2)
-          
-          setEcoStats({
-            savedMoney,
-            savedCO2,
-            plantedTrees
-          })
+          // 주문 건수와 환경 지표를 API 응답 데이터 기준으로 업데이트하는 코드 제거
+          // 백엔드의 totalProductCount 값을 계속 사용
         }
       } catch (error) {
         console.error('사용자 데이터 로딩 중 오류:', error)
@@ -105,6 +101,10 @@ function MyPage() {
 
   // API에서 가져온 사용자 정보가 없으면, 로컬 상태의 사용자 정보 사용
   const displayUser = userData || user || {}
+  
+  // 주문 건수 계산 - 예약 내역에서 가져온 주문 건수를 사용하되,
+  // 환경 지표(CO2, 나무)는 백엔드의 totalProductCount 값 기준으로 계산됨
+  const totalOrders = completedOrders.length || 0
 
   return (
     <div className="flex flex-col h-full">
@@ -134,7 +134,7 @@ function MyPage() {
                     <span className="ml-1">개의 리뷰</span>
                   </div>
                   <div className="mt-1 text-sm text-gray-800">
-                    <span className="font-bold">{completedOrders.length || 0}</span>
+                    <span className="font-bold">{totalOrders}</span>
                     <span className="ml-1">개의 주문 완료</span>
                   </div>
                 </div>
@@ -211,7 +211,7 @@ function MyPage() {
             </div>
             
             {/* 환경 기여 섹션 */}
-            {completedOrders.length > 0 && (
+            {totalOrders > 0 && (
               <div className="p-4">
                 <h3 className="font-bold text-lg mb-3">나의 환경 기여</h3>
                 <div className="bg-green-50 p-4 rounded-lg">
@@ -221,7 +221,7 @@ function MyPage() {
                   <div className="flex justify-between items-center mt-3">
                     <div className="text-center">
                       <p className="text-xs text-gray-500">주문 횟수</p>
-                      <p className="font-bold text-green-600">{completedOrders.length}회</p>
+                      <p className="font-bold text-green-600">{totalOrders}회</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-gray-500">절약 금액</p>

@@ -190,6 +190,8 @@ function HomePage() {
           
           // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
           let filteredData = [...data];
+          
+          // 카테고리 필터링
           if (categoryFilter && categoryFilter !== '전체') {
             const category = categoryOptions.find(opt => opt.name === categoryFilter);
             if (category) {
@@ -201,6 +203,16 @@ function HomePage() {
               });
               console.log('필터링 후 가게 수:', filteredData.length);
             }
+          }
+          
+          // 검색어 필터링 - 클라이언트 측에서도 적용
+          if (searchQuery && searchQuery.trim() !== '') {
+            console.log('클라이언트 측 검색어 필터링 적용:', searchQuery);
+            filteredData = filteredData.filter(store => {
+              const storeName = store.storeName || store.name || '';
+              return storeName.toLowerCase().includes(searchQuery.toLowerCase());
+            });
+            console.log('검색 필터링 후 가게 수:', filteredData.length);
           }
           
           setDisplayedStores(filteredData)
@@ -361,6 +373,30 @@ function HomePage() {
     navigate(link)
   }
 
+  const handleSearch = (query) => {
+    console.log('검색어 변경됨:', query);
+    setSearchQuery(query);
+    
+    // 검색어가 있을 경우 현재 데이터에서 즉시 필터링 적용
+    if (query && query.trim() !== '') {
+      console.log('클라이언트 측 검색 필터링 적용:', query);
+      
+      // 현재 표시된 가게 목록에서 검색어로 필터링
+      const filteredResults = stores.filter(store => {
+        const storeName = store.storeName || store.name || '';
+        return storeName.toLowerCase().includes(query.toLowerCase());
+      });
+      
+      console.log('검색 필터링 결과:', filteredResults.length, '개 항목');
+      setFilteredStores(filteredResults);
+      setDisplayedStores(filteredResults);
+      setTotalStoreCount(filteredResults.length);
+    } else {
+      // 검색어가 없는 경우 기존 필터만 적용
+      fetchStores(1, true);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full relative">
       <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-30">
@@ -409,7 +445,7 @@ function HomePage() {
         onScroll={handleScroll}
       >
         <div className="px-4 py-2 border-b">
-          <SearchBar initialValue={searchQuery} onSearch={setSearchQuery} />
+          <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
         </div>
 
         <div

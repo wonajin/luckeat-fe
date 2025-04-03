@@ -575,13 +575,17 @@ function MapPage() {
 
   // 마커 클릭 핸들러
   const handleMarkerClick = useCallback((store) => {
+    console.log('MapPage - 마커 클릭 핸들러 호출:', store?.id)
+    
     // store가 null인 경우 선택 해제 후 종료
     if (!store) {
+      console.log('MapPage - 마커 선택 해제')
       setSelectedStoreId(null)
       return
     }
 
-    // 항상 인포윈도우가 표시되도록 설정 - 토글 방식 제거
+    // 선택된 가게 ID 설정 (같은 ID여도 상태 변경을 강제)
+    console.log('MapPage - 가게 선택:', store.id, store.name || store.storeName)
     setSelectedStoreId(store.id)
 
     // 선택된 가게로 지도 중심 이동
@@ -597,7 +601,7 @@ function MapPage() {
     if (storeItemRefs.current[store.id] && storeListRef.current) {
       // 약간의 지연을 두고 스크롤 (UI 업데이트 후에 실행되도록)
       setTimeout(() => {
-        storeItemRefs.current[store.id].scrollIntoView({
+        storeItemRefs.current[store.id]?.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
         })
@@ -685,6 +689,8 @@ function MapPage() {
       )
     }
 
+    console.log('현재 선택된 가게 ID:', selectedStoreId);
+    
     // 중복 ID 체크 및 유효한 좌표 확인
     const validStores = filteredStores.filter((store, index, self) => {
       // ID가 없는 경우 제외

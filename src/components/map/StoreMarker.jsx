@@ -4,6 +4,14 @@ import defaultImage from '../../assets/images/luckeat-default.png'
 import storeDefaultImage from '../../assets/images/제빵사디폴트이미지.png'
 
 function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
+  // 로컬 상태로 오버레이 표시 여부 관리
+  const [showOverlay, setShowOverlay] = useState(isSelected);
+
+  // isSelected 상태가 변경되면 showOverlay 상태도 업데이트
+  useEffect(() => {
+    setShowOverlay(isSelected);
+  }, [isSelected]);
+
   // 사용자 위치 정보 상태
   const [currentLocation, setCurrentLocation] = useState(userLocation)
 
@@ -14,19 +22,31 @@ function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
 
   // 마커 클릭했을 때 즉시 로그 출력 및 선택 상태 변경
   const handleMarkerClick = () => {
-    // 항상 인포윈도우가 표시되도록 변경 (이미 선택된 상태여도 다시 onClick 호출)
+    console.log('마커 클릭됨! 가게 ID:', store.id, '이름:', store.name || store.storeName)
+    
+    // 로컬 상태 즉시 변경하여 오버레이가 바로 보이도록 함
+    setShowOverlay(true);
+    
+    // 부모 컴포넌트에 알림
     onClick(store)
   }
 
   // 오버레이 닫기 핸들러
   const handleOverlayClose = (e) => {
     e.stopPropagation()
+    console.log('인포윈도우 닫기')
+    
+    // 로컬 상태 즉시 변경
+    setShowOverlay(false);
+    
+    // 부모 컴포넌트에 알림
     onClick(null) // 선택 해제 - null을 전달하여 선택 상태 해제
   }
 
   // 상세 페이지로 이동 핸들러
   const handleDetailClick = (e) => {
     e.stopPropagation() // 이벤트 전파 방지
+    console.log('상세 페이지로 이동:', store.id)
     if (onDetail) {
       onDetail(store.id)
     } else {
@@ -52,22 +72,27 @@ function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
     return simplified
   }
 
+  // 디버깅용 출력 - isSelected 값과 showOverlay 값 확인
+  useEffect(() => {
+    console.log(`마커 상태 변경 - ID:${store.id}, isSelected:${isSelected}, showOverlay:${showOverlay}`)
+  }, [isSelected, showOverlay, store.id]);
+
   return (
     <>
       {/* 가게 마커 */}
       <MapMarker
         position={{ lat: store.lat, lng: store.lng }}
         image={{
-          src: BLUE_MARKER,
+          src: (isSelected || showOverlay) ? SELECTED_MARKER : BLUE_MARKER,
           size: { width: 28, height: 40 }
         }}
         onClick={handleMarkerClick}
         title={store.name || store.storeName}
-        zIndex={isSelected ? 10 : 1}
+        zIndex={(isSelected || showOverlay) ? 10 : 1}
       />
 
-      {/* 커스텀 말풍선 오버레이 - 선택했을 때만 표시 */}
-      {isSelected && (
+      {/* 커스텀 말풍선 오버레이 - showOverlay 상태에 따라 표시 */}
+      {(isSelected || showOverlay) && (
         <CustomOverlayMap
           position={{ lat: store.lat, lng: store.lng }}
           yAnchor={1.4}

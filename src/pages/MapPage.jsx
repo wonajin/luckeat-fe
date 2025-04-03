@@ -27,7 +27,7 @@ const StoreItem = ({ data, index, style }) => {
   // index가 유효하지 않거나 store가 배열이 아니거나 해당 인덱스에 항목이 없는 경우 처리
   if (!Array.isArray(store) || !store[index]) {
     return (
-      <div style={style} className="px-3 py-1">
+      <div style={style} className="px-2 py-0.5">
         <div className="flex items-center p-2 border rounded-lg border-gray-200">
           <p className="text-sm text-gray-500">데이터를 불러오는 중...</p>
         </div>
@@ -38,7 +38,7 @@ const StoreItem = ({ data, index, style }) => {
   const currentStore = store[index]
 
   return (
-    <div style={style} className="px-3 py-1">
+    <div style={style} className="px-2 py-0.5">
       <div
         key={currentStore.id}
         ref={(el) => (storeItemRefs.current[currentStore.id] = el)}
@@ -49,7 +49,7 @@ const StoreItem = ({ data, index, style }) => {
         }`}
         onClick={() => handleMarkerClick(currentStore)}
       >
-        <div className="w-12 h-12 bg-gray-200 rounded-md mr-3 overflow-hidden">
+        <div className="w-10 h-10 bg-gray-200 rounded-md mr-2 overflow-hidden">
           <img
             src={storeDefaultImage}
             alt={currentStore.name || currentStore.storeName || '가게 이미지'}
@@ -806,40 +806,40 @@ function MapPage() {
   const renderStoreList = () => {
     // 상태에 따른 목록 높이 계산
     const listHeight = storeListExpanded
-      ? window.innerHeight * 0.4
+      ? window.innerHeight * 0.6
       : window.innerHeight * 0.25
     
     return (
       <div
         ref={storeListRef}
         className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg overflow-hidden z-10 transition-all duration-300 ${
-          storeListExpanded ? 'h-2/5' : 'h-1/4'
+          storeListExpanded ? 'h-3/5' : 'h-1/4'
         }`}
         onScroll={handleStoreListScroll}
+        onClick={() => !storeListExpanded && setStoreListExpanded(true)}
       >
         <div className="sticky top-0 w-full flex justify-center pt-2 pb-1 bg-white z-10">
-          <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+          <div 
+            className="w-12 h-1 bg-gray-300 rounded-full cursor-pointer" 
+            onClick={(e) => {
+              e.stopPropagation();
+              setStoreListExpanded(!storeListExpanded);
+            }}
+          ></div>
         </div>
 
-        <div className="p-4 pb-0">
+        <div className="p-3 pb-0">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-bold">주변 가게 ({filteredStores.length})</h3>
-            {/* 최대화/최소화 토글 버튼 */}
-            <button
-              className="text-xs px-2 py-1 bg-gray-100 rounded-full"
-              onClick={() => setStoreListExpanded(!storeListExpanded)}
-            >
-              {storeListExpanded ? '최소화' : '전체보기'}
-            </button>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {filteredStores.length > 0 ? (
               <List
                 className="StoreList"
-                height={listHeight - 80} // 헤더 높이 등을 고려해 조정
+                height={listHeight - 70} // 헤더 높이 등을 고려해 조정
                 itemCount={filteredStores.length}
-                itemSize={100} // 각 아이템의 높이 축소
+                itemSize={80} // 각 아이템의 높이 축소
                 width="100%"
                 itemData={itemData}
               >

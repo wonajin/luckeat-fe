@@ -14,7 +14,6 @@ function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
 
   // 마커 클릭했을 때 즉시 로그 출력 및 선택 상태 변경
   const handleMarkerClick = () => {
-    console.log('마커 클릭됨:', store.id, store.name || store.storeName)
     // 항상 인포윈도우가 표시되도록 변경 (이미 선택된 상태여도 다시 onClick 호출)
     onClick(store)
   }
@@ -22,14 +21,12 @@ function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
   // 오버레이 닫기 핸들러
   const handleOverlayClose = (e) => {
     e.stopPropagation()
-    console.log('오버레이 닫기:', store.id)
     onClick(null) // 선택 해제 - null을 전달하여 선택 상태 해제
   }
 
   // 상세 페이지로 이동 핸들러
   const handleDetailClick = (e) => {
     e.stopPropagation() // 이벤트 전파 방지
-    console.log('상세 페이지로 이동:', store.id)
     if (onDetail) {
       onDetail(store.id)
     } else {

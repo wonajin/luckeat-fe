@@ -21,8 +21,8 @@ function MapPage() {
   const [filteredStores, setFilteredStores] = useState([])
   const [selectedStoreId, setSelectedStoreId] = useState(null)
   const [mapCenter, setMapCenter] = useState({
-    lat: 37.5665, // 서울 시청 기본값 (현재 위치가 가져와지기 전까지 임시 사용)
-    lng: 126.978,
+    lat: 33.4996,
+    lng: 126.5302,
   })
   const [mapLevel, setMapLevel] = useState(3)
   const [mapLoaded, setMapLoaded] = useState(false)
@@ -58,7 +58,6 @@ function MapPage() {
 
   // 사용자 위치 가져오기 함수
   const getUserLocation = () => {
-    console.log('지도 - 사용자 위치 가져오기 시도')
     return new Promise((resolve, reject) => {
       if (navigator.geolocation) {
         const options = {
@@ -71,13 +70,12 @@ function MapPage() {
           (position) => {
             const { latitude, longitude } = position.coords
             const location = { lat: latitude, lng: longitude }
-            console.log('지도 - 사용자 위치:', location)
             setUserLocation(location)
             setMapCenter(location)
             resolve(location)
           },
           (error) => {
-            console.error('지도 - 위치 정보를 가져오는데 실패했습니다:', error)
+            console.error('위치 정보를 가져오는데 실패했습니다:', error)
             reject(error)
           },
           options,
@@ -86,7 +84,7 @@ function MapPage() {
         const error = new Error(
           '이 브라우저에서는 위치 정보를 지원하지 않습니다.',
         )
-        console.error('지도 - ' + error.message)
+        console.error(error.message)
         reject(error)
       }
     })
@@ -95,7 +93,7 @@ function MapPage() {
   // 사용자 위치 가져오기
   useEffect(() => {
     getUserLocation().catch((error) => {
-      console.warn('지도 - 위치 정보 가져오기 실패, 기본 위치 사용:', error)
+      console.warn('위치 정보 가져오기 실패, 기본 위치 사용:', error)
       // 위치 정보 가져오기 실패 시 기본 위치 사용 (서울 시청)
       const defaultLocation = { lat: 37.5665, lng: 126.978 }
       setUserLocation(defaultLocation) // 기본 위치도 userLocation에 저장
@@ -110,7 +108,6 @@ function MapPage() {
         setLoading(true)
 
         // 가게 데이터 가져오기
-        console.log('가게 정보 불러오는 중...')
         try {
           // 할인중인 가게만 보여주기 옵션이 선택된 경우 API 파라미터 추가
           let apiUrl = `${API_BASE_URL}/api/v1/stores`
@@ -121,10 +118,8 @@ function MapPage() {
           // 직접 axios로 API 호출
           const response = await axios.get(apiUrl)
           const storesData = response.data
-          console.log('가게 데이터:', storesData)
 
           if (!storesData || storesData.length === 0) {
-            console.log('가게 데이터가 없습니다.')
             setLoading(false)
             return
           }
@@ -154,9 +149,6 @@ function MapPage() {
                 (lat === 0 && lng === 0)
               ) {
                 // 유효하지 않은 좌표를 가진 가게는 지도에 표시하지 않음
-                console.log(
-                  `매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 지도에 표시하지 않음`,
-                )
                 return {
                   ...store,
                   lat: null,
@@ -165,9 +157,6 @@ function MapPage() {
                 }
               }
 
-              console.log(
-                `매장 ${store.id}(${store.name || store.storeName}): 좌표 확인 - 위도 ${lat}, 경도 ${lng}`,
-              )
               return {
                 ...store,
                 lat: lat,
@@ -176,11 +165,8 @@ function MapPage() {
               }
             })
             // 유효한 좌표를 가진 가게만 필터링 (지도에 표시)
-            .filter(store => store.hasValidLocation)
+            .filter((store) => store.hasValidLocation)
 
-          console.log(
-            `총 ${storesWithValidLocation.length}개 매장 정보 로드 완료 (유효한 좌표 있는 매장만)`,
-          )
           setStores(storesWithValidLocation)
           setFilteredStores(storesWithValidLocation)
         } catch (error) {
@@ -188,7 +174,6 @@ function MapPage() {
           // 오류가 있으면 getStores 함수로 재시도
           try {
             const storesData = await getStores()
-            console.log('getStores 함수로 재시도:', storesData)
             const storeList = Array.isArray(storesData)
               ? storesData
               : storesData?.data || []
@@ -234,7 +219,7 @@ function MapPage() {
                 }
               })
               // 유효한 좌표를 가진 가게만 필터링 (지도에 표시)
-              .filter(store => store.hasValidLocation)
+              .filter((store) => store.hasValidLocation)
 
             setStores(storesWithLocation)
             setFilteredStores(storesWithLocation)
@@ -259,7 +244,6 @@ function MapPage() {
       if (window.kakao && window.kakao.maps) {
         setMapLoaded(true)
       } else {
-        console.log('카카오맵 SDK를 로드합니다...')
         const script = document.createElement('script')
 
         // API 키 설정
@@ -269,7 +253,6 @@ function MapPage() {
 
         script.onload = () => {
           window.kakao.maps.load(() => {
-            console.log('카카오맵 로드 완료')
             setMapLoaded(true)
           })
         }
@@ -293,7 +276,6 @@ function MapPage() {
     if (stores.length === 0) return
 
     let result = [...stores]
-    console.log('필터링 전 가게 수:', result.length)
 
     // 검색어 필터링
     if (searchQuery) {
@@ -306,7 +288,6 @@ function MapPage() {
           address.toLowerCase().includes(query)
         )
       })
-      console.log('검색 필터링 후 가게 수:', result.length)
     }
 
     // 카테고리 필터링
@@ -314,7 +295,6 @@ function MapPage() {
       result = result.filter((store) => {
         return store.categoryId === categoryFilter
       })
-      console.log('카테고리 필터링 후 가게 수:', result.length)
     }
 
     setFilteredStores(result)
@@ -322,8 +302,6 @@ function MapPage() {
 
   // 마커 클릭 핸들러
   const handleMarkerClick = useCallback((store) => {
-    console.log('마커 클릭:', store?.id, store?.name || store?.storeName)
-
     // store가 null인 경우 선택 해제 후 종료
     if (!store) {
       setSelectedStoreId(null)
@@ -359,7 +337,6 @@ function MapPage() {
     // 최소 레벨 1, 최대 레벨 14로 제한
     const level = Math.max(1, Math.min(14, newLevel))
     setMapLevel(level)
-    console.log('줌 레벨 변경:', level)
     // 줌 변경 시 가게 목록 상태를 변경하지 않도록 함
   }
 
@@ -371,15 +348,16 @@ function MapPage() {
   // 사용자 위치로 이동하는 핸들러 - 현재 위치 다시 가져오기
   const handleMoveToCurrentLocation = async () => {
     try {
-      console.log('지도 - 현재 위치로 이동 요청')
       // 위치 정보 새로 가져오기 시도
+      setLoading(true) // 로딩 표시 추가
       const location = await getUserLocation()
-      console.log('지도 - 현재 위치로 이동:', location)
       setMapCenter(location)
       setMapLevel(3) // 줌 레벨 설정
+      setLoading(false) // 로딩 완료
     } catch (error) {
-      console.error('지도 - 현재 위치로 이동 실패:', error)
+      console.error('현재 위치로 이동 실패:', error)
       alert('현재 위치를 가져올 수 없습니다. 위치 접근 권한을 확인해주세요.')
+      setLoading(false) // 에러 발생해도 로딩 종료
     }
   }
 
@@ -404,13 +382,12 @@ function MapPage() {
 
   // 검색 핸들러
   const handleSearch = (query) => {
-    console.log('검색어:', query)
     setSearchQuery(query)
     // 검색어 변경 후에는 매장 목록 확장
     setStoreListExpanded(true)
   }
 
-  // 주소 간소화 함수 추가
+  // 주소 간소화 및 글자수 제한 함수
   const simplifyAddress = (address) => {
     if (!address) return '주소 정보 없음'
     // "대한민국" 제거
@@ -447,8 +424,8 @@ function MapPage() {
           <MapMarker
             position={userLocation}
             image={{
-              src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
-              size: { width: 24, height: 35 },
+              src: 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_red.png',
+              size: { width: 26, height: 37 },
             }}
             title="내 위치"
           />
@@ -546,7 +523,6 @@ function MapPage() {
                 <h3 className="font-medium text-gray-900 mb-0.5 pr-14">
                   {store.name || store.storeName || '이름 없는 가게'}
                 </h3>
-                
                 <p className="text-xs text-gray-500 mb-1">
                   {simplifyAddress(store.address) || '주소 정보 없음'}
                 </p>
@@ -555,9 +531,8 @@ function MapPage() {
                   <span className="text-yellow-500 font-medium">
                     ★ {(store.avgRating || store.averageRating || 0).toFixed(1)}
                   </span>
-                  
                   {/* 할인 정보 */}
-                  {((store.discount && store.discount !== '0%') || 
+                  {((store.discount && store.discount !== '0%') ||
                     store.isDiscountOpen === true) && (
                     <span className="ml-2 bg-red-100 text-red-700 px-1.5 rounded-sm">
                       {store.discount || '할인중'}
@@ -597,7 +572,7 @@ function MapPage() {
       {/* 검색 영역 */}
       <div className="px-4 py-2 border-b">
         <SearchBar
-          placeholder="가게 이름, 메뉴 검색"
+          placeholder="가게 이름, 주소 검색"
           initialValue={searchQuery}
           onSearch={handleSearch}
         />
@@ -695,7 +670,58 @@ function MapPage() {
         </div>
 
         {/* 가게 목록 */}
-        {renderStoreList()}
+        <div
+          className={`absolute bottom-0 left-0 right-0 bg-white z-10 transition-transform duration-300 shadow-lg ${
+            storeListExpanded ? 'h-2/3' : 'h-auto max-h-48'
+          }`}
+          style={{
+            transform: storeListExpanded ? 'translateY(0)' : 'translateY(80%)',
+            maxHeight: storeListExpanded ? '65%' : '140px',
+          }}
+        >
+          <div
+            className="p-2 flex justify-between items-center bg-gray-50 border-b cursor-pointer"
+            onClick={() => setStoreListExpanded(!storeListExpanded)}
+          >
+            <span className="font-medium text-sm">
+              {filteredStores.length}개의 가게
+            </span>
+            <button className="text-gray-500">
+              {storeListExpanded ? (
+                <svg 
+                  width="20" 
+                  height="20" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M19 9l-7 7-7-7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M5 15l7-7 7 7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+          {renderStoreList()}
+        </div>
       </div>
 
       <Navigation />

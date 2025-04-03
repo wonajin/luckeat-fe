@@ -60,13 +60,13 @@ function HomePage() {
        link: '/partner',*/
     },
   ]
-
+ // 카테고리 옵션 추가
   const categoryOptions = [
     { id: 'all', name: '전체', icon: '🔍' },
     { id: 1, name: '한식', icon: '🍚' },
-    { id: 2, name: '일식', icon: '🍱' },
-    { id: 3, name: '중식', icon: '🥢' },
-    { id: 4, name: '양식', icon: '🍝' },
+    { id: 4, name: '일식', icon: '🍱' },
+    { id: 2, name: '중식', icon: '🥢' },
+    { id: 3, name: '양식', icon: '🍝' },
     { id: 5, name: '카페/베이커리', icon: '🍞' },
     { id: 6, name: '샐러드/청과', icon: '🥗' },
   ]

@@ -5,7 +5,7 @@ import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDateTime } from '../utils/dateUtils'
 import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
-import { getUserReservations, cancelReservation } from '../api/reservationApi'
+import { getUserReservations, updateReservationStatus } from '../api/reservationApi'
 
 const ReservationStatusBadge = ({ status }) => {
   const { bgColor, textColor } = getStatusStyle(status)
@@ -96,30 +96,33 @@ const UserReservationsPage = () => {
 
     try {
       setLoading(true)
-      
-      // cancelReservation API 사용
-      const response = await cancelReservation(reservationToCancel.id)
+      const response = await updateReservationStatus({
+        reservationId: reservationToCancel.id,
+        status: 'CANCELED'
+      })
       
       if (response.success) {
         // 예약 상태 업데이트
-        setReservations((prev) => 
-          prev.map((reservation) =>
+        setReservations(prev => 
+          prev.map(reservation =>
             reservation.id === reservationToCancel.id
-              ? { ...reservation, status: RESERVATION_STATUS.CANCELED }
+              ? { ...reservation, status: 'CANCELED' }
               : reservation
           )
         )
-        
-        showToastMessage('예약이 취소되었습니다', 'success')
+        setShowCancelConfirm(false)
+        setReservationToCancel(null)
+        setToastMessage('예약이 취소되었습니다')
+        setShowToast(true)
       } else {
-        showToastMessage(response.message || '예약 취소에 실패했습니다', 'error')
+        setToastMessage(response.message || '예약 취소에 실패했습니다')
+        setShowToast(true)
       }
     } catch (error) {
       console.error('예약 취소 중 오류:', error)
-      showToastMessage('예약 취소 중 오류가 발생했습니다', 'error')
+      setToastMessage('예약 취소 중 오류가 발생했습니다')
+      setShowToast(true)
     } finally {
-      setShowCancelConfirm(false)
-      setReservationToCancel(null)
       setLoading(false)
     }
   }
@@ -353,7 +356,7 @@ const UserReservationsPage = () => {
         </div>
       </div>
 
-      {/* 취소 확인 모달 */}
+      {/* 예약 취소 확인 모달 */}
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-sm p-5">

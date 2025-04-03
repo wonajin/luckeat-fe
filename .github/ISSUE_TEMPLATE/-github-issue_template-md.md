@@ -1,9 +1,10 @@
 ---
-name: '.github/ISSUE_TEMPLATE.md'
-about: 이슈 템플릿입니다.
+name: ".github/ISSUE_TEMPLATE.md"
+about: 이슈티켓템플릿입니다.
 title: ''
 labels: ''
 assignees: ''
+
 ---
 
 ## 📌 어떤 기능인가요?

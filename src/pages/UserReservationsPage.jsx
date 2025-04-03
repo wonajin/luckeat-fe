@@ -302,19 +302,7 @@ const UserReservationsPage = () => {
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">가격:</span>{' '}
-                            <span className="text-gray-600">{reservation.price.toLocaleString()}원</span>
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약 날짜:</span>{' '}
-                            <span className="text-gray-600">{formatDateTime(reservation.reservationDate)}</span>
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약 시간:</span>{' '}
-                            <span className="text-gray-600">{formatDateTime(reservation.reservationTime)}</span>
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약 생성:</span>{' '}
-                            <span className="text-gray-600">{formatDateTime(reservation.createdAt)}</span>
+                            <span className="text-gray-600">{reservation.totalPrice?.toLocaleString() || '0'}원</span>
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">포장 방법:</span>{' '}

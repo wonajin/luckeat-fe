@@ -45,7 +45,8 @@ function EditProfilePage() {
 
   // 닉네임 변경 핸들러
   const handleNicknameChange = (e) => {
-    const value = e.target.value
+    // 앞뒤 공백 제거
+    const value = e.target.value.trim()
     setNickname(value)
 
     // 닉네임 유효성 검사
@@ -75,15 +76,16 @@ function EditProfilePage() {
       return
     }
     
-    // 한글이 아닌 경우 상태 업데이트
-    setCurrentPassword(e.target.value)
+    // 한글이 아닌 경우 상태 업데이트 (공백 제거)
+    const value = e.target.value.replace(/\s+/g, '')
+    setCurrentPassword(value)
     
-    if (!e.target.value) {
+    if (!value) {
       setCurrentPasswordError('현재 비밀번호를 입력해주세요.')
     } else {
       setCurrentPasswordError('')
       // 새 비밀번호가 입력되어 있고 현재 비밀번호와 동일한 경우 체크
-      if (newPassword && e.target.value === newPassword) {
+      if (newPassword && value === newPassword) {
         setPasswordError('새 비밀번호는 현재 비밀번호와 달라야 합니다.')
       } else if (newPassword && passwordError === '새 비밀번호는 현재 비밀번호와 달라야 합니다.') {
         setPasswordError('')
@@ -101,8 +103,8 @@ function EditProfilePage() {
       return
     }
     
-    // 한글이 아닌 경우 상태 업데이트
-    const value = e.target.value
+    // 한글이 아닌 경우 상태 업데이트 (공백 제거)
+    const value = e.target.value.replace(/\s+/g, '')
     setNewPassword(value)
 
     // 새 비밀번호 유효성 검사
@@ -138,8 +140,8 @@ function EditProfilePage() {
       return
     }
     
-    // 한글이 아닌 경우 상태 업데이트
-    const value = e.target.value
+    // 한글이 아닌 경우 상태 업데이트 (공백 제거)
+    const value = e.target.value.replace(/\s+/g, '')
     setConfirmPassword(value)
 
     if (!value) {

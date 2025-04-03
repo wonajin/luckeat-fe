@@ -21,6 +21,20 @@ function SignupPage() {
     console.log('팝업 표시 상태 변경:', showSuccessPopup)
   }, [showSuccessPopup])
 
+  // 이메일 입력 처리 - 공백 제거 및 소문자 변환
+  const handleEmailInput = (e) => {
+    // 입력값에서 모든 공백 제거 후 소문자로 변환
+    const value = e.target.value.replace(/\s+/g, '').toLowerCase()
+    setEmail(value)
+  }
+
+  // 닉네임 입력 처리 - 앞뒤 공백 제거
+  const handleNicknameInput = (e) => {
+    // 입력값에서 앞뒤 공백 제거
+    const value = e.target.value.trim()
+    setNickname(value)
+  }
+
   // 한글 입력을 막는 함수
   const handlePasswordInput = (e) => {
     // 정규식을 사용하여 한글 입력 감지
@@ -29,8 +43,10 @@ function SignupPage() {
       // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
       return
     }
+    // 모든 공백 제거
+    const value = e.target.value.replace(/\s+/g, '')
     // 한글이 아닌 경우 상태 업데이트
-    setPassword(e.target.value)
+    setPassword(value)
   }
 
   // 한글 입력을 막는 함수 (비밀번호 확인용)
@@ -41,8 +57,10 @@ function SignupPage() {
       // 한글이 입력되면 이전 상태를 유지 (한글 입력 차단)
       return
     }
+    // 모든 공백 제거
+    const value = e.target.value.replace(/\s+/g, '')
     // 한글이 아닌 경우 상태 업데이트
-    setConfirmPassword(e.target.value)
+    setConfirmPassword(value)
   }
 
   const handleSignup = async (e) => {
@@ -293,7 +311,7 @@ function SignupPage() {
                 type="email"
                 placeholder="이메일 주소를 입력해주세요."
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailInput}
                 className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
                 required
               />
@@ -310,7 +328,7 @@ function SignupPage() {
                 type="text"
                 placeholder="닉네임을 입력해주세요."
                 value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
+                onChange={handleNicknameInput}
                 className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
                 required
               />

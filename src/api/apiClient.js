@@ -11,6 +11,14 @@ export const TOKEN_KEYS = {
   REFRESH: 'refreshToken', // 리프레시 토큰 키
 }
 
+// 한국 시간대 설정
+const koreaTimeZone = 'Asia/Seoul'
+const now = new Date()
+const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: koreaTimeZone }))
+Date.prototype.getTimezoneOffset = function() {
+  return -540 // 한국 시간대 UTC+9
+}
+
 // axios 인스턴스 생성
 const apiClient = axios.create({
   headers: {
@@ -49,6 +57,9 @@ apiClient.interceptors.request.use(
       config.headers['Authorization'] = `Bearer ${token}`
     }
 
+    // 시간대 설정
+    config.headers['X-Timezone'] = koreaTimeZone
+
     console.log('요청 전송:', config.method.toUpperCase(), config.url)
     console.log('요청 헤더:', JSON.stringify(config.headers, null, 2))
     if (config.data) {
@@ -65,6 +76,59 @@ apiClient.interceptors.request.use(
 // 응답 인터셉터 설정
 apiClient.interceptors.response.use(
   (response) => {
+    // UTC 시간을 한국 시간으로 변환하는 함수
+    const convertUTCToKoreaTime = (data) => {
+      if (!data) return data
+      
+      if (Array.isArray(data)) {
+        return data.map((item) => convertUTCToKoreaTime(item))
+      }
+      
+      if (typeof data === 'object') {
+        const converted = {}
+        for (const key in data) {
+          if (
+            key.toLowerCase().includes('time') || 
+            key.toLowerCase().includes('date') ||
+            key.toLowerCase().includes('createdat') ||
+            key.toLowerCase().includes('updatedat') ||
+            key.toLowerCase().includes('reservationtime')
+          ) {
+            // ISO 8601 형식의 날짜/시간 문자열인 경우 변환
+            if (typeof data[key] === 'string' && data[key].includes('T')) {
+              try {
+                const date = new Date(data[key])
+                if (!isNaN(date.getTime())) {
+                  // 한국 시간으로 변환 (UTC+9)
+                  const koreaTime = new Date(date.getTime() + 9 * 60 * 60 * 1000)
+                  converted[key] = koreaTime.toISOString()
+                } else {
+                  converted[key] = data[key]
+                }
+              } catch (error) {
+                console.error('날짜 변환 오류:', error)
+                converted[key] = data[key]
+              }
+            } else {
+              converted[key] = data[key]
+            }
+          } else if (typeof data[key] === 'object') {
+            converted[key] = convertUTCToKoreaTime(data[key])
+          } else {
+            converted[key] = data[key]
+          }
+        }
+        return converted
+      }
+      
+      return data
+    }
+
+    // 응답 데이터의 시간 필드 변환
+    if (response.data) {
+      response.data = convertUTCToKoreaTime(response.data)
+    }
+
     console.log(
       '응답 수신:',
       response.status,

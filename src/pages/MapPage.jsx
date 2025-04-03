@@ -149,7 +149,7 @@ function MapPage() {
   const [filteredStores, setFilteredStores] = useState([])
   const [selectedStoreId, setSelectedStoreId] = useState(null)
   const [mapCenter, setMapCenter] = useState({
-    lat: 33.4996, //제주 구름ㄱ퀘어
+    lat: 33.4996, //제주 구름스퀘어
     lng: 126.5302,
   })
   const [mapLevel, setMapLevel] = useState(3)
@@ -172,9 +172,9 @@ function MapPage() {
   // 카테고리 옵션 추가
   const categoryOptions = [
     { id: 1, name: '한식', icon: '🍚' },
-    { id: 2, name: '일식', icon: '🍱' },
-    { id: 3, name: '중식', icon: '🥢' },
-    { id: 4, name: '양식', icon: '🍝' },
+    { id: 4, name: '일식', icon: '🍱' },
+    { id: 2, name: '중식', icon: '🥢' },
+    { id: 3, name: '양식', icon: '🍝' },
     { id: 5, name: '카페/베이커리', icon: '🍞' },
     { id: 6, name: '샐러드/청과', icon: '🥗' },
   ]
@@ -546,7 +546,26 @@ function MapPage() {
       )
     }
 
-    setFilteredStores(result)
+    // 유효하지 않은 좌표 필터링
+    result = result.filter(store => {
+      return store && 
+             store.id && // ID가 있는지 확인
+             store.lat && store.lng && // 좌표가 있는지 확인
+             !isNaN(store.lat) && !isNaN(store.lng) && // 숫자인지 확인
+             !(store.lat === 0 && store.lng === 0); // 0,0이 아닌지 확인
+    });
+
+    // 중복 ID 제거
+    const uniqueStores = [];
+    const seenIds = new Set();
+    for (const store of result) {
+      if (!seenIds.has(store.id)) {
+        seenIds.add(store.id);
+        uniqueStores.push(store);
+      }
+    }
+
+    setFilteredStores(uniqueStores)
   }, [stores])
 
   // 검색어, 카테고리, 할인 필터가 변경될 때 필터링 실행
@@ -666,6 +685,26 @@ function MapPage() {
       )
     }
 
+    // 중복 ID 체크 및 유효한 좌표 확인
+    const validStores = filteredStores.filter((store, index, self) => {
+      // ID가 없는 경우 제외
+      if (!store.id) return false;
+      
+      // 고유 ID만 포함 (중복 제거)
+      const isUniqueId = index === self.findIndex(s => s.id === store.id);
+      
+      // 유효한 좌표인지 확인
+      const hasValidCoords = 
+        store.lat && 
+        store.lng && 
+        !isNaN(store.lat) && 
+        !isNaN(store.lng) &&
+        store.lat !== 0 && 
+        store.lng !== 0;
+        
+      return isUniqueId && hasValidCoords;
+    });
+
     return (
       <Map
         center={mapCenter}
@@ -694,23 +733,45 @@ function MapPage() {
         {/* 가게 마커 클러스터링 추가 */}
         <MarkerClusterer
           averageCenter={true}
-          minLevel={5}
+          minLevel={3}
+          calculator={[10, 30, 50, 100, 200, 500, 1000]}
           disableClickZoom={false}
+          gridSize={60}
           styles={[
             {
               width: '50px',
               height: '50px',
-              background: 'rgba(51, 204, 255, .8)',
+              background: 'rgba(51, 153, 255, .8)',
               borderRadius: '25px',
-              color: '#000',
+              color: '#fff',
               textAlign: 'center',
               fontWeight: 'bold',
               lineHeight: '50px',
             },
+            {
+              width: '55px',
+              height: '55px',
+              background: 'rgba(0, 102, 204, .8)',
+              borderRadius: '28px',
+              color: '#fff',
+              textAlign: 'center',
+              fontWeight: 'bold',
+              lineHeight: '55px',
+            },
+            {
+              width: '60px',
+              height: '60px',
+              background: 'rgba(0, 51, 153, .8)',
+              borderRadius: '30px',
+              color: '#fff',
+              textAlign: 'center',
+              fontWeight: 'bold',
+              lineHeight: '60px',
+            }
           ]}
         >
-          {/* 가게 마커 */}
-          {filteredStores.map((store) => (
+          {/* 가게 마커 - 유효성 검증된 데이터만 사용 */}
+          {validStores.map((store) => (
             <StoreMarker
               key={store.id}
               store={store}

@@ -11,10 +11,12 @@ import {
   updateReview,
   deleteReview,
 } from '../api/reviewApi'
+import { getUserCompletedReservations } from '../api/reservationApi'
+import { uploadImage } from '../api/uploadApi'
 
 function ReviewManagementPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, checkCurrentAuthStatus } = useAuth()
   const [writableStores, setWritableStores] = useState([])
   const [writtenReviews, setWrittenReviews] = useState([])
   const [expandedStoreId, setExpandedStoreId] = useState(null)
@@ -36,29 +38,91 @@ function ReviewManagementPage() {
     image: null,
     imagePreview: null,
   })
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [toastType, setToastType] = useState('success')
 
   // 작성 가능한 가게와 작성한 리뷰 초기화
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
+    const verifyAuth = async () => {
+      const isValid = await checkCurrentAuthStatus()
+      if (!isValid) {
+        navigate('/login')
+        return
+      }
+      fetchData()
+    }
 
-        // 사용자가 작성한 리뷰 목록 가져오기
-        const userReviewsResponse = await getMyReviews()
+    verifyAuth()
+  }, [navigate, checkCurrentAuthStatus])
 
-        if (userReviewsResponse && userReviewsResponse.data) {
-          const reviewData = userReviewsResponse.data.reviews || []
+  useEffect(() => {
+    const handleToast = (event) => {
+      const { message, type } = event.detail
+      setToastMessage(message)
+      setToastType(type)
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+    }
 
-          // API 응답에서 리뷰 데이터 형식 매핑
-          const formattedReviews = reviewData.map((review) => ({
-            id: review.reviewId,
-            storeId: review.storeId,
-            storeName: review.storeName || '가게 정보 없음',
-            userName: user?.nickname || '사용자',
-            rating: review.rating,
-            content: review.reviewContent,
-            image: review.reviewImage,
-            date: new Date(review.createdAt)
+    window.addEventListener('showToast', handleToast)
+    return () => window.removeEventListener('showToast', handleToast)
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+
+      // 사용자가 작성한 리뷰 목록 가져오기
+      const userReviewsResponse = await getMyReviews()
+
+      if (userReviewsResponse && userReviewsResponse.data) {
+        const reviewData = userReviewsResponse.data.reviews || []
+
+        // API 응답에서 리뷰 데이터 형식 매핑
+        const formattedReviews = reviewData.map((review) => ({
+          id: review.reviewId,
+          storeId: review.storeId,
+          storeName: review.storeName || '가게 정보 없음',
+          userName: user?.nickname || '사용자',
+          rating: review.rating,
+          content: review.reviewContent,
+          image: review.reviewImage,
+          productName: review.productName || '상품 정보 없음',
+          totalPrice: review.totalPrice || 0,
+          quantity: review.quantity || 1,
+          date: new Date(review.createdAt)
+            .toLocaleDateString('ko-KR', {
+              year: '2-digit',
+              month: '2-digit',
+              day: '2-digit',
+            })
+            .replace(/\. /g, '.')
+            .replace(/\.$/, ''),
+        }))
+
+        setWrittenReviews(formattedReviews)
+        console.log('사용자 리뷰 데이터:', formattedReviews)
+      } else {
+        console.log('리뷰 데이터가 없습니다.')
+        setWrittenReviews([])
+      }
+
+      // 완료된 예약 목록 가져오기
+      const completedReservationsResponse = await getUserCompletedReservations()
+      
+      if (completedReservationsResponse.success) {
+        const { completedOrders, confirmedOrders } = completedReservationsResponse.data
+        
+        // 완료된 예약과 확정된 예약을 합쳐서 리뷰 작성 가능한 가게 목록 구성
+        const allOrders = [...completedOrders, ...confirmedOrders]
+        const availableStores = allOrders
+          .filter((order) => !order.isReviewed) // isReviewed가 false인 주문만 필터링
+          .map((order) => ({
+            id: `store-${order.storeId}-${order.id}-${Date.now()}`,
+            storeId: order.storeId,
+            name: order.storeName,
+            orderDate: new Date(order.createdAt)
               .toLocaleDateString('ko-KR', {
                 year: '2-digit',
                 month: '2-digit',
@@ -66,57 +130,34 @@ function ReviewManagementPage() {
               })
               .replace(/\. /g, '.')
               .replace(/\.$/, ''),
+            orderId: order.id,
+            orderItems: order.orderItems || [],
+            totalPrice: order.totalPrice || 0,
+            productName: order.productName,
+            quantity: order.quantity,
           }))
 
-          setWrittenReviews(formattedReviews)
-          console.log('사용자 리뷰 데이터:', formattedReviews)
-        } else {
-          console.log('리뷰 데이터가 없습니다.')
-          setWrittenReviews([])
-        }
+        // 최신순으로 정렬
+        const sortedStores = availableStores.sort((a, b) => 
+          new Date(b.orderDate) - new Date(a.orderDate)
+        )
 
-        // 리뷰 작성 가능한 가게 목록 가져오기
-        try {
-          const storesResponse = await getStores()
-          if (storesResponse && storesResponse.data) {
-            // 이미 리뷰를 작성한 가게 ID 목록
-            const reviewedStoreIds = new Set(
-              writtenReviews.map((review) => review.storeId),
-            )
-
-            // 아직 리뷰를 작성하지 않은 가게만 필터링
-            const availableStores = storesResponse.data.stores
-              ? storesResponse.data.stores.filter(
-                  (store) => !reviewedStoreIds.has(store.id),
-                )
-              : []
-
-            setWritableStores(availableStores)
-            console.log('리뷰 작성 가능한 가게:', availableStores)
-          }
-        } catch (storeError) {
-          console.error('가게 정보 로딩 실패:', storeError)
-        }
-
-        setLoading(false)
-      } catch (err) {
-        console.error('데이터 로딩 중 오류 발생:', err)
-        setError('리뷰 데이터를 불러오는데 실패했습니다')
-        setLoading(false)
+        setWritableStores(sortedStores)
+        console.log('리뷰 작성 가능한 가게:', sortedStores)
       }
-    }
 
-    if (user) {
-      fetchData()
-    } else {
-      // 로그인되어 있지 않은 경우 로그인 페이지로 리다이렉트
-      navigate('/login')
+      setLoading(false)
+    } catch (err) {
+      console.error('데이터 로딩 중 오류 발생:', err)
+      setError('리뷰 데이터를 불러오는데 실패했습니다')
+      setLoading(false)
     }
-  }, [user, navigate])
+  }
 
   // 리뷰 작성 폼 토글
-  const toggleReviewForm = (storeId) => {
-    if (expandedStoreId === storeId) {
+  const toggleReviewForm = (storeId, orderId) => {
+    const uniqueId = `${storeId}-${orderId}`
+    if (expandedStoreId === uniqueId) {
       // 이미 열려있는 폼을 닫으려고 할 때
       if (newReview.content || newReview.image) {
         // 작성 중인 내용이 있으면 경고 모달 표시
@@ -127,7 +168,7 @@ function ReviewManagementPage() {
       }
     } else {
       // 새로운 폼 열기
-      setExpandedStoreId(storeId)
+      setExpandedStoreId(uniqueId)
       setNewReview({
         rating: 5,
         content: '',
@@ -185,8 +226,10 @@ function ReviewManagementPage() {
       return
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      alert('파일 크기는 20MB를 초과할 수 없습니다.')
+    // 파일 크기 제한 (5MB)
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      alert('파일 크기는 5MB를 초과할 수 없습니다.')
       return
     }
 
@@ -232,36 +275,69 @@ function ReviewManagementPage() {
   }
 
   // 리뷰 작성 완료
-  const handleSubmitReview = async (storeId) => {
+  const handleSubmitReview = async (storeId, orderId) => {
     if (!newReview.content) {
-      alert('리뷰 내용을 입력해주세요.')
+      window.dispatchEvent(new CustomEvent('showToast', {
+        detail: {
+          message: '리뷰 내용을 입력해주세요.',
+          type: 'error'
+        }
+      }))
       return
     }
 
     try {
+      let imageUrl = null
+      
+      // 이미지가 있는 경우 먼저 업로드
+      if (newReview.image) {
+        try {
+          const uploadedImageUrl = await uploadImage(newReview.image, 'reviews')
+          if (uploadedImageUrl) {
+            // S3 URL 구조에서 필요한 경로 부분 추출
+            const pathPart = uploadedImageUrl.replace('https://luckeat-front.s3.ap-northeast-2.amazonaws.com', '')
+            // CloudFront URL로 변환
+            imageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`
+          }
+        } catch (error) {
+          console.error('이미지 업로드 중 오류:', error)
+          window.dispatchEvent(new CustomEvent('showToast', {
+            detail: {
+              message: '이미지 업로드에 실패했습니다. 다시 시도해주세요.',
+              type: 'error'
+            }
+          }))
+          return
+        }
+      }
+
       // 리뷰 데이터 구성
       const reviewData = {
         storeId: storeId,
+        reservationId: orderId,
         rating: newReview.rating,
         reviewContent: newReview.content,
-        reviewImage: newReview.image || null,
+        reviewImage: imageUrl,
       }
 
       // API로 리뷰 생성
       const response = await createReview(reviewData)
 
-      if (response && response.message === '리뷰 작성 성공') {
+      if (response) {
         // 성공적으로 리뷰가 생성되면 리뷰 목록을 업데이트
-        const store = writableStores.find((s) => s.id === storeId)
+        const store = writableStores.find((s) => s.storeId === storeId)
 
         const newReviewObj = {
-          id: response.reviewId || Date.now(), // API에서 반환된 ID 또는 임시 ID
+          id: response.reviewId || Date.now(),
           storeId,
-          storeName: store ? store.storeName || store.name : '가게 정보',
+          storeName: store ? store.name : '가게 정보',
           userName: user?.nickname || '사용자',
           rating: newReview.rating,
           content: newReview.content,
-          image: newReview.imagePreview,
+          image: imageUrl,
+          productName: store ? store.productName : '상품 정보 없음',
+          totalPrice: store ? store.totalPrice : 0,
+          quantity: store ? store.quantity : 1,
           date: new Date()
             .toLocaleDateString('ko-KR', {
               year: '2-digit',
@@ -277,7 +353,7 @@ function ReviewManagementPage() {
 
         // 작성 가능한 가게 목록에서 제거
         setWritableStores((prev) =>
-          prev.filter((store) => store.id !== storeId),
+          prev.filter((store) => store.storeId !== storeId),
         )
 
         // 폼 닫기
@@ -291,38 +367,64 @@ function ReviewManagementPage() {
           imagePreview: null,
         })
 
-        alert('리뷰가 성공적으로 작성되었습니다.')
-      } else {
-        alert(
-          '리뷰 작성에 실패했습니다: ' +
-            (response.message || '알 수 없는 오류'),
-        )
+        // 1초 후 페이지 새로고침
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       }
     } catch (error) {
       console.error('리뷰 작성 중 오류:', error)
-      alert('리뷰 작성 중 오류가 발생했습니다.')
     }
   }
 
   // 리뷰 수정 완료
   const handleUpdateReview = async (reviewId) => {
     if (!editReview.content) {
-      alert('리뷰 내용을 입력해주세요.')
+      window.dispatchEvent(new CustomEvent('showToast', {
+        detail: {
+          message: '리뷰 내용을 입력해주세요.',
+          type: 'error'
+        }
+      }))
       return
     }
 
     try {
+      let imageUrl = null
+      
+      // 이미지가 있고 변경된 경우에만 업로드
+      if (editReview.image && editReview.image !== editReview.imagePreview) {
+        try {
+          const uploadedImageUrl = await uploadImage(editReview.image, 'reviews')
+          if (uploadedImageUrl) {
+            // S3 URL 구조에서 필요한 경로 부분 추출
+            const pathPart = uploadedImageUrl.replace('https://luckeat-front.s3.ap-northeast-2.amazonaws.com', '')
+            // CloudFront URL로 변환
+            imageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`
+          }
+        } catch (error) {
+          console.error('이미지 업로드 중 오류:', error)
+          // 이미지 업로드 실패 시 이전 이미지를 사용
+          const existingReview = writtenReviews.find((review) => review.id === reviewId)
+          imageUrl = existingReview?.image || null
+        }
+      } else {
+        // 이미지가 변경되지 않았거나 없는 경우 이전 이미지 URL 사용
+        const existingReview = writtenReviews.find((review) => review.id === reviewId)
+        imageUrl = existingReview?.image || null
+      }
+
       // 리뷰 데이터 구성
       const reviewData = {
         rating: editReview.rating,
         reviewContent: editReview.content,
-        reviewImage: editReview.image || null,
+        reviewImage: imageUrl,
       }
 
       // API로 리뷰 수정
       const response = await updateReview(reviewId, reviewData)
 
-      if (response && response.message === '리뷰 수정 성공') {
+      if (response) {
         // 성공적으로 리뷰가 수정되면 리뷰 목록을 업데이트
         setWrittenReviews((prev) =>
           prev.map((review) =>
@@ -331,7 +433,10 @@ function ReviewManagementPage() {
                   ...review,
                   rating: editReview.rating,
                   content: editReview.content,
-                  image: editReview.imagePreview,
+                  image: imageUrl,
+                  productName: review.productName,
+                  totalPrice: review.totalPrice,
+                  quantity: review.quantity,
                 }
               : review,
           ),
@@ -340,16 +445,13 @@ function ReviewManagementPage() {
         // 수정 모드 종료
         setEditingReviewId(null)
 
-        alert('리뷰가 성공적으로 수정되었습니다.')
-      } else {
-        alert(
-          '리뷰 수정에 실패했습니다: ' +
-            (response.message || '알 수 없는 오류'),
-        )
+        // 1초 후 페이지 새로고침
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       }
     } catch (error) {
       console.error('리뷰 수정 중 오류:', error)
-      alert('리뷰 수정 중 오류가 발생했습니다.')
     }
   }
 
@@ -367,7 +469,7 @@ function ReviewManagementPage() {
       // API로 리뷰 삭제
       const response = await deleteReview(reviewToDelete)
 
-      if (response && response.message === '리뷰 삭제 성공') {
+      if (response === 204) {
         // 리뷰 목록에서 삭제된 리뷰 제거
         const deletedReview = writtenReviews.find(
           (r) => r.id === reviewToDelete,
@@ -380,7 +482,7 @@ function ReviewManagementPage() {
         // 리뷰가 삭제된 가게를 작성 가능한 가게 목록에 다시 추가
         if (deletedReview) {
           const storeToAdd = writableStores.find(
-            (s) => s.id === deletedReview.storeId,
+            (s) => s.storeId === deletedReview.storeId,
           )
           if (storeToAdd) {
             setWritableStores((prev) => [...prev, storeToAdd])
@@ -390,16 +492,13 @@ function ReviewManagementPage() {
         setShowDeleteModal(false)
         setReviewToDelete(null)
 
-        alert('리뷰가 성공적으로 삭제되었습니다.')
-      } else {
-        alert(
-          '리뷰 삭제에 실패했습니다: ' +
-            (response.message || '알 수 없는 오류'),
-        )
+        // 1초 후 페이지 새로고침
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       }
     } catch (error) {
       console.error('리뷰 삭제 중 오류:', error)
-      alert('리뷰 삭제 중 오류가 발생했습니다.')
     } finally {
       setShowDeleteModal(false)
     }
@@ -437,8 +536,17 @@ function ReviewManagementPage() {
     <div className="flex flex-col h-full relative">
       <Header title="리뷰 관리" onBack={handleBack} />
       
-      {/* 콘텐츠 영역 (흐릿하게 표시) */}
-      <div className="p-4 flex-1 overflow-y-auto blur-sm pointer-events-none">
+      {/* 토스트 메시지 */}
+      {showToast && (
+        <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 ${
+          toastType === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } text-white`}>
+          {toastMessage}
+        </div>
+      )}
+
+      {/* 콘텐츠 영역 */}
+      <div className="p-4 flex-1 overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">나의 리뷰</h2>
 
         {/* 작성 가능한 리뷰 섹션 */}
@@ -451,18 +559,40 @@ function ReviewManagementPage() {
           ) : (
             <div className="space-y-4">
               {writableStores.map((store) => (
-                <div key={store.id} className="border rounded overflow-hidden">
-                  <div className="p-4 flex justify-between items-center cursor-pointer">
-                    <div>
+                <div key={`store-${store.storeId}-${store.orderId}`} className="border rounded overflow-hidden">
+                  <div 
+                    className="p-4 flex justify-between items-center cursor-pointer"
+                    onClick={() => toggleReviewForm(store.storeId, store.orderId)}
+                  >
+                    <div className="flex-1">
                       <p className="font-semibold">{store.name}</p>
                       <p className="text-sm text-gray-500">
                         {store.orderDate} 주문
                       </p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        {store.productName} {store.quantity}개
+                      </p>
+                      {/* 주문 상세 정보 */}
+                      <div className="mt-2 text-sm">
+                        {store.orderItems && store.orderItems.map((item, index) => (
+                          <div key={index} className="flex justify-between">
+                            <span>{item.name}</span>
+                            <span className="ml-2">
+                              {item.quantity}개 × {item.price.toLocaleString()}원
+                            </span>
+                          </div>
+                        ))}
+                        <div className="mt-1 font-medium">
+                          주문 금액: {store.totalPrice.toLocaleString()}원
+                        </div>
+                      </div>
                     </div>
-                    <button className="text-gray-700 flex items-center">
+                    <button className="text-gray-700 flex items-center ml-4">
                       리뷰쓰기
                       <span 
-                        className={`ml-1 transform transition-transform ${expandedStoreId === store.id ? 'rotate-180' : ''}`}
+                        className={`ml-1 transform transition-transform ${
+                          expandedStoreId === `${store.storeId}-${store.orderId}` ? 'rotate-180' : ''
+                        }`}
                       >
                         ▼
                       </span>
@@ -470,7 +600,7 @@ function ReviewManagementPage() {
                   </div>
 
                   {/* 리뷰 작성 폼 */}
-                  {expandedStoreId === store.id && (
+                  {expandedStoreId === `${store.storeId}-${store.orderId}` && (
                     <div className="p-4 border-t">
                       <div className="mb-3">
                         <div className="flex text-[#F7B32B] mb-2">
@@ -520,7 +650,10 @@ function ReviewManagementPage() {
 
                       <button
                         className="w-full py-2 bg-[#F7B32B] hover:bg-[#E09D18] text-white rounded transition-colors"
-                        onClick={() => handleSubmitReview(store.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleSubmitReview(store.storeId, store.orderId)
+                        }}
                       >
                         작성 완료
                       </button>
@@ -547,12 +680,23 @@ function ReviewManagementPage() {
                     <div>
                       <p className="font-semibold">{review.storeName}</p>
                       <p className="text-sm text-gray-500">
-                        {review.orderDate} 주문
+                        {review.date}
                       </p>
                       <div className="text-[#F7B32B] my-1">
                         {editingReviewId === review.id
                           ? renderStars(editReview.rating, true, true)
                           : renderStars(review.rating)}
+                      </div>
+                      <div className="mt-2 p-2 bg-gray-50 rounded">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-medium">{review.productName}</span>
+                          <span className="mx-2">·</span>
+                          <span>{review.quantity}개</span>
+                        </p>
+                        <p className="text-sm text-gray-700 mt-1">
+                          <span className="font-medium">주문 금액</span>
+                          <span className="ml-2">{review.totalPrice.toLocaleString()}원</span>
+                        </p>
                       </div>
                     </div>
                     <div className="flex space-x-2">
@@ -560,13 +704,19 @@ function ReviewManagementPage() {
                         <>
                           <button
                             className="px-3 py-1 bg-[#F7B32B] text-white rounded hover:bg-[#E09D18] transition-colors"
-                            onClick={() => handleUpdateReview(review.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleUpdateReview(review.id)
+                            }}
                           >
                             수정완료
                           </button>
                           <button
                             className="px-3 py-1 border rounded"
-                            onClick={() => setEditingReviewId(null)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingReviewId(null)
+                            }}
                           >
                             취소
                           </button>
@@ -575,13 +725,19 @@ function ReviewManagementPage() {
                         <>
                           <button
                             className="px-3 py-1 border rounded"
-                            onClick={() => toggleEditMode(review)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleEditMode(review)
+                            }}
                           >
                             수정
                           </button>
                           <button
                             className="px-3 py-1 border rounded"
-                            onClick={() => showDeleteConfirmation(review.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              showDeleteConfirmation(review.id)
+                            }}
                           >
                             삭제
                           </button>
@@ -651,19 +807,6 @@ function ReviewManagementPage() {
               ))}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* COMING SOON 오버레이 */}
-      <div 
-        className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none" 
-        style={{ top: '56px', bottom: '56px' }}
-      >
-        <div className="text-center">
-          <h2 className="text-4xl font-bold text-[#F7B32B] mb-2">
-            COMING SOON
-          </h2>
-          <p className="text-xl text-gray-700">리뷰 기능이 곧 출시됩니다!</p>
         </div>
       </div>
 

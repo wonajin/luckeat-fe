@@ -832,14 +832,17 @@ function StoreDetailPage() {
 
           {store.reviews && store.reviews.length > 0 ? (
             <div>
-              {/* 럭킷 리뷰 평점 */}
+              {/* 리뷰 평점 */}
               <div className="mb-4">
                 <p className="text-3xl font-bold text-center mb-2">
-                  {store.avgRatingGoogle?.toFixed(1) || '0.0'}
+                  {(
+                    store.reviews.reduce((acc, review) => acc + review.rating, 0) /
+                    store.reviews.length
+                  ).toFixed(1)}
                   <span className="text-lg text-gray-500">/5</span>
                 </p>
                 <p className="text-center text-sm text-gray-600 mb-2">
-                  구글 평점
+                  리뷰 평점
                 </p>
               </div>
 
@@ -855,11 +858,11 @@ function StoreDetailPage() {
                     <div className="flex items-center">
                       <div className="bg-gray-200 rounded-full w-7 h-7 flex items-center justify-center mr-2">
                         <span className="text-gray-500 text-xs">
-                          {review.userId ? String(review.userId)[0] : '?'}
+                          {review.userNickname ? review.userNickname[0] : '?'}
                         </span>
                       </div>
                       <span className="font-bold text-sm">
-                        사용자 {review.userId || '알 수 없음'}
+                        {review.userNickname || '알 수 없음'}
                       </span>
                     </div>
                     <div className="flex items-center">
@@ -868,6 +871,19 @@ function StoreDetailPage() {
                         {review.rating}
                       </span>
                     </div>
+                  </div>
+
+                  {/* 상품 정보 */}
+                  <div className="mt-2 p-2 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">{review.productName}</span>
+                      <span className="mx-2">·</span>
+                      <span>{review.quantity}개</span>
+                    </p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <span className="font-medium">주문 금액</span>
+                      <span className="ml-2">{review.totalPrice.toLocaleString()}원</span>
+                    </p>
                   </div>
 
                   {review.reviewImage && (

@@ -104,6 +104,18 @@ function HomePage() {
     setAutoSlide(true)
   }
 
+  // 주소에서 '대한민국' 제거하는 함수
+  const simplifyAddress = (address) => {
+    if (!address) return '주소 정보 없음'
+    // "대한민국" 제거
+    let simplified = address.replace(/^대한민국\s+/, '')
+    // 20자 제한 (20자가 넘으면 "..." 표시)
+    if (simplified.length > 20) {
+      simplified = simplified.substring(0, 20) + '...'
+    }
+    return simplified
+  }
+
   // 서버에서 페이지별로 데이터 가져오기
   const fetchStores = useCallback(async (page = 1, reset = false) => {
     try {
@@ -777,10 +789,7 @@ function HomePage() {
                       className="text-sm text-gray-500 truncate"
                       title={store.address || '주소 정보 없음'}
                     >
-                      {(store.address || '주소 정보 없음').length > 20
-                        ? (store.address || '주소 정보 없음').substring(0, 20) +
-                          '...'
-                        : store.address || '주소 정보 없음'}
+                      {simplifyAddress(store.address)}
                     </p>
                     <div className="flex items-center">
                       <div className="flex items-center text-sm text-yellow-500 mr-2">

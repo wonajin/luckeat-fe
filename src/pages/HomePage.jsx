@@ -44,17 +44,20 @@ function HomePage() {
     {
       id: 1,
       image: banner01,
-      link: '/intro',
+      /*페이지 추후 추가 후 연결
+      link: '/intro',*/
     },
     {
       id: 2,
       image: banner02,
-      link: '/jeju-special',
+      /*페이지 추후 추가 후 연결
+      link: '/jeju-special',*/
     },
     {
       id: 3,
       image: banner03,
-      link: '/partner',
+      /*페이지 추후 추가 후 연결
+       link: '/partner',*/
     },
   ]
 
@@ -140,26 +143,61 @@ function HomePage() {
 
       // 정렬 옵션
       let sortBy = '';
+      let orderBy = '';
+      let orderDirection = '';
+      
       switch (sortOption) {
         case '가까운 순':
           sortBy = 'distance';
+          orderBy = 'distance';
+          orderDirection = 'asc';
           break;
         case '리뷰 많은 순':
           sortBy = 'reviewCount';
+          orderBy = 'reviewCount';
+          orderDirection = 'desc';
           break;
         case '공유 많은 순':
           sortBy = 'shareCount';
+          orderBy = 'shareCount';
+          orderDirection = 'desc';
           break;
         case '별점 높은 순':
           sortBy = 'avgRating';
+          orderBy = 'avgRating';
+          orderDirection = 'desc';
           break;
         default:
           sortBy = 'distance';
+          orderBy = 'distance';
+          orderDirection = 'asc';
       }
+      
+      // 다양한 정렬 파라미터 형식을 시도 (백엔드 API가 어떤 형식을 사용하는지에 따라)
       queryParams.append('sort', sortBy);
+      queryParams.append('sortBy', sortBy); 
+      queryParams.append('orderBy', orderBy);
+      queryParams.append('orderDirection', orderDirection);
+      
+      // 정렬 형식 로깅
+      console.log('정렬 옵션 적용:', { 
+        sortOption, 
+        sortBy, 
+        orderBy, 
+        orderDirection,
+        sortingParams: {
+          sort: sortBy,
+          sortBy: sortBy,
+          orderBy: orderBy,
+          orderDirection: orderDirection
+        }
+      });
 
       console.log('요청 URL:', url + (queryParams.toString() ? `?${queryParams.toString()}` : ''));
 
+      // 테스트 목적으로 브라우저에서 직접 호출할 수 있는 URL 로깅
+      console.log('브라우저에서 테스트용 URL:', `${url}?${queryParams.toString()}`);
+      
       // 쿼리 파라미터가 있으면 URL에 추가
       if (queryParams.toString()) {
         url += `?${queryParams.toString()}`
@@ -171,6 +209,25 @@ function HomePage() {
         
         // 응답 데이터 로깅
         console.log('API 응답 데이터 길이:', data.length);
+        console.log('API 응답 첫 번째 항목:', data && data.length > 0 ? data[0] : 'No data');
+        console.log('API 응답 마지막 항목:', data && data.length > 0 ? data[data.length - 1] : 'No data');
+        
+        // 정렬 적용 확인 (정렬 필드 로깅)
+        if (data && data.length > 1) {
+          console.log('정렬 필드 값 확인 (첫 번째 vs 마지막 항목):');
+          console.log('첫 번째 항목 정렬 필드 값:', {
+            distance: data[0].distance,
+            reviewCount: data[0].reviewCount,
+            shareCount: data[0].shareCount,
+            avgRating: data[0].avgRatingGoogle
+          });
+          console.log('마지막 항목 정렬 필드 값:', {
+            distance: data[data.length - 1].distance,
+            reviewCount: data[data.length - 1].reviewCount,
+            shareCount: data[data.length - 1].shareCount,
+            avgRating: data[data.length - 1].avgRatingGoogle
+          });
+        }
         
         // 데이터가 없거나 배열이 아닌 경우 처리
         if (!data || !Array.isArray(data)) {
@@ -186,10 +243,32 @@ function HomePage() {
         
         // 페이지가 1이거나 reset이 true면 데이터 초기화
         if (page === 1 || reset) {
-          setStores(data)
+          // 클라이언트 측 정렬 적용 (백엔드에서 정렬이 제대로 작동하지 않는 경우)
+          // 필드가 없는 경우를 처리하기 위한 안전 조치
+          const sortData = [...data].sort((a, b) => {
+            // 기본값 설정 (필드가 없는 경우 사용)
+            const defaultA = 0;
+            const defaultB = 0;
+            
+            switch (sortOption) {
+              case '가까운 순':
+                return (a.distance || defaultA) - (b.distance || defaultB);
+              case '리뷰 많은 순':
+                return (b.reviewCount || defaultB) - (a.reviewCount || defaultA);
+              case '공유 많은 순':
+                return (b.shareCount || defaultB) - (a.shareCount || defaultA);
+              case '별점 높은 순':
+                return (b.avgRatingGoogle || defaultB) - (a.avgRatingGoogle || defaultA);
+              default:
+                return (a.distance || defaultA) - (b.distance || defaultB);
+            }
+          });
+          
+          console.log('클라이언트 측 정렬 적용 후:', sortOption);
+          setStores(sortData);
           
           // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
-          let filteredData = [...data];
+          let filteredData = [...sortData];
           
           // 카테고리 필터링
           if (categoryFilter && categoryFilter !== '전체') {
@@ -221,10 +300,31 @@ function HomePage() {
           setTotalStoreCount(filteredData.length)
         } else {
           // 이미 로드된 데이터에 추가
-          setStores(prev => [...prev, ...data])
+          // 클라이언트 측 정렬 적용 (백엔드에서 정렬이 제대로 작동하지 않는 경우)
+          const sortData = [...data].sort((a, b) => {
+            // 기본값 설정 (필드가 없는 경우 사용)
+            const defaultA = 0;
+            const defaultB = 0;
+            
+            switch (sortOption) {
+              case '가까운 순':
+                return (a.distance || defaultA) - (b.distance || defaultB);
+              case '리뷰 많은 순':
+                return (b.reviewCount || defaultB) - (a.reviewCount || defaultA);
+              case '공유 많은 순':
+                return (b.shareCount || defaultB) - (a.shareCount || defaultA);
+              case '별점 높은 순':
+                return (b.avgRatingGoogle || defaultB) - (a.avgRatingGoogle || defaultA);
+              default:
+                return (a.distance || defaultA) - (b.distance || defaultB);
+            }
+          });
+          
+          console.log('클라이언트 측 정렬 적용 후 (추가 데이터):', sortOption);
+          setStores(prev => [...prev, ...sortData]);
           
           // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
-          let filteredData = [...data];
+          let filteredData = [...sortData];
           if (categoryFilter && categoryFilter !== '전체') {
             const category = categoryOptions.find(opt => opt.name === categoryFilter);
             if (category) {

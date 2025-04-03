@@ -1,98 +1,114 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk'
 import defaultImage from '../../assets/images/luckeat-default.png'
 import storeDefaultImage from '../../assets/images/제빵사디폴트이미지.png'
 
 function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
-  // 로컬 상태로 오버레이 표시 여부 관리
-  const [showOverlay, setShowOverlay] = useState(isSelected);
+  const [imageUrl, setImageUrl] = useState(null)
+  const [showInfoWindow, setShowInfoWindow] = useState(false)
+  const prevSelectedRef = useRef(isSelected)
 
-  // isSelected 상태가 변경되면 showOverlay 상태도 업데이트
+  // 가게 이미지 설정
   useEffect(() => {
-    setShowOverlay(isSelected);
-  }, [isSelected]);
-
-  // 사용자 위치 정보 상태
-  const [currentLocation, setCurrentLocation] = useState(userLocation)
-
-  // 사용자 위치가 변경되면 업데이트
-  useEffect(() => {
-    setCurrentLocation(userLocation)
-  }, [userLocation])
-
-  // 마커 클릭했을 때 즉시 로그 출력 및 선택 상태 변경
-  const handleMarkerClick = () => {
-    console.log('마커 클릭됨! 가게 ID:', store.id, '이름:', store.name || store.storeName)
+    const storeImage = store.image || store.imageUrl || store.storeImg
     
-    // 로컬 상태 즉시 변경하여 오버레이가 바로 보이도록 함
-    setShowOverlay(true);
+    if (storeImage) {
+      const img = new Image()
+      
+      img.onload = () => {
+        setImageUrl(storeImage)
+      }
+      
+      img.onerror = () => {
+        setImageUrl(store.type === 'bakery' ? storeDefaultImage : defaultImage)
+      }
+      
+      img.src = storeImage
+    } else {
+      setImageUrl(store.type === 'bakery' ? storeDefaultImage : defaultImage)
+    }
+  }, [store])
+
+  // isSelected 상태가 변경될 때 showInfoWindow 상태 업데이트
+  useEffect(() => {
+    if (isSelected !== prevSelectedRef.current) {
+      // 선택 상태가 true로 변경되면 인포윈도우 표시
+      if (isSelected === true) {
+        setShowInfoWindow(true)
+      }
+      
+      // 선택 상태가 false로 변경되면 인포윈도우 닫기
+      if (prevSelectedRef.current === true && isSelected === false) {
+        setShowInfoWindow(false)
+      }
+      
+      prevSelectedRef.current = isSelected
+    }
+  }, [isSelected])
+
+  // 마커 클릭 시 실행되는 함수
+  const handleMarkerClick = () => {
+    // 인포윈도우 표시 상태 설정 (항상 열림)
+    setShowInfoWindow(true)
     
     // 부모 컴포넌트에 알림
     onClick(store)
   }
 
-  // 오버레이 닫기 핸들러
+  // 오버레이 닫기 버튼 클릭 시 실행되는 함수
   const handleOverlayClose = (e) => {
     e.stopPropagation()
-    console.log('인포윈도우 닫기')
     
-    // 로컬 상태 즉시 변경
-    setShowOverlay(false);
+    // 인포윈도우 닫기
+    setShowInfoWindow(false)
     
-    // 부모 컴포넌트에 알림
-    onClick(null) // 선택 해제 - null을 전달하여 선택 상태 해제
+    // 부모 컴포넌트에 선택 해제 알림
+    onClick(null)
   }
 
-  // 상세 페이지로 이동 핸들러
+  // 상세 페이지로 이동하는 함수
   const handleDetailClick = (e) => {
-    e.stopPropagation() // 이벤트 전파 방지
-    console.log('상세 페이지로 이동:', store.id)
+    e.stopPropagation()
+    
     if (onDetail) {
       onDetail(store.id)
-    } else {
-      window.location.href = `/store/${store.id}`
     }
   }
 
-  // 마커 이미지 상수로 정의
-  const BLUE_MARKER = 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png'
-  const SELECTED_MARKER = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png'
-
-  // 주소 간소화 및 글자수 제한 함수
+  // 주소 간소화 함수
   const simplifyAddress = (address) => {
     if (!address) return '주소 정보 없음'
-    // "대한민국" 제거
     let simplified = address.replace(/^대한민국\s+/, '')
-    // "제주특별자치도" 제거
     simplified = simplified.replace(/제주특별자치도\s+/, '')
-    // 20자 제한 (20자가 넘으면 "..." 표시)
-    if (simplified.length > 20) {
-      simplified = simplified.substring(0, 20) + '...'
-    }
-    return simplified
+    return simplified.length > 20 
+      ? simplified.substring(0, 20) + '...' 
+      : simplified
   }
 
-  // 디버깅용 출력 - isSelected 값과 showOverlay 값 확인
-  useEffect(() => {
-    console.log(`마커 상태 변경 - ID:${store.id}, isSelected:${isSelected}, showOverlay:${showOverlay}`)
-  }, [isSelected, showOverlay, store.id]);
+  // 마커 이미지 설정 (선택 여부에 따라 다른 이미지 사용)
+  const markerImage = isSelected || showInfoWindow
+    ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png'
+    : 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png'
 
   return (
     <>
       {/* 가게 마커 */}
       <MapMarker
         position={{ lat: store.lat, lng: store.lng }}
-        image={{
-          src: (isSelected || showOverlay) ? SELECTED_MARKER : BLUE_MARKER,
-          size: { width: 28, height: 40 }
+        image={{ 
+          src: markerImage, 
+          size: { 
+            width: isSelected || showInfoWindow ? 35 : 28, 
+            height: isSelected || showInfoWindow ? 50 : 40 
+          } 
         }}
         onClick={handleMarkerClick}
         title={store.name || store.storeName}
-        zIndex={(isSelected || showOverlay) ? 10 : 1}
+        zIndex={isSelected || showInfoWindow ? 10 : 1}
       />
 
-      {/* 커스텀 말풍선 오버레이 - showOverlay 상태에 따라 표시 */}
-      {(isSelected || showOverlay) && (
+      {/* 커스텀 오버레이 (인포윈도우) */}
+      {showInfoWindow && (
         <CustomOverlayMap
           position={{ lat: store.lat, lng: store.lng }}
           yAnchor={1.4}
@@ -102,14 +118,13 @@ function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
           <div
             className="bg-white p-2 rounded-lg shadow-xl border relative"
             style={{
-              width: '200px',
-              height: 'auto',
+              width: '180px',
+              transform: 'translateY(-5px)',
               boxShadow: '0 3px 10px rgba(0,0,0,0.15)',
-              transform: 'translateY(-5px)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 화살표 (말풍선 꼬리) */}
+            {/* 말풍선 화살표 */}
             <div
               className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full"
               style={{
@@ -117,40 +132,37 @@ function StoreMarker({ store, isSelected, onClick, onDetail, userLocation }) {
                 height: 0,
                 borderLeft: '8px solid transparent',
                 borderRight: '8px solid transparent',
-                borderTop: '8px solid white'
+                borderTop: '8px solid white',
               }}
             />
-
             {/* 닫기 버튼 */}
             <button
-              className="absolute -top-2 -right-2 w-5 h-5 bg-white flex items-center justify-center text-gray-600 hover:text-gray-900 rounded-full shadow-md hover:bg-gray-100 transition-all text-xs"
+              className="absolute -top-2 -right-2 w-5 h-5 bg-white text-gray-600 hover:text-gray-900 rounded-full shadow-md hover:bg-gray-100 transition-all text-xs flex items-center justify-center"
               onClick={handleOverlayClose}
             >
               ✕
             </button>
-            
             {/* 가게 이름 */}
-            <div className="text-center">
+            <div className="text-center mb-1">
               <h3 className="font-bold text-sm truncate">
                 {store.name || store.storeName}
               </h3>
             </div>
-            
-            {/* 할인 정보와 별점을 한 줄에 표시 */}
+            {/* 할인 정보와 별점 */}
             <div className="flex justify-center items-center gap-2 my-1 text-xs">
-              {((store.discount && store.discount !== '0%') || 
-                store.isDiscountOpen === true) && (
+              {((store.discount && store.discount !== '0%') || store.isDiscountOpen) && (
                 <span className="inline-block px-1.5 py-0.5 bg-yellow-100 text-yellow-800 rounded-full">
-                  {store.discount ? `${store.discount}` : '할인중'}
+                  {store.discount || '할인중'}
                 </span>
               )}
-              <span className="text-yellow-500">★ {(store.averageRating || store.avgRatingGoogle || 0).toFixed(1)}</span>
+              <span className="text-yellow-500">
+                ★ {(store.averageRating || store.avgRatingGoogle || 0).toFixed(1)}
+              </span>
             </div>
-            
-            {/* 버튼 영역 */}
+            {/* 상세보기 버튼 */}
             <div className="flex justify-center mt-1">
               <button
-                className="w-full px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-all font-medium"
+                className="w-full px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors font-medium"
                 onClick={handleDetailClick}
               >
                 상세보기

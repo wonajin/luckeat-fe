@@ -36,6 +36,12 @@ const StoreItem = ({ data, index, style }) => {
   }
   
   const currentStore = store[index]
+  
+  // 가게 이미지 처리 로직
+  const getStoreImage = () => {
+    const storeImage = currentStore.image || currentStore.imageUrl || currentStore.storeImg;
+    return storeImage || (currentStore.type === 'bakery' ? storeDefaultImage : defaultImage);
+  };
 
   return (
     <div style={style} className="px-2 py-0.5">
@@ -49,12 +55,17 @@ const StoreItem = ({ data, index, style }) => {
         }`}
         onClick={() => handleMarkerClick(currentStore)}
       >
-        <div className="w-10 h-10 bg-gray-200 rounded-md mr-2 overflow-hidden">
+        <div className="w-16 h-16 bg-gray-200 rounded-md mr-3 overflow-hidden">
           <img
-            src={storeDefaultImage}
+            src={getStoreImage()}
             alt={currentStore.name || currentStore.storeName || '가게 이미지'}
             className="w-full h-full object-cover rounded-md"
             loading="lazy"
+            onError={(e) => {
+              console.log(`[MapPage] 가게(${currentStore.id}) 이미지 로드 실패, 기본 이미지 사용`);
+              e.target.onerror = null;
+              e.target.src = currentStore.type === 'bakery' ? storeDefaultImage : defaultImage;
+            }}
           />
         </div>
 
@@ -573,33 +584,23 @@ function MapPage() {
     filterStores(searchQuery, categoryFilter, showDiscountOnly)
   }, [searchQuery, categoryFilter, showDiscountOnly, filterStores])
 
-  // 마커 클릭 핸들러
+  // 가게 마커 클릭 핸들러 개선 - 동일한 마커 다시 클릭해도 인포윈도우 표시
   const handleMarkerClick = useCallback((store) => {
-    console.log('MapPage - 마커 클릭 핸들러 호출:', store?.id)
-    
-    // store가 null인 경우 선택 해제 후 종료
     if (!store) {
-      console.log('MapPage - 마커 선택 해제')
       setSelectedStoreId(null)
       return
     }
 
-    // 선택된 가게 ID 설정 (같은 ID여도 상태 변경을 강제)
-    console.log('MapPage - 가게 선택:', store.id, store.name || store.storeName)
-    setSelectedStoreId(store.id)
+    // 항상 선택된 상태로 강제로 상태 변경
+    setSelectedStoreId((prevId) => {
+      return prevId === store.id ? `${store.id}_force` : store.id
+    })
 
-    // 선택된 가게로 지도 중심 이동
     setMapCenter({ lat: store.lat, lng: store.lng })
-
-    // 가게 목록 최소화 (오버레이가 더 잘 보이도록)
     setStoreListExpanded(false)
-
-    // 지도 레벨 조정 (더 가깝게 보이도록)
     setMapLevel(3)
 
-    // 선택된 가게로 목록 스크롤
     if (storeItemRefs.current[store.id] && storeListRef.current) {
-      // 약간의 지연을 두고 스크롤 (UI 업데이트 후에 실행되도록)
       setTimeout(() => {
         storeItemRefs.current[store.id]?.scrollIntoView({
           behavior: 'smooth',
@@ -640,6 +641,8 @@ function MapPage() {
 
   // 지도 클릭 핸들러
   const handleMapClick = () => {
+    console.log('지도 클릭 - 마커 선택 해제')
+    
     // 마커가 선택되어 있다면 선택 해제
     if (selectedStoreId) {
       setSelectedStoreId(null)
@@ -781,7 +784,7 @@ function MapPage() {
             <StoreMarker
               key={store.id}
               store={store}
-              isSelected={selectedStoreId === store.id}
+              isSelected={String(selectedStoreId).startsWith(store.id)} // force 상태 대비 string 비교
               onClick={handleMarkerClick}
               onDetail={handleStoreDetail}
               userLocation={userLocation}
@@ -845,7 +848,7 @@ function MapPage() {
                 className="StoreList"
                 height={listHeight - 70} // 헤더 높이 등을 고려해 조정
                 itemCount={filteredStores.length}
-                itemSize={80} // 각 아이템의 높이 축소
+                itemSize={90} // 각 아이템의 높이 축소
                 width="100%"
                 itemData={itemData}
               >

@@ -82,6 +82,12 @@ function EditProfilePage() {
       setCurrentPasswordError('현재 비밀번호를 입력해주세요.')
     } else {
       setCurrentPasswordError('')
+      // 새 비밀번호가 입력되어 있고 현재 비밀번호와 동일한 경우 체크
+      if (newPassword && e.target.value === newPassword) {
+        setPasswordError('새 비밀번호는 현재 비밀번호와 달라야 합니다.')
+      } else if (newPassword && passwordError === '새 비밀번호는 현재 비밀번호와 달라야 합니다.') {
+        setPasswordError('')
+      }
     }
   }
 
@@ -99,21 +105,26 @@ function EditProfilePage() {
     const value = e.target.value
     setNewPassword(value)
 
+    // 새 비밀번호 유효성 검사
     if (!value) {
       setPasswordError('새로운 비밀번호를 입력해주세요.')
     } else if (value.length < 8 || value.length > 20) {
       setPasswordError('비밀번호는 8자 이상, 20자 이하여야 합니다.')
+    } else if (value === currentPassword && currentPassword) {
+      setPasswordError('새 비밀번호는 현재 비밀번호와 달라야 합니다.')
     } else {
       setPasswordError('')
     }
 
     // 비밀번호 확인 일치 여부 검사
-    if (confirmPassword && value !== confirmPassword) {
-      setPasswordsNotMatch(true)
-      setConfirmPasswordError('비밀번호가 일치하지 않습니다.')
-    } else if (confirmPassword) {
-      setPasswordsNotMatch(false)
-      setConfirmPasswordError('')
+    if (confirmPassword) {
+      if (value !== confirmPassword) {
+        setPasswordsNotMatch(true)
+        setConfirmPasswordError('비밀번호가 일치하지 않습니다.')
+      } else {
+        setPasswordsNotMatch(false)
+        setConfirmPasswordError('')
+      }
     }
   }
 
@@ -131,7 +142,10 @@ function EditProfilePage() {
     const value = e.target.value
     setConfirmPassword(value)
 
-    if (value !== newPassword) {
+    if (!value) {
+      setPasswordsNotMatch(false)
+      setConfirmPasswordError('비밀번호 확인을 입력해주세요.')
+    } else if (value !== newPassword) {
       setPasswordsNotMatch(true)
       setConfirmPasswordError('비밀번호가 일치하지 않습니다.')
     } else {
@@ -216,6 +230,16 @@ function EditProfilePage() {
       return
     }
 
+    if (newPassword === currentPassword) {
+      setPasswordError('새 비밀번호는 현재 비밀번호와 달라야 합니다.')
+      return
+    }
+
+    if (!confirmPassword) {
+      setConfirmPasswordError('비밀번호 확인을 입력해주세요.')
+      return
+    }
+
     if (newPassword !== confirmPassword) {
       setPasswordsNotMatch(true)
       setConfirmPasswordError('비밀번호가 일치하지 않습니다.')
@@ -237,7 +261,9 @@ function EditProfilePage() {
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
+        setCurrentPasswordError('')
         setPasswordError('')
+        setConfirmPasswordError('')
         setPasswordsNotMatch(false)
         // 수정 완료 시 홈화면으로 이동
         setTimeout(() => {
@@ -349,11 +375,17 @@ function EditProfilePage() {
             value={currentPassword}
             onChange={handleCurrentPasswordChange}
             placeholder="현재 비밀번호를 입력해주세요."
-            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300 mb-2"
+            className={`w-full p-2 bg-gray-100 rounded-lg border ${
+              currentPasswordError ? 'border-red-500' : 'border-gray-300'
+            } mb-2`}
           />
-          {currentPasswordError && (
+          {currentPasswordError ? (
             <p className="text-red-500 text-sm mb-2">
               * {currentPasswordError}
+            </p>
+          ) : (
+            <p className="text-gray-500 text-xs mb-2">
+              * 현재 사용중인 비밀번호를 입력해주세요.
             </p>
           )}
 
@@ -363,10 +395,16 @@ function EditProfilePage() {
             value={newPassword}
             onChange={handlePasswordChange}
             placeholder="새로운 비밀번호를 입력해주세요."
-            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300 mb-2"
+            className={`w-full p-2 bg-gray-100 rounded-lg border ${
+              passwordError ? 'border-red-500' : 'border-gray-300'
+            } mb-2`}
           />
-          {passwordError && (
+          {passwordError ? (
             <p className="text-red-500 text-sm mb-2">* {passwordError}</p>
+          ) : (
+            <p className="text-gray-500 text-xs mb-2">
+              * 8~20자의 영문, 숫자, 특수문자를 조합하여 입력해주세요.
+            </p>
           )}
 
           <label className="block text-sm font-medium mb-1">
@@ -377,11 +415,21 @@ function EditProfilePage() {
             value={confirmPassword}
             onChange={handleConfirmPasswordChange}
             placeholder="비밀번호를 다시 한번 입력해주세요."
-            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300"
+            className={`w-full p-2 bg-gray-100 rounded-lg border ${
+              confirmPasswordError ? 'border-red-500' : 'border-gray-300'
+            }`}
           />
-          {passwordsNotMatch && (
+          {confirmPasswordError ? (
             <p className="text-red-500 text-sm mt-1">
               * {confirmPasswordError}
+            </p>
+          ) : confirmPassword ? (
+            <p className="text-green-500 text-xs mt-1">
+              * 비밀번호가 일치합니다.
+            </p>
+          ) : (
+            <p className="text-gray-500 text-xs mt-1">
+              * 새 비밀번호를 한번 더 입력해주세요.
             </p>
           )}
 
@@ -394,7 +442,8 @@ function EditProfilePage() {
                 !newPassword ||
                 !confirmPassword ||
                 passwordsNotMatch ||
-                !!passwordError
+                !!passwordError ||
+                !!currentPasswordError
               }
               className={`px-4 py-3 rounded-lg w-full ${
                 isLoading ||
@@ -402,7 +451,8 @@ function EditProfilePage() {
                 !newPassword ||
                 !confirmPassword ||
                 passwordsNotMatch ||
-                !!passwordError
+                !!passwordError ||
+                !!currentPasswordError
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-[#F7B32B] hover:bg-[#E09D18] active:bg-[#D08D08]'
               } text-white font-medium transition-colors`}

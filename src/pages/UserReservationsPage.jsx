@@ -309,8 +309,8 @@ const UserReservationsPage = () => {
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">포장 방법:</span>{' '}
-                            <span className={reservation.isZeroWaste ? "text-green-600 font-medium" : "text-gray-600"}>
-                              {reservation.isZeroWaste ? '제로웨이스트 (포장용기 지참)' : '일반 포장'}
+                            <span className={reservation.isZerowaste ? "text-green-600 font-medium" : "text-gray-600"}>
+                              {reservation.isZerowaste ? '제로웨이스트 (포장용기 지참)' : '일반 포장'}
                             </span>
                           </p>
                         </div>

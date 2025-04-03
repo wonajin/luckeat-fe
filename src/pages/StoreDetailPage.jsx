@@ -216,6 +216,12 @@ function StoreDetailPage() {
     }
   }, [])
 
+  // 주소에서 '대한민국' 제거하는 함수 추가
+  const removeCountryFromAddress = (address) => {
+    if (!address) return '주소 정보 없음'
+    return address.replace(/^대한민국\s+/, '')
+  }
+
   // 주소 복사 기능 추가
   const handleCopyClick = () => {
     if (!store?.address) return
@@ -605,7 +611,7 @@ function StoreDetailPage() {
 
           {/* 지도 아래에 주소 표시 및 복사 기능 추가 */}
           <div className="mt-2 flex items-center justify-between bg-gray-100 p-2 rounded-md">
-            <span className="text-gray-700">{store.address || '주소 정보 없음'}</span>
+            <span className="text-gray-700">{removeCountryFromAddress(store.address)}</span>
             <button
               onClick={handleCopyClick}
               className="ml-2 flex items-center text-blue-500 hover:text-blue-600 transition-colors"

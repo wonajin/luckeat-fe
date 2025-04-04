@@ -627,110 +627,7 @@ function MapPage() {
       setMapCenter({ lat: store.lat, lng: store.lng })
       setMapLevel(3) // 적절한 줌 레벨로 설정
     }, 50)
-    
-    // 가게 목록 확장 - 항상 목록이 보이도록 설정
-    setStoreListExpanded(true)
-    
-    // 다음 렌더링 사이클에서 스크롤 실행
-    setTimeout(() => {
-      try {
-        // 직접 ID로 접근 시도 - ID 기반 요소 선택
-        const directElement = document.getElementById(`store-item-${store.id}`)
-        if (directElement) {
-          console.log('[MapPage] ID로 직접 가게 요소 찾음:', store.id)
-          
-          // 해당 아이템으로 스크롤
-          directElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center'
-          })
-          
-          // 시각적 효과로 깜빡이는 효과 추가
-          directElement.classList.add('highlight-store')
-          setTimeout(() => {
-            directElement.classList.remove('highlight-store')
-          }, 1500)
-          
-          console.log('[MapPage] 스크롤 수행됨 (ID 기반):', store.id)
-          return
-        }
-        
-        // 클래스+속성 선택자로 DOM 요소에 접근
-        if (storeListRef.current) {
-          // 스토어 ID 기반으로 DOM 요소 찾기
-          const storeItems = storeListRef.current.querySelectorAll('.store-item')
-          console.log('[MapPage] 총 가게 아이템 수:', storeItems.length)
-          
-          // 각 아이템의 속성 로깅
-          for (let i = 0; i < storeItems.length && i < 5; i++) { // 처음 5개만 로깅
-            const item = storeItems[i]
-            const itemId = item.getAttribute('data-store-id')
-            const itemKey = item.getAttribute('key')
-            console.log(`[DEBUG] 아이템 #${i} - id: ${itemId}, key: ${itemKey}`)
-          }
-          
-          let targetElement = null
-          
-          // DOM 요소를 ID로 검색 (data-store-id 속성)
-          for (let i = 0; i < storeItems.length; i++) {
-            const item = storeItems[i]
-            const itemId = item.getAttribute('data-store-id')
-            // 문자열로 변환하여 비교 (유형 일치 보장)
-            if (itemId && itemId.toString() === store.id.toString()) {
-              targetElement = item
-              console.log('[MapPage] 찾은 가게 요소:', i, itemId)
-              break
-            }
-          }
-          
-          if (targetElement) {
-            // 해당 아이템으로 스크롤
-            targetElement.scrollIntoView({ 
-              behavior: 'smooth',
-              block: 'center'
-            })
-            
-            // 시각적 효과로 깜빡이는 효과 추가
-            targetElement.classList.add('highlight-store')
-            setTimeout(() => {
-              targetElement.classList.remove('highlight-store')
-            }, 1500)
-            
-            console.log('[MapPage] 스크롤 수행됨:', store.id)
-          } else {
-            // List 컴포넌트의 스크롤 기능 시도
-            try {
-              const listIndex = filteredStores.findIndex(s => s.id === store.id)
-              if (listIndex !== -1 && storeListRef.current.children[0]._reactInternals) {
-                const listInstance = storeListRef.current.children[0]._reactInternals.stateNode
-                if (listInstance && typeof listInstance.scrollToItem === 'function') {
-                  console.log('[MapPage] List 컴포넌트의 scrollToItem 호출:', listIndex)
-                  listInstance.scrollToItem(listIndex, 'center')
-                  
-                  // 아이템이 렌더링될 시간을 주고 하이라이트 추가
-                  setTimeout(() => {
-                    const renderedItem = document.querySelector(`[data-store-id="${store.id}"]`)
-                    if (renderedItem) {
-                      renderedItem.classList.add('highlight-store')
-                      setTimeout(() => {
-                        renderedItem.classList.remove('highlight-store')
-                      }, 1500)
-                    }
-                  }, 300)
-                }
-              } else {
-                console.log('[MapPage] 스토어 아이템을 ID로 찾을 수 없음:', store.id)
-              }
-            } catch (scrollErr) {
-              console.error('[MapPage] List 스크롤 오류:', scrollErr)
-            }
-          }
-        }
-      } catch (err) {
-        console.error('[MapPage] 스크롤 오류:', err)
-      }
-    }, 300)
-  }, [filteredStores, setSelectedStoreId, setMapCenter, setMapLevel, setStoreListExpanded])
+  }, [setSelectedStoreId, setMapCenter, setMapLevel])
 
   // 지도 클릭 핸들러 개선
   const handleMapClick = (map, mouseEvent) => {
@@ -755,11 +652,6 @@ function MapPage() {
     if (selectedStoreId) {
       console.log('[MapPage] 지도 클릭으로 마커 선택 해제:', selectedStoreId)
       setSelectedStoreId(null)
-    }
-    
-    // 가게 목록 축소
-    if (storeListExpanded) {
-      setStoreListExpanded(false)
     }
   }
 

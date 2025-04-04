@@ -603,48 +603,34 @@ function MapPage() {
     filterStores(searchQuery, categoryFilter, showDiscountOnly)
   }, [searchQuery, categoryFilter, showDiscountOnly, filterStores])
 
-  // 가게 마커 클릭 핸들러 개선
+  // 가게 마커 클릭 핸들러 - 항상 가게 목록에 표시되도록 개선
   const handleMarkerClick = useCallback((store) => {
     // store가 null이면 선택 해제
     if (!store) {
-      // 개발용 로그 주석 처리
-      // console.log('[MapPage] 마커 선택 해제')
       setSelectedStoreId(null)
       return
     }
-
-    // 개발용 로그 주석 처리
-    // console.log('[MapPage] 마커 선택:', store.id, store.name || store.storeName)
     
-    // 이미 선택된 상태에서 같은 마커를 클릭한 경우에도 상태 업데이트
-    // 리액트에서 같은 값으로 setState를 호출하면 렌더링이 발생하지 않으므로
-    // 명시적으로 다른 값을 설정했다가 다시 원래 값으로 설정
-    if (selectedStoreId === store.id) {
-      // 개발용 로그 주석 처리
-      // console.log('[MapPage] 이미 선택된 마커 다시 클릭')
-      setSelectedStoreId(null)
-      
-      // 약간의 지연 후 다시 선택 상태로 설정
-      setTimeout(() => {
-        setSelectedStoreId(store.id)
-      }, 10)
-    } else {
-      // 다른 마커 선택
-      setSelectedStoreId(store.id)
-    }
+    // 선택된 가게 ID 설정
+    setSelectedStoreId(store.id)
     
-    // 목록에서 해당 가게 아이템으로 스크롤
-    if (storeItemRefs.current[store.id] && storeListRef.current) {
-      try {
-        storeItemRefs.current[store.id]?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        })
-      } catch (err) {
-        console.error('[MapPage] 스크롤 오류:', err)
+    // 가게 목록 확장 - 항상 목록이 보이도록 설정
+    setStoreListExpanded(true)
+    
+    // 약간의 지연 후 스크롤 위치 조정 (렌더링 완료 후 스크롤하기 위함)
+    setTimeout(() => {
+      if (storeItemRefs.current[store.id] && storeListRef.current) {
+        try {
+          storeItemRefs.current[store.id]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          })
+        } catch (err) {
+          console.error('스크롤 오류:', err)
+        }
       }
-    }
-  }, [selectedStoreId])
+    }, 100)
+  }, [])
 
   // 줌 레벨 변경 핸들러 추가
   const handleZoomChange = (newLevel) => {
@@ -675,49 +661,22 @@ function MapPage() {
     }
   }
 
-  // 지도 클릭 핸들러 개선
+  // 지도 클릭 핸들러 - 명확한 예외 처리
   const handleMapClick = (map, mouseEvent) => {
-    // 개발용 로그 주석 처리
-    // console.log('[MapPage] 지도 클릭', mouseEvent)
-    
-    // 마커 클릭 이벤트에서 전파를 막은 경우 처리하지 않음
-    if (mouseEvent) {
-      // 이벤트 전파 중단 플래그 체크
-      if (mouseEvent._stopPropagation === true) {
-        // 개발용 로그 주석 처리
-        // console.log('[MapPage] 이벤트 전파 중단됨 (마커 또는 오버레이 클릭)')
-        return
-      }
-      
-      // domEvent가 있는 경우 추가 체크
-      if (mouseEvent.domEvent && mouseEvent.domEvent._stopPropagation === true) {
-        // 개발용 로그 주석 처리
-        // console.log('[MapPage] domEvent 전파 중단됨')
-        return
-      }
-      
-      // 이벤트의 target이 마커인 경우 처리하지 않음
-      if (mouseEvent.target && 
-          (mouseEvent.target.className === 'MapMarker' || 
-           mouseEvent.target.classList && 
-           mouseEvent.target.classList.contains('MapMarker'))) {
-        // 개발용 로그 주석 처리
-        // console.log('[MapPage] 마커 클릭 이벤트로 감지됨')
-        return
-      }
+    // 마커나 오버레이에서 이벤트 전파 중단된 경우 처리하지 않음
+    if (mouseEvent && 
+        (mouseEvent._stopPropagation === true || 
+         (mouseEvent.domEvent && mouseEvent.domEvent._stopPropagation === true))) {
+      return
     }
     
     // 마커 선택 해제
     if (selectedStoreId) {
-      // 개발용 로그 주석 처리
-      // console.log('[MapPage] 지도 클릭으로 마커 선택 해제:', selectedStoreId)
       setSelectedStoreId(null)
     }
     
-    // 가게 목록 축소
-    if (storeListExpanded) {
-      setStoreListExpanded(false)
-    }
+    // 가게 목록은 축소하지 않음 - 항상 목록이 보이도록 유지
+    // 사용자가 직접 접었다 펼쳤다 할 수 있게 함
   }
 
   // 가게 목록 스크롤 핸들러 추가
@@ -757,7 +716,7 @@ function MapPage() {
     return simplified
   }
 
-  // 지도 렌더링 코드 부분을 수정
+  // 지도 렌더링 함수 개선
   const renderMap = () => {
     if (!mapLoaded) {
       return (
@@ -766,28 +725,19 @@ function MapPage() {
         </div>
       )
     }
-
-    console.log('현재 선택된 가게 ID:', selectedStoreId);
     
-    // 중복 ID 체크 및 유효한 좌표 확인
-    const validStores = filteredStores.filter((store, index, self) => {
+    // 유효한 가게 목록 필터링
+    const validStores = filteredStores.filter((store) => {
       // ID가 없는 경우 제외
-      if (!store.id) return false;
-      
-      // 고유 ID만 포함 (중복 제거)
-      const isUniqueId = index === self.findIndex(s => s.id === store.id);
+      if (!store.id) return false
       
       // 유효한 좌표인지 확인
-      const hasValidCoords = 
-        store.lat && 
-        store.lng && 
-        !isNaN(store.lat) && 
-        !isNaN(store.lng) &&
-        store.lat !== 0 && 
-        store.lng !== 0;
-        
-      return isUniqueId && hasValidCoords;
-    });
+      return store.lat && 
+             store.lng && 
+             !isNaN(store.lat) && 
+             !isNaN(store.lng) &&
+             !(store.lat === 0 && store.lng === 0)
+    })
 
     return (
       <Map
@@ -797,12 +747,12 @@ function MapPage() {
         ref={mapRef}
         onClick={handleMapClick}
       >
-        {/* 사용자 위치 마커 - 사용자 정의 마커 사용 */}
+        {/* 사용자 위치 마커 */}
         {userLocation && (
           <MapMarker
             position={userLocation}
             image={{
-              src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', // 빨간색 마커 사용
+              src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
               size: { width: 32, height: 34 },
             }}
             zIndex={10}
@@ -814,12 +764,12 @@ function MapPage() {
           />
         )}
 
-        {/* 가게 마커 클러스터링 추가 */}
+        {/* 가게 마커 클러스터링 */}
         <MarkerClusterer
           averageCenter={true}
-          minLevel={3}
-          calculator={[10, 30, 50, 100, 200, 500, 1000]}
+          minLevel={6}
           disableClickZoom={false}
+          calculator={[20, 50, 100]}
           gridSize={60}
           styles={[
             {
@@ -854,15 +804,14 @@ function MapPage() {
             }
           ]}
         >
-          {/* 가게 마커 - 유효성 검증된 데이터만 사용 */}
+          {/* 가게 마커 */}
           {validStores.map((store) => (
             <StoreMarker
               key={store.id}
               store={store}
-              isSelected={String(selectedStoreId).startsWith(store.id)} // force 상태 대비 string 비교
+              isSelected={selectedStoreId === store.id}
               onClick={handleMarkerClick}
               onDetail={handleStoreDetail}
-              userLocation={userLocation}
             />
           ))}
         </MarkerClusterer>
@@ -886,7 +835,7 @@ function MapPage() {
     simplifyAddress,
   ]);
   
-  // 가게 목록 부분 수정 - 슬라이딩 시트 스타일로 개선
+  // 가게 목록 렌더링 함수 개선 - 클릭 항상 허용
   const renderStoreList = () => {
     // 상태에 따른 목록 높이 계산
     const listHeight = storeListExpanded
@@ -906,15 +855,19 @@ function MapPage() {
           <div 
             className="w-12 h-1 bg-gray-300 rounded-full cursor-pointer" 
             onClick={(e) => {
-              e.stopPropagation();
-              setStoreListExpanded(!storeListExpanded);
+              e.stopPropagation()
+              setStoreListExpanded(!storeListExpanded)
             }}
           ></div>
         </div>
 
         <div className="p-3 pb-0">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="font-bold">주변 가게 ({filteredStores.length})</h3>
+            <h3 className="font-bold">
+              {selectedStoreId 
+                ? '선택된 가게' 
+                : `주변 가게 (${filteredStores.length})`}
+            </h3>
           </div>
 
           <div className="space-y-0.5">

@@ -167,6 +167,7 @@ function MapPage() {
   const [mapLoaded, setMapLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
   const [userLocation, setUserLocation] = useState(null)
+  const [locationPermissionDenied, setLocationPermissionDenied] = useState(false)
   const mapRef = useRef(null)
   const storeListRef = useRef(null)
 
@@ -203,7 +204,7 @@ function MapPage() {
     filterStores(searchQuery, categoryId, showDiscountOnly)
   }
 
-  // 사용자 위치 가져오기 함수
+  // 사용자 위치 가져오기 함수 개선
   const getUserLocation = () => {
     return new Promise((resolve, reject) => {
       if (navigator.geolocation) {
@@ -217,29 +218,47 @@ function MapPage() {
           (position) => {
             const { latitude, longitude } = position.coords
             const location = { lat: latitude, lng: longitude }
+            // 개발용 로그 주석 처리
+            // console.log('사용자 위치 가져오기 성공:', location)
             setUserLocation(location)
             setMapCenter(location)
+            setLocationPermissionDenied(false)
             resolve(location)
           },
           (error) => {
+            console.error('위치 정보 가져오기 오류:', error.code, error.message)
+            // 위치 권한 거부된 경우 플래그 설정
+            if (error.code === 1) { // PERMISSION_DENIED
+              setLocationPermissionDenied(true)
+            }
+            
+            // 서울 중심부를 기본 위치로 사용
+            const defaultLocation = { lat: 37.5665, lng: 126.9780 }
+            setUserLocation(defaultLocation)
+            setMapCenter(defaultLocation)
             reject(error)
           },
           options,
         )
       } else {
         const error = new Error('이 브라우저에서는 위치 정보를 지원하지 않습니다.')
+        console.error(error.message)
+        
+        // 서울 중심부를 기본 위치로 사용
+        const defaultLocation = { lat: 37.5665, lng: 126.9780 }
+        setUserLocation(defaultLocation)
+        setMapCenter(defaultLocation)
         reject(error)
       }
     })
   }
 
-  // 사용자 위치 가져오기
+  // 사용자 위치 가져오기 - 컴포넌트 마운트 시 즉시 실행
   useEffect(() => {
     getUserLocation().catch((error) => {
-      // 위치 정보 가져오기 실패 시 기본 위치 사용 (서울 시청)
-      const defaultLocation = { lat: 37.5665, lng: 126.978 }
-      setUserLocation(defaultLocation) // 기본 위치도 userLocation에 저장
-      setMapCenter(defaultLocation)
+      // 개발용 로그 주석 처리
+      // console.log('위치 정보 가져오기 실패, 서울 중심부 위치 사용')
+      // 이미 getUserLocation 내에서 기본 위치를 설정하므로 여기서는 추가 작업 필요 없음
     })
   }, [])
 
@@ -584,31 +603,48 @@ function MapPage() {
     filterStores(searchQuery, categoryFilter, showDiscountOnly)
   }, [searchQuery, categoryFilter, showDiscountOnly, filterStores])
 
-  // 가게 마커 클릭 핸들러 개선 - 동일한 마커 다시 클릭해도 인포윈도우 표시
+  // 가게 마커 클릭 핸들러 개선
   const handleMarkerClick = useCallback((store) => {
+    // store가 null이면 선택 해제
     if (!store) {
+      // 개발용 로그 주석 처리
+      // console.log('[MapPage] 마커 선택 해제')
       setSelectedStoreId(null)
       return
     }
 
-    // 항상 선택된 상태로 강제로 상태 변경
-    setSelectedStoreId((prevId) => {
-      return prevId === store.id ? `${store.id}_force` : store.id
-    })
-
-    setMapCenter({ lat: store.lat, lng: store.lng })
-    setStoreListExpanded(false)
-    setMapLevel(3)
-
-    if (storeItemRefs.current[store.id] && storeListRef.current) {
+    // 개발용 로그 주석 처리
+    // console.log('[MapPage] 마커 선택:', store.id, store.name || store.storeName)
+    
+    // 이미 선택된 상태에서 같은 마커를 클릭한 경우에도 상태 업데이트
+    // 리액트에서 같은 값으로 setState를 호출하면 렌더링이 발생하지 않으므로
+    // 명시적으로 다른 값을 설정했다가 다시 원래 값으로 설정
+    if (selectedStoreId === store.id) {
+      // 개발용 로그 주석 처리
+      // console.log('[MapPage] 이미 선택된 마커 다시 클릭')
+      setSelectedStoreId(null)
+      
+      // 약간의 지연 후 다시 선택 상태로 설정
       setTimeout(() => {
+        setSelectedStoreId(store.id)
+      }, 10)
+    } else {
+      // 다른 마커 선택
+      setSelectedStoreId(store.id)
+    }
+    
+    // 목록에서 해당 가게 아이템으로 스크롤
+    if (storeItemRefs.current[store.id] && storeListRef.current) {
+      try {
         storeItemRefs.current[store.id]?.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
         })
-      }, 100)
+      } catch (err) {
+        console.error('[MapPage] 스크롤 오류:', err)
+      }
     }
-  }, [])
+  }, [selectedStoreId])
 
   // 줌 레벨 변경 핸들러 추가
   const handleZoomChange = (newLevel) => {
@@ -639,16 +675,46 @@ function MapPage() {
     }
   }
 
-  // 지도 클릭 핸들러
-  const handleMapClick = () => {
-    console.log('지도 클릭 - 마커 선택 해제')
+  // 지도 클릭 핸들러 개선
+  const handleMapClick = (map, mouseEvent) => {
+    // 개발용 로그 주석 처리
+    // console.log('[MapPage] 지도 클릭', mouseEvent)
     
-    // 마커가 선택되어 있다면 선택 해제
+    // 마커 클릭 이벤트에서 전파를 막은 경우 처리하지 않음
+    if (mouseEvent) {
+      // 이벤트 전파 중단 플래그 체크
+      if (mouseEvent._stopPropagation === true) {
+        // 개발용 로그 주석 처리
+        // console.log('[MapPage] 이벤트 전파 중단됨 (마커 또는 오버레이 클릭)')
+        return
+      }
+      
+      // domEvent가 있는 경우 추가 체크
+      if (mouseEvent.domEvent && mouseEvent.domEvent._stopPropagation === true) {
+        // 개발용 로그 주석 처리
+        // console.log('[MapPage] domEvent 전파 중단됨')
+        return
+      }
+      
+      // 이벤트의 target이 마커인 경우 처리하지 않음
+      if (mouseEvent.target && 
+          (mouseEvent.target.className === 'MapMarker' || 
+           mouseEvent.target.classList && 
+           mouseEvent.target.classList.contains('MapMarker'))) {
+        // 개발용 로그 주석 처리
+        // console.log('[MapPage] 마커 클릭 이벤트로 감지됨')
+        return
+      }
+    }
+    
+    // 마커 선택 해제
     if (selectedStoreId) {
+      // 개발용 로그 주석 처리
+      // console.log('[MapPage] 지도 클릭으로 마커 선택 해제:', selectedStoreId)
       setSelectedStoreId(null)
     }
-
-    // 가게 목록이 확장되어 있다면 축소
+    
+    // 가게 목록 축소
     if (storeListExpanded) {
       setStoreListExpanded(false)
     }
@@ -673,8 +739,17 @@ function MapPage() {
     if (!address) return '주소 정보 없음'
     // "대한민국" 제거
     let simplified = address.replace(/^대한민국\s+/, '')
-    // "제주특별자치도" 제거
-    simplified = simplified.replace(/제주특별자치도\s+/, '')
+    // "제주특별자치도" 등 긴 도/시 이름 줄이기
+    simplified = simplified.replace(/제주특별자치도\s+/, '제주 ')
+    simplified = simplified.replace(/세종특별자치시\s+/, '세종 ')
+    simplified = simplified.replace(/서울특별시\s+/, '서울 ')
+    simplified = simplified.replace(/인천광역시\s+/, '인천 ')
+    simplified = simplified.replace(/대전광역시\s+/, '대전 ')
+    simplified = simplified.replace(/부산광역시\s+/, '부산 ')
+    simplified = simplified.replace(/대구광역시\s+/, '대구 ')
+    simplified = simplified.replace(/울산광역시\s+/, '울산 ')
+    simplified = simplified.replace(/광주광역시\s+/, '광주 ')
+    
     // 20자 제한 (20자가 넘으면 "..." 표시)
     if (simplified.length > 20) {
       simplified = simplified.substring(0, 20) + '...'

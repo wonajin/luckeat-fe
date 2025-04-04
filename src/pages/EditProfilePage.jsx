@@ -25,6 +25,7 @@ function EditProfilePage() {
 
   // 유효성 검사 메시지
   const [nicknameError, setNicknameError] = useState('')
+  const [nicknameSuccess, setNicknameSuccess] = useState('')
   const [currentPasswordError, setCurrentPasswordError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
@@ -48,21 +49,16 @@ function EditProfilePage() {
     // 앞뒤 공백 제거
     const value = e.target.value.trim()
     setNickname(value)
-
+    
     // 닉네임 유효성 검사
-    if (value === originalNickname) {
-      setIsNicknameSame(true)
+    if (value.length < 2 || value.length > 10) {
+      setNicknameError('닉네임은 2자 이상 10자 이하여야 합니다.')
+    } else if (value === originalNickname) {
       setNicknameError('')
+      setIsNicknameSame(true)
     } else {
+      setNicknameError('')
       setIsNicknameSame(false)
-
-      if (value.length < 2) {
-        setNicknameError('닉네임은 최소 2자 이상이어야 합니다.')
-      } else if (value.length > 10) {
-        setNicknameError('닉네임은 최대 10자까지 작성가능합니다.')
-      } else {
-        setNicknameError('')
-      }
     }
   }
 
@@ -165,41 +161,29 @@ function EditProfilePage() {
     }, 3000)
   }
 
-  // 닉네임 수정 처리
+  // 닉네임 수정 제출
   const handleNicknameSubmit = async () => {
-    // 닉네임 유효성 검사
-    if (!nickname) {
-      setNicknameError('닉네임을 입력해주세요.')
+    if (isNicknameSame) {
+      setNicknameError('변경할 닉네임을 입력해주세요.')
       return
     }
 
-    if (nickname === originalNickname) {
-      showToastMessage('변경된 내용이 없습니다.')
+    if (nickname.length < 2 || nickname.length > 10) {
+      setNicknameError('닉네임은 2자 이상 10자 이하여야 합니다.')
       return
     }
-
-    if (nickname.length < 2) {
-      setNicknameError('닉네임은 최소 2자 이상이어야 합니다.')
-      return
-    }
-
-    if (nickname.length > 10) {
-      setNicknameError('닉네임은 최대 10자까지 작성가능합니다.')
-      return
-    }
-
-    setIsLoading(true)
 
     try {
+      setIsLoading(true)
+      setNicknameError('')
+      
       const result = await updateNickname(nickname)
+      
       if (result.success) {
+        setNicknameSuccess('닉네임이 성공적으로 변경되었습니다.')
+        setNicknameError('')
         setOriginalNickname(nickname)
         setIsNicknameSame(true)
-        showToastMessage('닉네임이 수정되었습니다.')
-        // 수정 완료 시 홈화면으로 이동
-        setTimeout(() => {
-          navigate('/')
-        }, 1500)
       } else {
         if (result.message && result.message.includes('중복')) {
           setNicknameError('중복된 닉네임입니다.')
@@ -342,13 +326,16 @@ function EditProfilePage() {
             onChange={handleNicknameChange}
             className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300"
           />
-          {isNicknameSame && (
+          {isNicknameSame && !nicknameSuccess && (
             <p className="text-gray-500 text-sm mt-1">
               * 변경할 닉네임을 입력해주세요.
             </p>
           )}
           {nicknameError && (
             <p className="text-red-500 text-sm mt-1">* {nicknameError}</p>
+          )}
+          {nicknameSuccess && (
+            <p className="text-green-500 text-sm mt-1">* {nicknameSuccess}</p>
           )}
 
           <div className="mt-3">

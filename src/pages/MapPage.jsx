@@ -28,26 +28,20 @@ const StoreItem = ({ data, index, style }) => {
   
   // 스토어가 없는 경우 빈 컴포넌트 반환
   if (!currentStore) {
-    console.log(`[MapPage] 인덱스 ${index}에 해당하는 가게 정보 없음`)
     return <div style={style} className="px-2 py-0.5"></div>
   }
-  
-  // 콘솔에 아이템 ID 확인
-  useEffect(() => {
-    if (selectedStoreId === currentStore.id) {
-      console.log(`[MapPage] 렌더링된 가게 아이템 ID 확인: ${currentStore.id}`, currentStore)
-    }
-  }, [selectedStoreId, currentStore])
   
   // 이미지 URL 또는 기본 이미지 선택
   const getStoreImage = () => {
     const storeImage = currentStore.image || currentStore.imageUrl || currentStore.storeImg
-    return storeImage || (currentStore.type === 'bakery' ? storeDefaultImage : defaultImage)
+    return (
+      storeImage || 
+      (currentStore.type === 'bakery' ? storeDefaultImage : defaultImage)
+    )
   }
   
   // 목록 항목 클릭 시 handleMarkerClick 호출하여 마커와 동일하게 처리
   const handleStoreItemClick = () => {
-    console.log('목록에서 가게 선택:', currentStore.id, currentStore.name || currentStore.storeName)
     handleMarkerClick(currentStore)
   }
   
@@ -72,9 +66,10 @@ const StoreItem = ({ data, index, style }) => {
             className="w-full h-full object-cover rounded-md"
             loading="lazy"
             onError={(e) => {
-              console.log(`[MapPage] 가게(${currentStore.id}) 이미지 로드 실패, 기본 이미지 사용`);
-              e.target.onerror = null;
-              e.target.src = currentStore.type === 'bakery' ? storeDefaultImage : defaultImage;
+              e.target.onerror = null
+              e.target.src = currentStore.type === 'bakery'
+                ? storeDefaultImage
+                : defaultImage
             }}
           />
         </div>
@@ -227,20 +222,17 @@ function MapPage() {
           (position) => {
             const { latitude, longitude } = position.coords
             const location = { lat: latitude, lng: longitude }
-            console.log('사용자 위치 가져오기 성공:', location)
             setUserLocation(location)
             setMapCenter(location)
             resolve(location)
           },
           (error) => {
-            console.error('위치 정보 가져오기 오류:', error.code, error.message)
             reject(error)
           },
           options,
         )
       } else {
         const error = new Error('이 브라우저에서는 위치 정보를 지원하지 않습니다.')
-        console.error(error.message)
         reject(error)
       }
     })
@@ -249,7 +241,6 @@ function MapPage() {
   // 사용자 위치 가져오기
   useEffect(() => {
     getUserLocation().catch((error) => {
-      console.log('위치 정보 가져오기 실패, 기본 위치 사용')
       // 위치 정보 가져오기 실패 시 제주 구름스퀘어로 기본 위치 설정
       const defaultLocation = { lat: 33.4996, lng: 126.5302 }
       setUserLocation(defaultLocation)
@@ -602,7 +593,6 @@ function MapPage() {
   const handleMarkerClick = useCallback((store) => {
     // store가 null이면 선택 해제
     if (!store) {
-      console.log('[MapPage] 마커 선택 해제')
       setSelectedStoreId(null)
       return
     }
@@ -613,12 +603,9 @@ function MapPage() {
     window._lastMarkerClickTime = now
     
     if (now - lastClickTime < 300) {
-      console.log('[MapPage] 중복 클릭 무시:', now - lastClickTime, 'ms')
       return
     }
 
-    console.log('[MapPage] 마커 선택:', store.id, store.name || store.storeName)
-    
     // 이미 선택된 상태에서 같은 마커를 클릭한 경우에도 상태 업데이트
     setSelectedStoreId(store.id)
     
@@ -631,8 +618,6 @@ function MapPage() {
 
   // 지도 클릭 핸들러 개선
   const handleMapClick = (map, mouseEvent) => {
-    console.log('[MapPage] 지도 클릭', mouseEvent)
-    
     // 클릭 이벤트가 마커나 오버레이에서 시작된 경우 무시
     if (mouseEvent && (
       mouseEvent._stopPropagation === true || 
@@ -644,13 +629,11 @@ function MapPage() {
         mouseEvent.domEvent._handled === true
       ))
     )) {
-      console.log('[MapPage] 이벤트 전파 중단됨 (마커 또는 오버레이 클릭)')
       return
     }
     
     // 마커 선택 해제
     if (selectedStoreId) {
-      console.log('[MapPage] 지도 클릭으로 마커 선택 해제:', selectedStoreId)
       setSelectedStoreId(null)
     }
   }
@@ -760,7 +743,6 @@ function MapPage() {
             }}
             zIndex={10}
             onClick={() => {
-              console.log('현재 위치 마커 클릭')
               setMapCenter(userLocation)
               setMapLevel(3)
             }}

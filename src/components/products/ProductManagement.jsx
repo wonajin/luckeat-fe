@@ -96,7 +96,9 @@ const ProductManagement = () => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+
     }))
+
 
     // 가격 필드인 경우 숫자만 입력되도록 유효성 검사 추가
     if (name === 'originalPrice' || name === 'discountedPrice') {
@@ -505,10 +507,12 @@ const ProductManagement = () => {
                     className={`w-full p-2 border ${formData.description.length < 10 ? 'border-red-500' : 'border-gray-300'} rounded-md`}
                     rows="3"
                     placeholder="럭키트에 포함될 수 있는 음식들을 설명해주세요"
+
                   />
                   {formData.description.length < 10 && (
                     <p className="text-red-500 text-xs mt-1">
                       패키지 설명은 10글자 이상 입력해주세요
+
                     </p>
                   )}
                 </div>
@@ -568,7 +572,7 @@ const ProductManagement = () => {
       {/* 토스트 메시지 */}
       {toast.show && (
         <div
-          className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg ${
+          className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-100 ${
             toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
           } text-white text-sm`}
         >

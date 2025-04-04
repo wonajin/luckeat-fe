@@ -12,9 +12,7 @@ function StoreMarker({ store, isSelected, onClick, onDetail }) {
   
   // 선택 상태가 변경될 때마다 콘솔에 기록
   useEffect(() => {
-    if (isSelected) {
-      console.log(`마커 선택됨: ${store.id} (${store.name || store.storeName})`)
-    }
+    // 선택 상태 변경 시 필요한 로직만 남기고 로그 제거
   }, [isSelected, store])
 
   // 가게 이미지 로드
@@ -38,69 +36,36 @@ function StoreMarker({ store, isSelected, onClick, onDetail }) {
   }, [store])
 
   // 마커 클릭 이벤트 처리기
-  const handleMarkerClick = (e) => {
-    // 전역 플래그 설정 - 중복 클릭 방지
-    if (window._markerClickInProgress === true) {
-      // 제거된 콘솔 로그
-      return
+  const handleMarkerClick = (event) => {
+    // 콘솔 로그 제거
+    
+    // 이벤트 전파 중지 로직 강화
+    if (event) {
+      // 모든 가능한 이벤트 중지 메서드 호출
+      if (event.stopPropagation) event.stopPropagation()
+      if (event.preventDefault) event.preventDefault()
+      if (event.cancelBubble !== undefined) event.cancelBubble = true
+      
+      // 카카오맵 이벤트 처리를 위한 플래그 설정
+      event._stopPropagation = true
+      
+      // 원본 DOM 이벤트가 있는 경우에도 전파 중지
+      if (event.nativeEvent) {
+        event.nativeEvent.stopPropagation()
+        event.nativeEvent.preventDefault()
+      }
     }
     
-    // 플래그 설정
-    window._markerClickInProgress = true
+    // 글로벌 플래그 설정 - 다른 곳에서도 확인 가능하도록
+    window._markerClickInProgress = true;
     
-    // 5초 후 플래그 초기화 (보통 클릭 이벤트는 몇 백 ms 내에 처리됨)
+    // 클릭 처리
+    onClick(store)
+    
+    // 타임아웃으로 플래그 초기화
     setTimeout(() => {
-      window._markerClickInProgress = false
-    }, 500)
-
-    // 클릭 싱글톤 패턴 - 같은 마커에 대한 중복 클릭 방지
-    const now = Date.now()
-    const lastClickTime = window._lastMarkerClickTime || 0
-    
-    // 300ms 내 중복 클릭 방지
-    if (now - lastClickTime < 300) {
-      // 제거된 콘솔 로그
-      return
-    }
-    
-    window._lastMarkerClickTime = now
-    window._lastClickedMarkerId = store.id
-
-    // 이벤트 전파 중지를 위한 플래그 설정
-    if (e) {
-      // DOM 이벤트
-      if (e.domEvent) {
-        e.domEvent._markerClicked = true
-        e.domEvent._stopPropagation = true
-        e.domEvent._handled = true
-        
-        if (e.domEvent.stopPropagation) {
-          e.domEvent.stopPropagation()
-        }
-      }
-      
-      // 원본 이벤트
-      e._markerClicked = true
-      e._stopPropagation = true
-      e._handled = true
-      
-      if (e.stopPropagation) {
-        e.stopPropagation()
-      }
-      
-      // preventDefault 호출 시도
-      if (e.preventDefault) {
-        e.preventDefault()
-      }
-    }
-    
-    // 상위 컴포넌트에 클릭 알림
-    // 약간의 지연을 두어 이벤트 충돌 최소화
-    setTimeout(() => {
-      if (onClick) {
-        onClick(store)
-      }
-    }, 10)
+      window._markerClickInProgress = false;
+    }, 300);
   }
 
   // 인포윈도우 닫기 버튼 클릭 핸들러

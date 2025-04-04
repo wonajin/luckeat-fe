@@ -706,11 +706,14 @@ function StoreDetailPage() {
                           </p>
                         </div>
                         <span className="text-red-500 font-bold">
-                          {Math.round(
-                            (1 -
-                              productInfo.discountedPrice /
-                                productInfo.originalPrice) *
-                            100,
+                          {Math.min(
+                            Math.round(
+                              (1 -
+                                productInfo.discountedPrice /
+                                  productInfo.originalPrice) *
+                              100,
+                            ),
+                            99
                           )}
                           % 할인
                         </span>
@@ -760,72 +763,47 @@ function StoreDetailPage() {
           className="p-3 space-y-3"
         >
           <div className="border-b pb-3">
-            <h3 className="font-bold mb-2 text-lg">기본 정보</h3>
-            <p className="text-gray-600">📍 {store.storeName}</p>
-            <p className="text-gray-600">
-              📞 {store.contactNumber || '연락처 정보 없음'}
-            </p>
-            <p className="text-gray-600">
-              🌐{' '}
-              {store.website ? (
-                <a
-                  href={store.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 underline"
-                >
-                  {store.website}
-                </a>
-              ) : (
-                '웹사이트 정보 없음'
-              )}
-            </p>
-            <p className="text-gray-600">
-              <span className="block mb-1 font-bold">🏷️ 영업시간</span>
-              <div className="mt-2 ml-2">
-                {store.businessHours ? (
-                  <div className="py-1 whitespace-pre-line">
-                    {store.businessHours.replace(/\\n/g, '\n')}
-                  </div>
-                ) : (
-                  <p className="py-1 text-gray-500">영업시간 정보가 없습니다.</p>
-                )}
-              </div>
-            </p>
-
-            {/* 공간 추가 */}
-            <div className="mt-6"></div>
-
-            {/* 구글 리뷰 평균 별점 */}
-            <div className="bg-gray-100 rounded-lg p-3 mb-2">
-              <div className="flex items-center justify-between mb-1">
-                <h4 className="font-bold text-sm">구글 리뷰 평균 별점</h4>
-                <div className="flex items-center">
-                  <span className="text-yellow-500 mr-1">★</span>
-                  <span className="font-medium">
-                    {store.avgRatingGoogle?.toFixed(1) || '0.0'}
-                  </span>
-                  <span className="text-gray-500 ml-1">/5</span>
+            <h3 className="font-bold mb-4 text-lg">기본 정보</h3>
+            <div className="space-y-4">
+              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-xl">🏪</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">가게명</p>
+                  <p className="font-medium">{store.storeName}</p>
                 </div>
               </div>
-            </div>
 
-            {/* AI 후기 요약 영역 */}
-            <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-100">
-              <h4 className="font-bold mb-1 flex items-center text-sm">
-                <svg
-                  className="w-4 h-4 mr-1 text-blue-500"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path>
-                </svg>
-                AI 후기 요약
-              </h4>
-              <p className="text-xs text-gray-700">
-                {store.reviewSummary || '아직 리뷰 요약이 없습니다.'}
-              </p>
+              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-xl">📞</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">연락처</p>
+                  <p className="font-medium">{store.contactNumber || '연락처 정보 없음'}</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-xl">⏰</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">영업시간</p>
+                  </div>
+                </div>
+                <div className="ml-13">
+                  {store.businessHours ? (
+                    <div className="py-1 whitespace-pre-line text-gray-700">
+                      {store.businessHours.replace(/\\n/g, '\n')}
+                    </div>
+                  ) : (
+                    <p className="py-1 text-gray-500">영업시간 정보가 없습니다.</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

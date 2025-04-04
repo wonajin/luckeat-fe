@@ -357,6 +357,16 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
+                    onClick={() => navigate('/edit-store')}
+                  >
+                    <span>가게 정보 수정</span>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                </div>
+
+                <div className="border-b pb-2">
+                  <button
+                    className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => navigate('/edit-profile')}
                   >
                     <span>내 정보 수정</span>

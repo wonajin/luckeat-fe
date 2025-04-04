@@ -715,7 +715,7 @@ function StoreDetailPage() {
                             ),
                             99
                           )}
-                          % 할인
+                           % 할인
                         </span>
                       </div>
                     </div>
@@ -804,6 +804,41 @@ function StoreDetailPage() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* 공간 추가 */}
+            <div className="mt-6"></div>
+
+            {/* 구글 리뷰 평균 별점 */}
+            <div className="bg-gray-100 rounded-lg p-3 mb-2">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-bold text-sm">구글 리뷰 평균 별점</h4>
+                <div className="flex items-center">
+                  <span className="text-yellow-500 mr-1">★</span>
+                  <span className="font-medium">
+                    {store.avgRatingGoogle?.toFixed(1) || '0.0'}
+                  </span>
+                  <span className="text-gray-500 ml-1">/5</span>
+                </div>
+              </div>
+            </div>
+
+            {/* AI 후기 요약 영역 */}
+            <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-100">
+              <h4 className="font-bold mb-1 flex items-center text-sm">
+                <svg
+                  className="w-4 h-4 mr-1 text-blue-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path>
+                </svg>
+                AI 후기 요약
+              </h4>
+              <p className="text-xs text-gray-700">
+                {store.reviewSummary || '아직 리뷰 요약이 없습니다.'}
+              </p>
             </div>
           </div>
 

@@ -92,23 +92,27 @@ const ProductManagement = () => {
   // 입력 필드 변경 처리
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData({
-      ...formData,
+
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    })
+
+    }))
+
 
     // 가격 필드인 경우 숫자만 입력되도록 유효성 검사 추가
     if (name === 'originalPrice' || name === 'discountedPrice') {
       if (!/^\d*$/.test(value)) {
-        setErrors({
-          ...errors,
+        setErrors((prev) => ({
+          ...prev,
           [name]: '숫자만 입력해주세요',
-        })
+        }))
       } else {
-        // 에러 제거
-        const updatedErrors = { ...errors }
-        delete updatedErrors[name]
-        setErrors(updatedErrors)
+        setErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors[name]
+          return newErrors
+        })
       }
     }
   }
@@ -151,11 +155,7 @@ const ProductManagement = () => {
       isValid = false
     }
 
-    if (!formData.description) {
-      newErrors.description = '패키지 설명을 입력하세요'
-      isValid = false
-    } else if (formData.description.length < 10) {
-      newErrors.description = '패키지 설명은 10글자 이상 입력해주세요'
+    if (!formData.description || formData.description.length < 10) {
       isValid = false
     }
 
@@ -504,13 +504,15 @@ const ProductManagement = () => {
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    className={`w-full p-2 border ${formData.description.length < 10 ? 'border-red-500' : 'border-gray-300'} rounded-md`}
                     rows="3"
                     placeholder="럭키트에 포함될 수 있는 음식들을 설명해주세요"
-                  ></textarea>
-                  {errors.description && (
+
+                  />
+                  {formData.description.length < 10 && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.description}
+                      패키지 설명은 10글자 이상 입력해주세요
+
                     </p>
                   )}
                 </div>

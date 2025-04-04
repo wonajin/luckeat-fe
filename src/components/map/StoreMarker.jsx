@@ -12,9 +12,7 @@ function StoreMarker({ store, isSelected, onClick, onDetail }) {
   
   // 선택 상태가 변경될 때마다 콘솔에 기록
   useEffect(() => {
-    if (isSelected) {
-      console.log(`마커 선택됨: ${store.id} (${store.name || store.storeName})`)
-    }
+    // 선택 상태 변경 시 필요한 로직만 남기고 로그 제거
   }, [isSelected, store])
 
   // 가게 이미지 로드
@@ -39,7 +37,7 @@ function StoreMarker({ store, isSelected, onClick, onDetail }) {
 
   // 마커 클릭 이벤트 처리기
   const handleMarkerClick = (event) => {
-    console.log(`[StoreMarker] 마커 클릭 이벤트: ${store.id}, ${store.name || store.storeName}`)
+    // 콘솔 로그 제거
     
     // 이벤트 전파 중지 로직 강화
     if (event) {

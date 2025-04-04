@@ -593,18 +593,14 @@ function MapPage() {
   const handleMarkerClick = useCallback((store) => {
     // store가 null이면 선택 해제
     if (!store) {
-      console.log('[MapPage] 마커 선택 해제')
       setSelectedStoreId(null)
       return
     }
 
-    console.log('[MapPage] 마커 선택:', store.id, store.name || store.storeName)
-    
     // 이미 선택된 상태에서 같은 마커를 클릭한 경우에도 상태 업데이트
     // 리액트에서 같은 값으로 setState를 호출하면 렌더링이 발생하지 않으므로
     // 명시적으로 다른 값을 설정했다가 다시 원래 값으로 설정
     if (selectedStoreId === store.id) {
-      console.log('[MapPage] 이미 선택된 마커 다시 클릭')
       setSelectedStoreId(null)
       
       // 약간의 지연 후 다시 선택 상태로 설정
@@ -625,23 +621,18 @@ function MapPage() {
 
   // 지도 클릭 핸들러 개선
   const handleMapClick = (map, mouseEvent) => {
-    console.log('[MapPage] 지도 클릭', mouseEvent)
-    
     // 마커나 오버레이 클릭의 경우 전파 중단 확인
     if (mouseEvent && mouseEvent._stopPropagation === true) {
-      console.log('[MapPage] 이벤트 전파 중단됨 (마커 또는 오버레이 클릭)')
       return
     }
     
     // 글로벌 마커 클릭 플래그 확인
     if (window._markerClickInProgress === true) {
-      console.log('[MapPage] 마커 클릭 진행 중, 맵 클릭 무시')
       return
     }
     
     // 마커 선택 해제
     if (selectedStoreId) {
-      console.log('[MapPage] 지도 클릭으로 마커 선택 해제:', selectedStoreId)
       setSelectedStoreId(null)
     }
     

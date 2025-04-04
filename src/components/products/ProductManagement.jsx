@@ -301,7 +301,7 @@ const ProductManagement = () => {
         <>
           <div className="mb-6">
             <h2 className="text-lg font-bold mb-2">가게 정보</h2>
-            <div className="bg-white rounded-lg shadow-md p-4">
+            <div className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:bg-gray-50 transition-colors">
               <p className="text-gray-700">
                 <span className="font-medium">가게명:</span> {storeName}
               </p>
@@ -360,17 +360,22 @@ const ProductManagement = () => {
 
                     <div className="mt-4">
                       <div className="flex items-baseline">
-                        <span className="text-lg font-bold text-red-600">
-                          {product.discountedPrice.toLocaleString()}원
-                        </span>
-                        <span className="ml-2 text-sm text-gray-500 line-through">
-                          {product.originalPrice.toLocaleString()}원
-                        </span>
-                        <span className="ml-2 text-xs text-blue-600">
-                          {Math.round(
-                            (1 -
-                              product.discountedPrice / product.originalPrice) *
-                              100,
+                        <div className="mr-4">
+                          <p className="text-sm line-through text-gray-400">
+                            {product.originalPrice.toLocaleString()}원
+                          </p>
+                          <p className="text-lg font-bold">
+                            {product.discountedPrice.toLocaleString()}원
+                          </p>
+                        </div>
+                        <span className="text-red-500 font-bold">
+                          {Math.min(
+                            Math.round(
+                              (1 -
+                                product.discountedPrice / product.originalPrice) *
+                                100,
+                            ),
+                            99
                           )}
                           % 할인
                         </span>

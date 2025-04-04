@@ -341,6 +341,22 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
+                    onClick={() => {
+                      if (storeData) {
+                        console.log('가게 예약 리스트 이동:', storeData.id);
+                        navigate(`/store/${storeData.id}/reservation`);
+                      }
+                    }}
+                    disabled={!storeData}
+                  >
+                    <span>가게 예약 리스트</span>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                </div>
+
+                <div className="border-b pb-2">
+                  <button
+                    className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => navigate('/edit-store')}
                   >
                     <span>가게 정보 수정</span>
@@ -351,15 +367,9 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-                    onClick={() => {
-                      if (storeData) {
-                        console.log('가게 예약 리스트 이동:', storeData.id);
-                        navigate(`/store/${storeData.id}/reservation`);
-                      }
-                    }}
-                    disabled={!storeData}
+                    onClick={() => navigate('/edit-profile')}
                   >
-                    <span>가게 예약 리스트</span>
+                    <span>내 정보 수정</span>
                     <span className="text-gray-400">→</span>
                   </button>
                 </div>

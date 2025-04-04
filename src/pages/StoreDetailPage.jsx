@@ -706,13 +706,16 @@ function StoreDetailPage() {
                           </p>
                         </div>
                         <span className="text-red-500 font-bold">
-                          {Math.round(
-                            (1 -
-                              productInfo.discountedPrice /
-                                productInfo.originalPrice) *
-                            100,
+                          {Math.min(
+                            Math.round(
+                              (1 -
+                                productInfo.discountedPrice /
+                                  productInfo.originalPrice) *
+                              100,
+                            ),
+                            99
                           )}
-                          % 할인
+                           % 할인
                         </span>
                       </div>
                     </div>
@@ -760,38 +763,48 @@ function StoreDetailPage() {
           className="p-3 space-y-3"
         >
           <div className="border-b pb-3">
-            <h3 className="font-bold mb-2 text-lg">기본 정보</h3>
-            <p className="text-gray-600">📍 {store.storeName}</p>
-            <p className="text-gray-600">
-              📞 {store.contactNumber || '연락처 정보 없음'}
-            </p>
-            <p className="text-gray-600">
-              🌐{' '}
-              {store.website ? (
-                <a
-                  href={store.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 underline"
-                >
-                  {store.website}
-                </a>
-              ) : (
-                '웹사이트 정보 없음'
-              )}
-            </p>
-            <p className="text-gray-600">
-              <span className="block mb-1 font-bold">🏷️ 영업시간</span>
-              <div className="mt-2 ml-2">
-                {store.businessHours ? (
-                  <div className="py-1 whitespace-pre-line">
-                    {store.businessHours.replace(/\\n/g, '\n')}
-                  </div>
-                ) : (
-                  <p className="py-1 text-gray-500">영업시간 정보가 없습니다.</p>
-                )}
+            <h3 className="font-bold mb-4 text-lg">기본 정보</h3>
+            <div className="space-y-4">
+              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-xl">🏪</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">가게명</p>
+                  <p className="font-medium">{store.storeName}</p>
+                </div>
               </div>
-            </p>
+
+              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-xl">📞</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">연락처</p>
+                  <p className="font-medium">{store.contactNumber || '연락처 정보 없음'}</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-xl">⏰</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">영업시간</p>
+                  </div>
+                </div>
+                <div className="ml-13">
+                  {store.businessHours ? (
+                    <div className="py-1 whitespace-pre-line text-gray-700">
+                      {store.businessHours.replace(/\\n/g, '\n')}
+                    </div>
+                  ) : (
+                    <p className="py-1 text-gray-500">영업시간 정보가 없습니다.</p>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* 공간 추가 */}
             <div className="mt-6"></div>

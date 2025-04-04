@@ -15,45 +15,49 @@ import { FixedSizeList as List } from 'react-window'
 
 // 가게 항목 렌더링 컴포넌트
 const StoreItem = ({ data, index, style }) => {
-  const { 
-    store, 
-    selectedStoreId, 
-    storeItemRefs, 
-    handleMarkerClick, 
-    handleStoreDetail, 
-    simplifyAddress 
+  const {
+    store: storeList,
+    selectedStoreId,
+    storeItemRefs,
+    handleMarkerClick,
+    handleStoreDetail,
+    simplifyAddress,
   } = data
   
-  // index가 유효하지 않거나 store가 배열이 아니거나 해당 인덱스에 항목이 없는 경우 처리
-  if (!Array.isArray(store) || !store[index]) {
+  const currentStore = storeList[index]
+  
+  // 스토어가 없는 경우 빈 컴포넌트 반환
+  if (!currentStore) {
+    return <div style={style} className="px-2 py-0.5"></div>
+  }
+  
+  // 이미지 URL 또는 기본 이미지 선택
+  const getStoreImage = () => {
+    const storeImage = currentStore.image || currentStore.imageUrl || currentStore.storeImg
     return (
-      <div style={style} className="px-2 py-0.5">
-        <div className="flex items-center p-2 border rounded-lg border-gray-200">
-          <p className="text-sm text-gray-500">데이터를 불러오는 중...</p>
-        </div>
-      </div>
+      storeImage || 
+      (currentStore.type === 'bakery' ? storeDefaultImage : defaultImage)
     )
   }
   
-  const currentStore = store[index]
+  // 목록 항목 클릭 시 handleMarkerClick 호출하여 마커와 동일하게 처리
+  const handleStoreItemClick = () => {
+    handleMarkerClick(currentStore)
+  }
   
-  // 가게 이미지 처리 로직
-  const getStoreImage = () => {
-    const storeImage = currentStore.image || currentStore.imageUrl || currentStore.storeImg;
-    return storeImage || (currentStore.type === 'bakery' ? storeDefaultImage : defaultImage);
-  };
-
   return (
     <div style={style} className="px-2 py-0.5">
       <div
         key={currentStore.id}
         ref={(el) => (storeItemRefs.current[currentStore.id] = el)}
-        className={`flex items-center p-2 border rounded-lg cursor-pointer transition-all duration-200 ${
+        className={`store-item flex items-center p-2 border rounded-lg cursor-pointer transition-all duration-200 ${
           selectedStoreId === currentStore.id
             ? 'border-blue-500 bg-blue-50 shadow-md'
             : 'border-gray-200 hover:bg-gray-50'
         }`}
-        onClick={() => handleMarkerClick(currentStore)}
+        onClick={handleStoreItemClick}
+        data-store-id={currentStore.id}
+        id={`store-item-${currentStore.id}`}
       >
         <div className="w-16 h-16 bg-gray-200 rounded-md mr-3 overflow-hidden">
           <img
@@ -62,9 +66,10 @@ const StoreItem = ({ data, index, style }) => {
             className="w-full h-full object-cover rounded-md"
             loading="lazy"
             onError={(e) => {
-              console.log(`[MapPage] 가게(${currentStore.id}) 이미지 로드 실패, 기본 이미지 사용`);
-              e.target.onerror = null;
-              e.target.src = currentStore.type === 'bakery' ? storeDefaultImage : defaultImage;
+              e.target.onerror = null
+              e.target.src = currentStore.type === 'bakery'
+                ? storeDefaultImage
+                : defaultImage
             }}
           />
         </div>
@@ -236,9 +241,9 @@ function MapPage() {
   // 사용자 위치 가져오기
   useEffect(() => {
     getUserLocation().catch((error) => {
-      // 위치 정보 가져오기 실패 시 기본 위치 사용 (서울 시청)
-      const defaultLocation = { lat: 37.5665, lng: 126.978 }
-      setUserLocation(defaultLocation) // 기본 위치도 userLocation에 저장
+      // 위치 정보 가져오기 실패 시 제주 구름스퀘어로 기본 위치 설정
+      const defaultLocation = { lat: 33.4996, lng: 126.5302 }
+      setUserLocation(defaultLocation)
       setMapCenter(defaultLocation)
     })
   }, [])
@@ -584,31 +589,54 @@ function MapPage() {
     filterStores(searchQuery, categoryFilter, showDiscountOnly)
   }, [searchQuery, categoryFilter, showDiscountOnly, filterStores])
 
-  // 가게 마커 클릭 핸들러 개선 - 동일한 마커 다시 클릭해도 인포윈도우 표시
+  // 가게 마커 클릭 핸들러 개선
   const handleMarkerClick = useCallback((store) => {
+    // store가 null이면 선택 해제
     if (!store) {
       setSelectedStoreId(null)
       return
     }
 
-    // 항상 선택된 상태로 강제로 상태 변경
-    setSelectedStoreId((prevId) => {
-      return prevId === store.id ? `${store.id}_force` : store.id
-    })
-
-    setMapCenter({ lat: store.lat, lng: store.lng })
-    setStoreListExpanded(false)
-    setMapLevel(3)
-
-    if (storeItemRefs.current[store.id] && storeListRef.current) {
-      setTimeout(() => {
-        storeItemRefs.current[store.id]?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        })
-      }, 100)
+    // 1초 이내에 중복 클릭 방지
+    const now = Date.now()
+    const lastClickTime = window._lastMarkerClickTime || 0
+    window._lastMarkerClickTime = now
+    
+    if (now - lastClickTime < 300) {
+      return
     }
-  }, [])
+
+    // 이미 선택된 상태에서 같은 마커를 클릭한 경우에도 상태 업데이트
+    setSelectedStoreId(store.id)
+    
+    // 지도 중심 이동
+    setTimeout(() => {
+      setMapCenter({ lat: store.lat, lng: store.lng })
+      setMapLevel(3) // 적절한 줌 레벨로 설정
+    }, 50)
+  }, [setSelectedStoreId, setMapCenter, setMapLevel])
+
+  // 지도 클릭 핸들러 개선
+  const handleMapClick = (map, mouseEvent) => {
+    // 클릭 이벤트가 마커나 오버레이에서 시작된 경우 무시
+    if (mouseEvent && (
+      mouseEvent._stopPropagation === true || 
+      mouseEvent._markerClicked === true ||
+      mouseEvent._handled === true ||
+      (mouseEvent.domEvent && (
+        mouseEvent.domEvent._stopPropagation === true ||
+        mouseEvent.domEvent._markerClicked === true ||
+        mouseEvent.domEvent._handled === true
+      ))
+    )) {
+      return
+    }
+    
+    // 마커 선택 해제
+    if (selectedStoreId) {
+      setSelectedStoreId(null)
+    }
+  }
 
   // 줌 레벨 변경 핸들러 추가
   const handleZoomChange = (newLevel) => {
@@ -636,21 +664,6 @@ function MapPage() {
       console.error('현재 위치로 이동 실패:', error)
       alert('현재 위치를 가져올 수 없습니다. 위치 접근 권한을 확인해주세요.')
       setLoading(false) // 에러 발생해도 로딩 종료
-    }
-  }
-
-  // 지도 클릭 핸들러
-  const handleMapClick = () => {
-    console.log('지도 클릭 - 마커 선택 해제')
-    
-    // 마커가 선택되어 있다면 선택 해제
-    if (selectedStoreId) {
-      setSelectedStoreId(null)
-    }
-
-    // 가게 목록이 확장되어 있다면 축소
-    if (storeListExpanded) {
-      setStoreListExpanded(false)
     }
   }
 
@@ -691,8 +704,6 @@ function MapPage() {
         </div>
       )
     }
-
-    console.log('현재 선택된 가게 ID:', selectedStoreId);
     
     // 중복 ID 체크 및 유효한 좌표 확인
     const validStores = filteredStores.filter((store, index, self) => {
@@ -708,8 +719,7 @@ function MapPage() {
         store.lng && 
         !isNaN(store.lat) && 
         !isNaN(store.lng) &&
-        store.lat !== 0 && 
-        store.lng !== 0;
+        !(store.lat === 0 && store.lng === 0);
         
       return isUniqueId && hasValidCoords;
     });
@@ -721,29 +731,29 @@ function MapPage() {
         style={{ width: '100%', height: '100%' }}
         ref={mapRef}
         onClick={handleMapClick}
+        disableDoubleClickZoom={true}
       >
-        {/* 사용자 위치 마커 - 사용자 정의 마커 사용 */}
+        {/* 사용자 위치 마커 - 빨간색 마커 사용 */}
         {userLocation && (
           <MapMarker
             position={userLocation}
             image={{
-              src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', // 빨간색 마커 사용
-              size: { width: 32, height: 34 },
+              src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', // 카카오 기본 빨간색 마커로 변경
+              size: { width: 35, height: 35 }, // 크기 약간 키움
             }}
             zIndex={10}
             onClick={() => {
-              // 현재 위치로 지도 중심 이동
               setMapCenter(userLocation)
               setMapLevel(3)
             }}
           />
         )}
 
-        {/* 가게 마커 클러스터링 추가 */}
+        {/* 가게 마커 클러스터링 설정 */}
         <MarkerClusterer
           averageCenter={true}
-          minLevel={3}
-          calculator={[10, 30, 50, 100, 200, 500, 1000]}
+          minLevel={5}
+          calculator={[20, 50, 100]}
           disableClickZoom={false}
           gridSize={60}
           styles={[
@@ -782,12 +792,11 @@ function MapPage() {
           {/* 가게 마커 - 유효성 검증된 데이터만 사용 */}
           {validStores.map((store) => (
             <StoreMarker
-              key={store.id}
+              key={`store-marker-${store.id}`}
               store={store}
-              isSelected={String(selectedStoreId).startsWith(store.id)} // force 상태 대비 string 비교
+              isSelected={selectedStoreId === store.id}
               onClick={handleMarkerClick}
               onDetail={handleStoreDetail}
-              userLocation={userLocation}
             />
           ))}
         </MarkerClusterer>
@@ -871,6 +880,29 @@ function MapPage() {
     <div className="flex flex-col h-full">
       {/* 헤더 */}
       <Header title="지도" />
+
+      {/* 하이라이트 스타일 추가 */}
+      <style>{`
+        .highlight-store {
+          animation: pulse 1.5s ease-in-out;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            background-color: rgba(219, 234, 254, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            background-color: rgba(219, 234, 254, 0.9);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            background-color: rgba(219, 234, 254, 0.5);
+          }
+        }
+      `}</style>
 
       {/* 검색 영역을 홈페이지 스타일로 수정 */}
       <div className="px-4 py-3 border-b">

@@ -374,11 +374,8 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true)
       const response = await userApi.deleteAccount()
-
-      if (
-        response.success &&
-        response.message === SUCCESS_MESSAGES.USER_DELETE_SUCCESS
-      ) {
+      
+      if (response.success) {
         setUser(null)
         setIsLoggedIn(false)
         localStorage.removeItem('accessToken')

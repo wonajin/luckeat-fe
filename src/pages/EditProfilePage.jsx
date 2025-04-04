@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
 import { useAuth } from '../context/AuthContext'
 import Navigation from '../components/layout/Navigation'
+import * as userApi from '../api/userApi'
 
 function EditProfilePage() {
   const navigate = useNavigate()
-  const { user, updateNickname, updatePassword, deleteAccount } = useAuth()
+  const { user, updateNickname, updatePassword, deleteAccount, logout } = useAuth()
 
   // 상태 관리
   const [nickname, setNickname] = useState('')
@@ -18,6 +19,8 @@ function EditProfilePage() {
 
   // 모달 상태
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [deletionSuccessful, setDeletionSuccessful] = useState(false)
 
   // 토스트 메시지 상태
   const [showToast, setShowToast] = useState(false)
@@ -43,6 +46,11 @@ function EditProfilePage() {
       setIsNicknameSame(true)
     }
   }, [user])
+
+  // 성공 모달 상태 확인
+  useEffect(() => {
+    console.log('성공 모달 상태 변경:', showSuccessModal)
+  }, [showSuccessModal])
 
   // 닉네임 변경 핸들러
   const handleNicknameChange = (e) => {
@@ -278,21 +286,44 @@ function EditProfilePage() {
     setIsLoading(true)
 
     try {
-      const result = await deleteAccount()
+
+      // 회원 탈퇴 API 호출만 수행하고, 로컬 스토리지는 건드리지 않음
+      const result = await userApi.deleteAccount()
+      
       if (result.success) {
-        showToastMessage('회원 탈퇴가 완료되었습니다.')
-        setTimeout(() => {
-          navigate('/')
-        }, 1500)
+        // 탈퇴 성공 시, 로컬 스토리지는 건드리지 않고 모달만 표시
+        setShowDeleteModal(false)
+        setDeletionSuccessful(true)
+        setShowSuccessModal(true)
       } else {
         alert(result.message || '회원 탈퇴에 실패했습니다.')
         setShowDeleteModal(false)
       }
     } catch (error) {
+      console.error('회원 탈퇴 중 오류:', error)
       alert('회원 탈퇴 중 오류가 발생했습니다.')
       setShowDeleteModal(false)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // 회원 탈퇴 완료 처리 (모달 확인 버튼 클릭 시)
+  const handleConfirmDeletion = () => {
+    console.log('확인 버튼 클릭, 탈퇴 완료 처리 시작')
+    // 모달 닫기
+    setShowSuccessModal(false)
+    
+    // 실제 로그아웃 처리 (로컬 스토리지 삭제)
+    if (deletionSuccessful) {
+      // 로컬 스토리지 직접 접근 대신 로그아웃 함수 사용
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      console.log('로컬 스토리지 정보 삭제 완료')
+      
+      // 로그인 페이지로 즉시 이동 (history API 사용)
+      window.location.replace('/')
     }
   }
 
@@ -499,6 +530,28 @@ function EditProfilePage() {
                 } text-white font-bold rounded-lg transition-colors`}
               >
                 {isLoading ? '처리 중...' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 회원 탈퇴 완료 모달 */}
+      {showSuccessModal === true && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
+            <h3 className="font-bold text-lg text-center mb-4">
+              회원 탈퇴가 완료되었습니다.
+            </h3>
+            <p className="text-center text-gray-600 mb-4">
+              그동안 이용해 주셔서 감사합니다.
+            </p>
+            <div className="flex justify-center">
+              <button
+                onClick={handleConfirmDeletion}
+                className="px-4 py-2 bg-[#F7B32B] text-white font-bold rounded-lg hover:bg-[#E09D18] active:bg-[#D08D08] transition-colors"
+              >
+                확인
               </button>
             </div>
           </div>

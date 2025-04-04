@@ -37,117 +37,70 @@ function StoreMarker({ store, isSelected, onClick, onDetail }) {
     }
   }, [store])
 
-  // 마커 클릭 핸들러 - 이벤트 전파 완전 차단 및 즉시 호출
-  const handleMarkerClick = (map, marker, event) => {
-    console.log('마커 직접 클릭됨:', store.id) // 디버깅용
-    
-    try {
-      // 중복 클릭 방지를 위한 전역 플래그 설정
-      if (window._markerClickInProgress === true) {
-        console.log('이전 마커 클릭 처리 중, 무시:', store.id)
-        return false
-      }
-      
-      // 플래그 설정: 마커 클릭 처리 중
-      window._markerClickInProgress = true
-      
-      // 일정 시간 후 플래그 해제 - 연속 클릭 방지
-      setTimeout(() => {
-        window._markerClickInProgress = false
-      }, 500)
-      
-      // 이벤트 전파 중단을 위한 처리 강화
-      if (event) {
-        // DOM 이벤트 중단
-        if (event.domEvent) {
-          // DOM 이벤트 완전 중단
-          event.domEvent.stopPropagation()
-          event.domEvent.preventDefault()
-          event.domEvent.stopImmediatePropagation && event.domEvent.stopImmediatePropagation()
-          
-          // 카카오맵 내부 처리를 위한 플래그 (맵 클릭 핸들러에서 확인)
-          event.domEvent._stopPropagation = true
-          event.domEvent._handled = true
-          event.domEvent._markerClicked = true
-          event.domEvent._isMarkerClick = true // 추가 플래그
-        }
-        
-        // 카카오맵 이벤트 중단
-        if (typeof event.stopPropagation === 'function') {
-          event.stopPropagation()
-        }
-        if (typeof event.preventDefault === 'function') {
-          event.preventDefault()
-        }
-        if (typeof event.stopImmediatePropagation === 'function') {
-          event.stopImmediatePropagation()
-        }
-        
-        // 특수 플래그 설정 - 지도 컴포넌트에서 이 플래그로 식별
-        event._stopPropagation = true
-        event._markerClicked = true
-        event._handled = true
-        event._isMarkerClick = true // 추가 플래그
-        
-        // 원본 이벤트가 있다면 그것도 중단
-        if (event.originalEvent) {
-          event.originalEvent.stopPropagation && event.originalEvent.stopPropagation()
-          event.originalEvent.preventDefault && event.originalEvent.preventDefault()
-          event.originalEvent.stopImmediatePropagation && event.originalEvent.stopImmediatePropagation()
-        }
-      }
-      
-      // 맵 이벤트 중단을 위한 추가 로직
-      if (map && map.getNode) {
-        const mapNode = map.getNode();
-        if (mapNode) {
-          const lastClickTime = mapNode._lastMarkerClickTime || 0;
-          const now = Date.now();
-          mapNode._lastMarkerClickTime = now;
-          mapNode._lastClickedMarkerId = store.id;
-          
-          // 마커 클릭 플래그 설정 - 이후 지도 클릭 이벤트 차단용
-          mapNode._markerWasClicked = true;
-          
-          // 50ms 이내의 클릭은 중복으로 간주
-          if (now - lastClickTime < 50) {
-            console.log('중복 클릭 무시:', store.id);
-            return false;
-          }
-          
-          // 일정 시간 후에 지도 클릭 처리 다시 활성화
-          setTimeout(() => {
-            if (mapNode._lastClickedMarkerId === store.id) {
-              mapNode._markerWasClicked = false;
-            }
-          }, 500);
-        }
-      }
-    } catch (err) {
-      console.error('마커 클릭 이벤트 처리 오류:', err);
-      window._markerClickInProgress = false; // 오류 발생 시 플래그 초기화
+  // 마커 클릭 이벤트 처리기
+  const handleMarkerClick = (e) => {
+    // 전역 플래그 설정 - 중복 클릭 방지
+    if (window._markerClickInProgress === true) {
+      // 제거된 콘솔 로그
+      return
     }
     
-    // 싱글톤 패턴으로 중복 이벤트 방지
-    const currentTime = Date.now();
-    if (window._lastStoreMarkerClickTime && 
-        currentTime - window._lastStoreMarkerClickTime < 300 &&
-        window._lastClickedStoreId === store.id) {
-      console.log('마커 중복 클릭 무시 (싱글톤):', store.id);
-      return false;
-    }
+    // 플래그 설정
+    window._markerClickInProgress = true
     
-    window._lastStoreMarkerClickTime = currentTime;
-    window._lastClickedStoreId = store.id;
-    
-    // 지도 클릭 이벤트 캡처 방지를 위한 타임아웃 처리
+    // 5초 후 플래그 초기화 (보통 클릭 이벤트는 몇 백 ms 내에 처리됨)
     setTimeout(() => {
-      // 즉시 부모 컴포넌트에 알림 (약간의 지연으로 이벤트 충돌 방지)
-      onClick(store);
-    }, 10);
+      window._markerClickInProgress = false
+    }, 500)
+
+    // 클릭 싱글톤 패턴 - 같은 마커에 대한 중복 클릭 방지
+    const now = Date.now()
+    const lastClickTime = window._lastMarkerClickTime || 0
     
-    // 이벤트 버블링 중단을 확실히 함
-    return false;
+    // 300ms 내 중복 클릭 방지
+    if (now - lastClickTime < 300) {
+      // 제거된 콘솔 로그
+      return
+    }
+    
+    window._lastMarkerClickTime = now
+    window._lastClickedMarkerId = store.id
+
+    // 이벤트 전파 중지를 위한 플래그 설정
+    if (e) {
+      // DOM 이벤트
+      if (e.domEvent) {
+        e.domEvent._markerClicked = true
+        e.domEvent._stopPropagation = true
+        e.domEvent._handled = true
+        
+        if (e.domEvent.stopPropagation) {
+          e.domEvent.stopPropagation()
+        }
+      }
+      
+      // 원본 이벤트
+      e._markerClicked = true
+      e._stopPropagation = true
+      e._handled = true
+      
+      if (e.stopPropagation) {
+        e.stopPropagation()
+      }
+      
+      // preventDefault 호출 시도
+      if (e.preventDefault) {
+        e.preventDefault()
+      }
+    }
+    
+    // 상위 컴포넌트에 클릭 알림
+    // 약간의 지연을 두어 이벤트 충돌 최소화
+    setTimeout(() => {
+      if (onClick) {
+        onClick(store)
+      }
+    }, 10)
   }
 
   // 인포윈도우 닫기 버튼 클릭 핸들러

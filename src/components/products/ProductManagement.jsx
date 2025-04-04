@@ -127,10 +127,21 @@ const ProductManagement = () => {
 
   // 재고 감소 처리
   const decreaseStock = () => {
-    if (formData.stock > 1) {
+    if (formData.stock > 0) {
       setFormData((prev) => ({
         ...prev,
         stock: Number(prev.stock) - 1,
+      }))
+    }
+  }
+
+  // 재고 직접 입력 처리
+  const handleStockChange = (e) => {
+    const value = e.target.value
+    if (value === '' || /^\d+$/.test(value)) {
+      setFormData((prev) => ({
+        ...prev,
+        stock: value,
       }))
     }
   }
@@ -148,14 +159,25 @@ const ProductManagement = () => {
     if (!formData.originalPrice) {
       newErrors.originalPrice = '원가를 입력하세요'
       isValid = false
+    } else if (formData.originalPrice < 100 || formData.originalPrice > 10000000) {
+      newErrors.originalPrice = '원가는 100원 이상 1천만원 이하여야 합니다'
+      isValid = false
     }
 
     if (!formData.discountedPrice) {
       newErrors.discountedPrice = '할인가를 입력하세요'
       isValid = false
+    } else if (formData.discountedPrice < 100 || formData.discountedPrice > 10000000) {
+      newErrors.discountedPrice = '할인가는 100원 이상 1천만원 이하여야 합니다'
+      isValid = false
     }
 
     if (!formData.description || formData.description.length < 10) {
+      isValid = false
+    }
+
+    if (formData.stock === '') {
+      newErrors.stock = '재고 수량을 입력하세요'
       isValid = false
     }
 
@@ -363,7 +385,7 @@ const ProductManagement = () => {
                             : 'bg-gray-100 text-gray-600'
                         }`}
                       >
-                        재고: {product.productCount || 1}개
+                        재고: {product.productCount !== undefined ? product.productCount : 1}개
                       </span>
                       <div className="flex space-x-2">
                         <button
@@ -424,18 +446,19 @@ const ProductManagement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       원가
                     </label>
-                    <input
-                      type="text"
-                      name="originalPrice"
-                      value={formData.originalPrice}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="원가 (원)"
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="originalPrice"
+                        value={formData.originalPrice}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        placeholder="원가를 입력하세요"
+                      />
+                      <span className="absolute right-3 top-2 text-gray-500">원</span>
+                    </div>
                     {errors.originalPrice && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.originalPrice}
-                      </p>
+                      <p className="text-red-500 text-xs mt-1">{errors.originalPrice}</p>
                     )}
                   </div>
 
@@ -443,18 +466,19 @@ const ProductManagement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       할인가
                     </label>
-                    <input
-                      type="text"
-                      name="discountedPrice"
-                      value={formData.discountedPrice}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="할인가 (원)"
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="discountedPrice"
+                        value={formData.discountedPrice}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        placeholder="할인가를 입력하세요"
+                      />
+                      <span className="absolute right-3 top-2 text-gray-500">원</span>
+                    </div>
                     {errors.discountedPrice && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.discountedPrice}
-                      </p>
+                      <p className="text-red-500 text-xs mt-1">{errors.discountedPrice}</p>
                     )}
                   </div>
                 </div>
@@ -473,6 +497,7 @@ const ProductManagement = () => {
                         type="button"
                         onClick={decreaseStock}
                         className="p-2 bg-gray-200 rounded-l-md"
+                        disabled={formData.stock === '' || parseInt(formData.stock) <= 0}
                       >
                         -
                       </button>
@@ -480,9 +505,10 @@ const ProductManagement = () => {
                         type="text"
                         name="stock"
                         value={formData.stock}
-                        onChange={handleInputChange}
+                        onChange={handleStockChange}
                         className="w-full p-2 border-y border-gray-300 text-center"
-                        readOnly
+                        min="0"
+                        placeholder="재고 수량 입력"
                       />
                       <button
                         type="button"
@@ -492,6 +518,9 @@ const ProductManagement = () => {
                         +
                       </button>
                     </div>
+                    {errors.stock && (
+                      <p className="text-red-500 text-xs mt-1">{errors.stock}</p>
+                    )}
                   </div>
                 </div>
 

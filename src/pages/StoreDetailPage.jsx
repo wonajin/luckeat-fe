@@ -665,7 +665,7 @@ function StoreDetailPage() {
         {/* 상품 정보 섹션 */}
         <div ref={productsRef} id="products-section" className="p-3">
           <h3 className="font-bold mb-2 text-lg">럭키트 정보</h3>
-          <div className={`border rounded-lg p-3 mb-4 relative ${!productInfo?.isOpen ? 'overflow-hidden' : ''}`}>
+          <div className="border rounded-lg p-3 mb-4 relative">
             {productLoading ? (
               <div className="text-center py-4">상품 정보를 불러오는 중...</div>
             ) : productError ? (
@@ -674,7 +674,7 @@ function StoreDetailPage() {
               </div>
             ) : productInfo ? (
               <>
-                <div className={`${!productInfo.isOpen ? 'blur-[2px]' : ''}`}>
+                <div>
                   <div className="flex items-center mb-2">
                     <h4 className="font-bold">{productInfo.productName}</h4>
                     <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
@@ -688,13 +688,11 @@ function StoreDetailPage() {
                     </p>
                   </div>
 
-                  {productInfo.isOpen && (
-                    <div className="flex items-center mb-3">
-                      <span className="text-sm text-gray-600">
-                        남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span>
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex items-center mb-3">
+                    <span className="text-sm text-gray-600">
+                      남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span>
+                    </span>
+                  </div>
 
                   <div className="flex">
                     <div className="flex-1">
@@ -734,21 +732,15 @@ function StoreDetailPage() {
 
                 <button
                   className={`w-full py-3 font-bold rounded-lg mt-4 ${
-                    productInfo.isOpen 
-                      ? 'bg-yellow-500 text-white' 
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    !productInfo.isOpen || productInfo.productCount === 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-yellow-500 text-white hover:bg-yellow-600'
                   }`}
-                  onClick={productInfo.isOpen ? handleReservationClick : undefined}
-                  disabled={!productInfo.isOpen}
+                  onClick={handleReservationClick}
+                  disabled={!productInfo.isOpen || productInfo.productCount === 0}
                 >
-                  {productInfo.isOpen ? '럭키트 예약하기' : '매진된 상품입니다'}
+                  {!productInfo.isOpen || productInfo.productCount === 0 ? '매진되었습니다' : '럭키트 예약하기'}
                 </button>
-                
-                {!productInfo.isOpen && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 z-10">
-                    <span className="font-bold text-white text-2xl">매진</span>
-                  </div>
-                )}
               </>
             ) : (
               <div className="text-center py-4">
@@ -1157,7 +1149,10 @@ function StoreDetailPage() {
               </button>
               <button
                 className="w-full py-2 text-gray-600 font-medium"
-                onClick={() => setShowSuccessModal(false)}
+                onClick={() => {
+                  setShowSuccessModal(false)
+                  window.location.reload()
+                }}
               >
                 계속 둘러보기
               </button>

@@ -593,48 +593,61 @@ function MapPage() {
   const handleMarkerClick = useCallback((store) => {
     // store가 null이면 선택 해제
     if (!store) {
+      console.log('[MapPage] 마커 선택 해제')
       setSelectedStoreId(null)
       return
     }
 
-    // 1초 이내에 중복 클릭 방지
-    const now = Date.now()
-    const lastClickTime = window._lastMarkerClickTime || 0
-    window._lastMarkerClickTime = now
+    console.log('[MapPage] 마커 선택:', store.id, store.name || store.storeName)
     
-    if (now - lastClickTime < 300) {
-      return
-    }
-
     // 이미 선택된 상태에서 같은 마커를 클릭한 경우에도 상태 업데이트
-    setSelectedStoreId(store.id)
+    // 리액트에서 같은 값으로 setState를 호출하면 렌더링이 발생하지 않으므로
+    // 명시적으로 다른 값을 설정했다가 다시 원래 값으로 설정
+    if (selectedStoreId === store.id) {
+      console.log('[MapPage] 이미 선택된 마커 다시 클릭')
+      setSelectedStoreId(null)
+      
+      // 약간의 지연 후 다시 선택 상태로 설정
+      setTimeout(() => {
+        setSelectedStoreId(store.id)
+      }, 10)
+    } else {
+      // 다른 마커 선택
+      setSelectedStoreId(store.id)
+    }
     
     // 지도 중심 이동
     setTimeout(() => {
       setMapCenter({ lat: store.lat, lng: store.lng })
       setMapLevel(3) // 적절한 줌 레벨로 설정
     }, 50)
-  }, [setSelectedStoreId, setMapCenter, setMapLevel])
+  }, [selectedStoreId])
 
   // 지도 클릭 핸들러 개선
   const handleMapClick = (map, mouseEvent) => {
-    // 클릭 이벤트가 마커나 오버레이에서 시작된 경우 무시
-    if (mouseEvent && (
-      mouseEvent._stopPropagation === true || 
-      mouseEvent._markerClicked === true ||
-      mouseEvent._handled === true ||
-      (mouseEvent.domEvent && (
-        mouseEvent.domEvent._stopPropagation === true ||
-        mouseEvent.domEvent._markerClicked === true ||
-        mouseEvent.domEvent._handled === true
-      ))
-    )) {
+    console.log('[MapPage] 지도 클릭', mouseEvent)
+    
+    // 마커나 오버레이 클릭의 경우 전파 중단 확인
+    if (mouseEvent && mouseEvent._stopPropagation === true) {
+      console.log('[MapPage] 이벤트 전파 중단됨 (마커 또는 오버레이 클릭)')
+      return
+    }
+    
+    // 글로벌 마커 클릭 플래그 확인
+    if (window._markerClickInProgress === true) {
+      console.log('[MapPage] 마커 클릭 진행 중, 맵 클릭 무시')
       return
     }
     
     // 마커 선택 해제
     if (selectedStoreId) {
+      console.log('[MapPage] 지도 클릭으로 마커 선택 해제:', selectedStoreId)
       setSelectedStoreId(null)
+    }
+    
+    // 가게 목록 축소
+    if (storeListExpanded) {
+      setStoreListExpanded(false)
     }
   }
 

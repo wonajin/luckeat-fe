@@ -27,6 +27,7 @@ const apiClient = axios.create({
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   },
+  withCredentials: false, // CORS 인증 정보 전송 설정
 })
 
 // 요청 인터셉터 설정
@@ -73,9 +74,58 @@ apiClient.interceptors.request.use(
   },
 )
 
+// HTML 응답인지 확인하는 함수
+const isHtmlResponse = (response) => {
+  // Content-Type 헤더 확인
+  const contentType = response.headers && response.headers['content-type'];
+  if (contentType && contentType.includes('text/html')) {
+    return true;
+  }
+  
+  // 데이터가 HTML인지 문자열 기반으로 확인
+  if (typeof response.data === 'string' && 
+     (response.data.includes('<!DOCTYPE html>') || 
+      response.data.includes('<html') || 
+      response.data.includes('<body'))) {
+    return true;
+  }
+  
+  return false;
+};
+
+// HTML 응답을 사용자 친화적인 오류 메시지로 변환
+const transformHtmlResponse = (response) => {
+  console.warn('HTML 응답이 감지되었습니다:', response.config.url);
+  
+  // 로그인 관련 엔드포인트인 경우
+  if (response.config.url.includes('/login') || response.config.url.includes('/auth')) {
+    return {
+      ...response,
+      data: {
+        success: false,
+        message: '로그인에 실패했습니다. 아이디 또는 비밀번호를 확인해주세요.'
+      }
+    };
+  }
+  
+  // 기본 변환
+  return {
+    ...response,
+    data: {
+      success: false,
+      message: '서버에서 예상치 못한 응답을 받았습니다. 잠시 후 다시 시도해주세요.'
+    }
+  };
+};
+
 // 응답 인터셉터 설정
 apiClient.interceptors.response.use(
   (response) => {
+    // HTML 응답 감지 및 변환
+    if (isHtmlResponse(response)) {
+      return transformHtmlResponse(response);
+    }
+  
     // UTC 시간을 한국 시간으로 변환하는 함수
     const convertUTCToKoreaTime = (data) => {
       if (!data) return data
@@ -139,6 +189,17 @@ apiClient.interceptors.response.use(
     return response
   },
   (error) => {
+    // HTML 응답 감지 (오류 객체 내부)
+    if (error.response && isHtmlResponse(error.response)) {
+      console.warn('오류 응답에서 HTML이 감지되었습니다.');
+      const transformedResponse = transformHtmlResponse(error.response);
+      return Promise.reject({
+        ...error,
+        response: transformedResponse,
+        message: transformedResponse.data.message
+      });
+    }
+  
     // 에러 처리
     if (error.response) {
       const { status, data, config } = error.response

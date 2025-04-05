@@ -207,7 +207,22 @@ export function AuthProvider({ children }) {
       // 더 친절한 오류 메시지 제공
       let errorMessage = '로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
       
-      if (error.response) {
+      // HTML 응답 감지 및 처리 
+      if (error.response && typeof error.response.data === 'string' && 
+         (error.response.data.includes('<!DOCTYPE html>') || 
+          error.response.data.includes('<html') || 
+          error.response.data.includes('<body'))) {
+        console.warn('HTML 응답이 감지되었습니다 - 인증 실패로 처리합니다');
+        errorMessage = '아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.';
+        
+        // 개발자 콘솔에 자세한 정보 기록
+        console.error('HTML 응답을 받았습니다 (로그인 실패):', {
+          url: error.response.config?.url || '알 수 없는 URL',
+          status: error.response.status || '알 수 없는 상태 코드',
+          headers: error.response.headers || {},
+          data: error.response.data?.substring(0, 200) + '...' || '데이터 없음'
+        });
+      } else if (error.response) {
         if (error.response.status === 401) {
           errorMessage = '아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.'
         } else if (error.response.status === 403) {

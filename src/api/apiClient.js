@@ -21,12 +21,11 @@ Date.prototype.getTimezoneOffset = function() {
 
 // axios 인스턴스 생성
 const apiClient = axios.create({
+  withCredentials: true, // CORS 요청 시 쿠키와 인증 헤더 포함
   headers: {
     'Content-Type': 'application/json',
-    // CORS 관련 헤더 모두 제거 - 백엔드에서 처리하도록 함
-    // 'Access-Control-Allow-Origin': '*',
-    // 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    // 'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+
+
   },
   withCredentials: false, // CORS 인증 정보 전송 설정
 })

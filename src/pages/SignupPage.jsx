@@ -31,7 +31,7 @@ function SignupPage() {
 
   // 디버깅용 - 팝업 표시 상태 변경 감지
   useEffect(() => {
-    console.log('팝업 표시 상태 변경:', showSuccessPopup)
+    // 팝업 상태 변경 감지
   }, [showSuccessPopup])
 
   // 이메일 유효성 검사 함수
@@ -230,10 +230,7 @@ function SignupPage() {
         userType,
       }
       
-      console.log('회원가입 요청 데이터:', userData)
-      
       const response = await signup(userData)
-      console.log('회원가입 응답:', response)
       
       if (response.success) {
         // 성공 팝업 표시
@@ -320,22 +317,18 @@ function SignupPage() {
 
   // 로그인 페이지로 이동
   const goToLogin = () => {
-    console.log('로그인 페이지로 이동')
     setShowSuccessPopup(false) // 팝업 닫기
     navigate('/login')
   }
 
   // 홈 화면으로 이동
   const goToHome = () => {
-    console.log('홈 화면으로 이동')
     setShowSuccessPopup(false) // 팝업 닫기
     navigate('/')
   }
 
   // 회원가입 성공 팝업 렌더링
   const renderSuccessPopup = () => {
-    console.log('팝업 렌더링 함수 호출됨, 상태:', showSuccessPopup)
-
     if (!showSuccessPopup) return null
 
     return (

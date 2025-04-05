@@ -152,40 +152,83 @@ export const getUserReservations = async (userId) => {
  */
 export const getUserCompletedReservations = async () => {
   try {
-     // 'me'를 사용하여 현재 사용자의 모든 예약을 가져옴
-     const userId = 'me'
-     const response = await apiClient.get(`/api/v1/reservation/${userId}`)
+    // 사용자 정보 가져오기
+    const userString = localStorage.getItem('user')
+    if (!userString) {
+      return {
+        success: false,
+        message: '로그인 정보를 찾을 수 없습니다.',
+        data: { completedOrders: [], confirmedOrders: [] }
+      }
+    }
+    
+    const user = JSON.parse(userString)
+    // user 객체에서 userId 또는 id 값을 사용
+    const userId = user.userId || user.id
+    
+    // 유효한 userId가 없는 경우 처리
+    if (!userId) {
+      console.error('유효한 사용자 ID를 찾을 수 없습니다.')
+      return {
+        success: false,
+        message: '유효한 사용자 ID를 찾을 수 없습니다.',
+        data: { completedOrders: [], confirmedOrders: [] }
+      }
+    }
+    
+    // userId로 예약 정보 조회
+    const response = await apiClient.get(`/api/v1/reservation/${userId}`)
  
-     if (response.data) {
-       // 서버 응답에서 완료된 예약만 필터링
-       // 'COMPLETED', 'PICKED_UP' 등 완료 상태인 예약만 필터링
-       const completedOrders = response.data.filter(
-         (order) =>
-           order.status === 'COMPLETED' ||
-           order.status === 'PICKED_UP' ||
-           order.status === 'DONE'
-       )
+    if (response.data) {
+      // 예약 내역 전체
+      const reservations = Array.isArray(response.data) ? response.data : []
+      
+      // 완료된 예약만 필터링 ('COMPLETED', 'PICKED_UP', 'DONE')
+      const completedOrders = reservations.filter(
+        (order) =>
+          order.status === 'COMPLETED' ||
+          order.status === 'PICKED_UP' ||
+          order.status === 'DONE'
+      )
+      
+      // 확정된 예약만 필터링 ('CONFIRMED')
+      const confirmedOrders = reservations.filter(
+        (order) => order.status === 'CONFIRMED'
+      )
+      
+      // 실제 주문 건수 = 완료된 주문 + 확정된 주문
+      const totalOrderCount = completedOrders.length + confirmedOrders.length
  
-       return {
-         success: true,
-         data: { 
-           completedOrders 
-         }
-       }
-     }
+      return {
+        success: true,
+        data: { 
+          completedOrders,
+          confirmedOrders,
+          totalOrderCount
+        }
+      }
+    }
  
-     return {
-       success: true,
-      data: { completedOrders: [] }
+    return {
+      success: true,
+      data: { 
+        completedOrders: [], 
+        confirmedOrders: [],
+        totalOrderCount: 0
+      }
     }
   } catch (error) {
     console.error('완료된 예약 목록 조회 오류:', error)
     return {
       success: false,
-        message:
-          error.response?.data?.message || '완료된 예약 목록 조회에 실패했습니다.',
-        data: { completedOrders: [] }
+      message:
+        error.response?.data?.message || '완료된 예약 목록 조회에 실패했습니다.',
+      data: { 
+        completedOrders: [], 
+        confirmedOrders: [],
+        totalOrderCount: 0
       }
+    }
   }
 }
 

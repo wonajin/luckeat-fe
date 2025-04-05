@@ -15,7 +15,7 @@ import { useAuth } from '../context/AuthContext'
 function StoreDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, logout } = useAuth()
   const [activeTab, setActiveTab] = useState('map')
   const [store, setStore] = useState(null)
   const [showPhonePopup, setShowPhonePopup] = useState(false)
@@ -43,6 +43,9 @@ function StoreDetailPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false) // 성공 모달 상태 추가
   const [reservationResult, setReservationResult] = useState(null) // 예약 결과 정보 저장
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showSellerModal, setShowSellerModal] = useState(false) // 사업자 안내 모달 상태 추가
+  const [modalQuantity, setModalQuantity] = useState(1)
+  const [stockError, setStockError] = useState('')
 
   // Google Maps 이미지 URL인지 확인하는 함수
   const isGoogleMapsImage = (url) => {
@@ -213,6 +216,12 @@ function StoreDetailPage() {
     }
   }, [])
 
+  // 주소에서 '대한민국' 제거하는 함수 추가
+  const removeCountryFromAddress = (address) => {
+    if (!address) return '주소 정보 없음'
+    return address.replace(/^대한민국\s+/, '')
+  }
+
   // 주소 복사 기능 추가
   const handleCopyClick = () => {
     if (!store?.address) return
@@ -341,19 +350,26 @@ function StoreDetailPage() {
 
   // 예약 처리 함수
   const handleMakeReservation = async () => {
-    // 상품 ID가 없으면 예약 불가
-    if (!productInfo?.id) {
-      toast.error('예약할 상품 정보가 없습니다.')
+    // 상품 ID가 없거나 상품이 매진됐으면 예약 불가
+    if (!productInfo?.id || !productInfo?.isOpen) {
+      toast.error('예약할 수 없는 상품입니다.')
+      return
+    }
+
+    // 재고 체크
+    if (modalQuantity > productInfo.productCount) {
+      setStockError(`재고가 부족합니다. (현재 재고: ${productInfo.productCount}개)`)
       return
     }
 
     try {
       setReservationLoading(true)
+      setStockError('')
       
       // 예약 데이터 구성
       const reservationData = {
         productId: productInfo.id,
-        quantity: quantity,
+        quantity: modalQuantity,
         isZerowaste: isZerowaste
       }
       
@@ -374,7 +390,7 @@ function StoreDetailPage() {
           productId: productInfo.id,
           productName: productInfo.productName,
           productPrice: productInfo.discountedPrice,
-          quantity: quantity,
+          quantity: modalQuantity,
           isZerowaste: isZerowaste,
           reservationId: result.data.reservationId || 'success',
         })
@@ -404,6 +420,13 @@ function StoreDetailPage() {
       setShowLoginModal(true)
       return
     }
+
+    // 사업자 예약 제한
+    if (user && user.role === 'SELLER') {
+      setShowSellerModal(true)
+      return
+    }
+
     setShowPhonePopup(true)
   }
 
@@ -412,6 +435,13 @@ function StoreDetailPage() {
     navigate('/login')
     setShowLoginModal(false)
   }
+
+  // 모달이 열릴 때마다 수량을 1로 초기화
+  useEffect(() => {
+    if (showPhonePopup) {
+      setModalQuantity(1)
+    }
+  }, [showPhonePopup])
 
   if (loading) {
     return (
@@ -580,12 +610,36 @@ function StoreDetailPage() {
           </div>
 
           {/* 지도 아래에 주소 표시 및 복사 기능 추가 */}
-          <div
-            className="mt-2 text-center text-gray-700 cursor-pointer bg-gray-100 p-2 rounded-md hover:bg-gray-200 transition"
-            onClick={handleCopyClick}
-          >
-            {store.address || '주소 정보 없음'}
+          <div className="mt-2 flex items-center justify-between bg-gray-100 p-2 rounded-md">
+            <span className="text-gray-700">{removeCountryFromAddress(store.address)}</span>
+            <button
+              onClick={handleCopyClick}
+              className="ml-2 flex items-center text-blue-500 hover:text-blue-600 transition-colors"
+              title="주소 복사하기"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+            </button>
           </div>
+
+          {/* 복사 성공 메시지 */}
+          {copySuccess && (
+            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg z-50">
+              복사되었습니다!
+            </div>
+          )}
 
           {/* 카카오맵으로 보기 및 길찾기 버튼 */}
           {store.latitude && store.longitude && (
@@ -620,65 +674,75 @@ function StoreDetailPage() {
               </div>
             ) : productInfo ? (
               <>
-                <div className="flex items-center mb-2">
-                  <h4 className="font-bold">{productInfo.productName}</h4>
-                  <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
-                    럭키트
-                  </span>
-                </div>
-
-                <div className="p-2 bg-gray-50 rounded-md mb-3">
-                  <p className="text-sm text-gray-700">
-                    {productInfo.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center mb-3">
-                  <span className="text-sm text-gray-600">
-                    남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span>
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <div className="mr-4">
-                        <p className="text-sm line-through text-gray-400">
-                          {productInfo.originalPrice.toLocaleString()}원
-                        </p>
-                        <p className="text-lg font-bold">
-                          {productInfo.discountedPrice.toLocaleString()}원
-                        </p>
-                      </div>
-                      <span className="text-red-500 font-bold">
-                        {Math.floor(
-                          (1 -
-                            productInfo.discountedPrice /
-                              productInfo.originalPrice) *
-                            100,
-                        )}
-                        % 할인
-                      </span>
-                    </div>
+                <div>
+                  <div className="flex items-center mb-2">
+                    <h4 className="font-bold">{productInfo.productName}</h4>
+                    <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                      럭키트
+                    </span>
                   </div>
 
-                  <div className="w-24 h-24 bg-gray-200 rounded-md flex-shrink-0">
-                    <img
-                      src={productInfo.productImg || bakerDefaultImage}
-                      alt={productInfo.productName}
-                      className="w-full h-full object-cover rounded-md"
-                      onError={(e) => {
-                        e.target.src = bakerDefaultImage
-                      }}
-                    />
+                  <div className="p-2 bg-gray-50 rounded-md mb-3">
+                    <p className="text-sm text-gray-700">
+                      {productInfo.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center mb-3">
+                    <span className="text-sm text-gray-600">
+                      남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span>
+                    </span>
+                  </div>
+
+                  <div className="flex">
+                    <div className="flex-1">
+                      <div className="flex items-center">
+                        <div className="mr-4">
+                          <p className="text-sm line-through text-gray-400">
+                            {productInfo.originalPrice.toLocaleString()}원
+                          </p>
+                          <p className="text-lg font-bold">
+                            {productInfo.discountedPrice.toLocaleString()}원
+                          </p>
+                        </div>
+                        <span className="text-red-500 font-bold">
+                          {Math.min(
+                            Math.round(
+                              (1 -
+                                productInfo.discountedPrice /
+                                  productInfo.originalPrice) *
+                              100,
+                            ),
+                            99
+                          )}
+                           % 할인
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-24 h-24 bg-gray-200 rounded-md flex-shrink-0 relative">
+                      <img
+                        src={productInfo.productImg || bakerDefaultImage}
+                        alt={productInfo.productName}
+                        className="w-full h-full object-cover rounded-md"
+                        onError={(e) => {
+                          e.target.src = bakerDefaultImage
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <button
-                  className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg mt-4"
+                  className={`w-full py-3 font-bold rounded-lg mt-4 ${
+                    !productInfo.isOpen || productInfo.productCount === 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                  }`}
                   onClick={handleReservationClick}
+                  disabled={!productInfo.isOpen || productInfo.productCount === 0}
                 >
-                  럭키트 예약하기
+                  {!productInfo.isOpen || productInfo.productCount === 0 ? '매진되었습니다' : '럭키트 예약하기'}
                 </button>
               </>
             ) : (
@@ -699,36 +763,48 @@ function StoreDetailPage() {
           className="p-3 space-y-3"
         >
           <div className="border-b pb-3">
-            <h3 className="font-bold mb-2 text-lg">기본 정보</h3>
-            <p className="text-gray-600">📍 {store.storeName}</p>
-            <p className="text-gray-600">
-              📞 {store.contactNumber || '연락처 정보 없음'}
-            </p>
-            <p className="text-gray-600">
-              🌐{' '}
-              {store.website ? (
-                <a
-                  href={store.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 underline"
-                >
-                  {store.website}
-                </a>
-              ) : (
-                '웹사이트 정보 없음'
-              )}
-            </p>
-            <p className="text-gray-600">
-              <span className="block mb-1 font-bold">🏷️ 영업시간</span>
-              <div className="mt-2 ml-2">
-                {store.businessHours ? (
-                  <p className="py-1">{store.businessHours}</p>
-                ) : (
-                  <p className="py-1 text-gray-500">영업시간 정보가 없습니다.</p>
-                )}
+            <h3 className="font-bold mb-4 text-lg">기본 정보</h3>
+            <div className="space-y-4">
+              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-xl">🏪</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">가게명</p>
+                  <p className="font-medium">{store.storeName}</p>
+                </div>
               </div>
-            </p>
+
+              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-xl">📞</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">연락처</p>
+                  <p className="font-medium">{store.contactNumber || '연락처 정보 없음'}</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-xl">⏰</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">영업시간</p>
+                  </div>
+                </div>
+                <div className="ml-13">
+                  {store.businessHours ? (
+                    <div className="py-1 whitespace-pre-line text-gray-700">
+                      {store.businessHours.replace(/\\n/g, '\n')}
+                    </div>
+                  ) : (
+                    <p className="py-1 text-gray-500">영업시간 정보가 없습니다.</p>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* 공간 추가 */}
             <div className="mt-6"></div>
@@ -791,14 +867,17 @@ function StoreDetailPage() {
 
           {store.reviews && store.reviews.length > 0 ? (
             <div>
-              {/* 럭킷 리뷰 평점 */}
+              {/* 리뷰 평점 */}
               <div className="mb-4">
                 <p className="text-3xl font-bold text-center mb-2">
-                  {store.avgRatingGoogle?.toFixed(1) || '0.0'}
+                  {(
+                    store.reviews.reduce((acc, review) => acc + review.rating, 0) /
+                    store.reviews.length
+                  ).toFixed(1)}
                   <span className="text-lg text-gray-500">/5</span>
                 </p>
                 <p className="text-center text-sm text-gray-600 mb-2">
-                  구글 평점
+                  리뷰 평점
                 </p>
               </div>
 
@@ -814,11 +893,11 @@ function StoreDetailPage() {
                     <div className="flex items-center">
                       <div className="bg-gray-200 rounded-full w-7 h-7 flex items-center justify-center mr-2">
                         <span className="text-gray-500 text-xs">
-                          {review.userId ? String(review.userId)[0] : '?'}
+                          {review.userNickname ? review.userNickname[0] : '?'}
                         </span>
                       </div>
                       <span className="font-bold text-sm">
-                        사용자 {review.userId || '알 수 없음'}
+                        {review.userNickname || '알 수 없음'}
                       </span>
                     </div>
                     <div className="flex items-center">
@@ -827,6 +906,19 @@ function StoreDetailPage() {
                         {review.rating}
                       </span>
                     </div>
+                  </div>
+
+                  {/* 상품 정보 */}
+                  <div className="mt-2 p-2 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">{review.productName}</span>
+                      <span className="mx-2">·</span>
+                      <span>{review.quantity}개</span>
+                    </p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <span className="font-medium">주문 금액</span>
+                      <span className="ml-2">{review.totalPrice.toLocaleString()}원</span>
+                    </p>
                   </div>
 
                   {review.reviewImage && (
@@ -902,25 +994,31 @@ function StoreDetailPage() {
             <div className="flex items-center justify-center space-x-4 mb-3">
               <button 
                 className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none"
-                onClick={decreaseQuantity}
+                onClick={() => setModalQuantity(prev => prev - 1)}
+                disabled={modalQuantity <= 1}
               >
                 -
               </button>
-              <div className="text-xl font-bold">{quantity}</div>
+              <div className="text-xl font-bold">{modalQuantity}</div>
               <button 
                 className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center focus:outline-none"
-                onClick={increaseQuantity}
+                onClick={() => setModalQuantity(prev => prev + 1)}
+                disabled={modalQuantity >= productInfo?.productCount}
               >
                 +
               </button>
             </div>
+
+            {stockError && (
+              <p className="text-red-500 text-sm text-center mb-3">{stockError}</p>
+            )}
 
             <div className="flex items-center mb-3">
               <input
                 type="checkbox"
                 id="bring-container"
                 checked={isZerowaste}
-                onChange={toggleZerowaste}
+                onChange={() => setIsZerowaste(!isZerowaste)}
                 className="w-4 h-4 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
               />
               <label
@@ -1064,7 +1162,10 @@ function StoreDetailPage() {
               </button>
               <button
                 className="w-full py-2 text-gray-600 font-medium"
-                onClick={() => setShowSuccessModal(false)}
+                onClick={() => {
+                  setShowSuccessModal(false)
+                  window.location.reload()
+                }}
               >
                 계속 둘러보기
               </button>
@@ -1116,6 +1217,61 @@ function StoreDetailPage() {
               <button
                 className="w-full py-2 text-gray-600 font-medium"
                 onClick={() => setShowLoginModal(false)}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 사업자 안내 모달 */}
+      {showSellerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">사업자 안내</h3>
+              <button
+                onClick={() => setShowSellerModal(false)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="text-center mb-4">
+              <p className="text-gray-600">
+                사업자 계정으로는 예약이 불가능합니다.
+                <br />
+                일반 사용자 계정으로 로그인해주세요.
+              </p>
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <button
+                className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg"
+                onClick={async () => {
+                  await logout()
+                  setShowSellerModal(false)
+                  navigate('/login')
+                }}
+              >
+                로그인하기
+              </button>
+              <button
+                className="w-full py-2 text-gray-600 font-medium"
+                onClick={() => setShowSellerModal(false)}
               >
                 취소
               </button>

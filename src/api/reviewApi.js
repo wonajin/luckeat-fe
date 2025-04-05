@@ -4,9 +4,26 @@ import apiClient from './apiClient'
 export const createReview = async (reviewData) => {
   try {
     const response = await apiClient.post('/api/v1/reviews', reviewData)
-    return response.data
+    if (response.status === 201) {
+      // 토스트 메시지 표시
+      window.dispatchEvent(new CustomEvent('showToast', {
+        detail: {
+          message: '리뷰가 성공적으로 작성되었습니다.',
+          type: 'success'
+        }
+      }))
+      return response.status
+    }
+    throw new Error('리뷰 작성에 실패했습니다.')
   } catch (error) {
     console.error('리뷰 작성 중 오류:', error)
+    // 에러 토스트 메시지 표시
+    window.dispatchEvent(new CustomEvent('showToast', {
+      detail: {
+        message: '리뷰 작성에 실패했습니다. 다시 시도해주세요.',
+        type: 'error'
+      }
+    }))
     throw error
   }
 }
@@ -60,8 +77,15 @@ export const getMyReviews = async () => {
 // 리뷰 수정
 export const updateReview = async (reviewId, reviewData) => {
   try {
+    console.log('리뷰 수정 요청 시작:', {
+      method: 'PUT',
+      url: `/api/v1/reviews/${reviewId}`,
+      data: reviewData
+    })
+    
     const response = await apiClient.put(`/api/v1/reviews/${reviewId}`, reviewData)
-    return response.data
+    console.log('리뷰 수정 응답:', response)
+    return response.status
   } catch (error) {
     console.error('리뷰 수정 중 오류:', error)
     throw error
@@ -72,7 +96,7 @@ export const updateReview = async (reviewId, reviewData) => {
 export const deleteReview = async (reviewId) => {
   try {
     const response = await apiClient.delete(`/api/v1/reviews/${reviewId}`)
-    return response.data
+    return response.status
   } catch (error) {
     console.error('리뷰 삭제 중 오류:', error)
     throw error

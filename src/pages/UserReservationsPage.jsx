@@ -5,7 +5,7 @@ import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDateTime } from '../utils/dateUtils'
 import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
-import { getUserReservations, cancelReservation } from '../api/reservationApi'
+import { getUserReservations, updateReservationStatus } from '../api/reservationApi'
 
 const ReservationStatusBadge = ({ status }) => {
   const { bgColor, textColor } = getStatusStyle(status)
@@ -52,12 +52,22 @@ const UserReservationsPage = () => {
       setLoading(true)
       setError(null) // 에러 상태 초기화
       
-      if (!user || !user.id) {
+      // 로컬 스토리지에서 사용자 정보 확인
+      const userString = localStorage.getItem('user')
+      if (!userString) {
         setError('로그인이 필요합니다.')
         return
       }
+      
+      const userData = JSON.parse(userString)
+      const userId = userData.userId || userData.id
+      
+      if (!userId) {
+        setError('유효한 사용자 ID를 찾을 수 없습니다.')
+        return
+      }
 
-      const response = await getUserReservations(user.id)
+      const response = await getUserReservations(userId)
       
       if (!response) {
         setError('서버 응답이 없습니다.')
@@ -86,30 +96,33 @@ const UserReservationsPage = () => {
 
     try {
       setLoading(true)
-      
-      // cancelReservation API 사용
-      const response = await cancelReservation(reservationToCancel.id)
+      const response = await updateReservationStatus({
+        reservationId: reservationToCancel.id,
+        status: 'CANCELED'
+      })
       
       if (response.success) {
         // 예약 상태 업데이트
-        setReservations((prev) => 
-          prev.map((reservation) =>
+        setReservations(prev => 
+          prev.map(reservation =>
             reservation.id === reservationToCancel.id
-              ? { ...reservation, status: RESERVATION_STATUS.CANCELED }
+              ? { ...reservation, status: 'CANCELED' }
               : reservation
           )
         )
-        
-        showToastMessage('예약이 취소되었습니다', 'success')
+        setShowCancelConfirm(false)
+        setReservationToCancel(null)
+        setToastMessage('예약이 취소되었습니다')
+        setShowToast(true)
       } else {
-        showToastMessage(response.message || '예약 취소에 실패했습니다', 'error')
+        setToastMessage(response.message || '예약 취소에 실패했습니다')
+        setShowToast(true)
       }
     } catch (error) {
       console.error('예약 취소 중 오류:', error)
-      showToastMessage('예약 취소 중 오류가 발생했습니다', 'error')
+      setToastMessage('예약 취소 중 오류가 발생했습니다')
+      setShowToast(true)
     } finally {
-      setShowCancelConfirm(false)
-      setReservationToCancel(null)
       setLoading(false)
     }
   }
@@ -292,24 +305,12 @@ const UserReservationsPage = () => {
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">가격:</span>{' '}
-                            <span className="text-gray-600">{reservation.price.toLocaleString()}원</span>
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약 날짜:</span>{' '}
-                            <span className="text-gray-600">{formatDateTime(reservation.reservationDate)}</span>
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약 시간:</span>{' '}
-                            <span className="text-gray-600">{formatDateTime(reservation.reservationTime)}</span>
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약 생성:</span>{' '}
-                            <span className="text-gray-600">{formatDateTime(reservation.createdAt)}</span>
+                            <span className="text-gray-600">{reservation.totalPrice?.toLocaleString() || '0'}원</span>
                           </p>
                           <p className="text-sm">
                             <span className="font-medium text-gray-700">포장 방법:</span>{' '}
-                            <span className={reservation.isZeroWaste ? "text-green-600 font-medium" : "text-gray-600"}>
-                              {reservation.isZeroWaste ? '제로웨이스트 (포장용기 지참)' : '일반 포장'}
+                            <span className={reservation.isZerowaste ? "text-green-600 font-medium" : "text-gray-600"}>
+                              {reservation.isZerowaste ? '제로웨이스트 (포장용기 지참)' : '일반 포장'}
                             </span>
                           </p>
                         </div>
@@ -355,7 +356,7 @@ const UserReservationsPage = () => {
         </div>
       </div>
 
-      {/* 취소 확인 모달 */}
+      {/* 예약 취소 확인 모달 */}
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-sm p-5">

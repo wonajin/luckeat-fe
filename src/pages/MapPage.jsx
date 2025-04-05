@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
@@ -11,6 +11,151 @@ import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import myLocationMarker from '../assets/images/my_locatoin_maker.png'
 import axios from 'axios'
 import SearchBar from '../components/Search/SearchBar'
+import { FixedSizeList as List } from 'react-window'
+import { API_BASE_URL } from '../config/apiConfig'
+
+// 가게 항목 렌더링 컴포넌트
+const StoreItem = ({ data, index, style }) => {
+  const {
+    store: storeList,
+    selectedStoreId,
+    storeItemRefs,
+    handleMarkerClick,
+    handleStoreDetail,
+    simplifyAddress,
+  } = data
+  
+  const currentStore = storeList[index]
+  
+  // 스토어가 없는 경우 빈 컴포넌트 반환
+  if (!currentStore) {
+    return <div style={style} className="px-2 py-0.5"></div>
+  }
+  
+  // 이미지 URL 또는 기본 이미지 선택
+  const getStoreImage = () => {
+    const storeImage = currentStore.image || currentStore.imageUrl || currentStore.storeImg
+    return (
+      storeImage || 
+      (currentStore.type === 'bakery' ? storeDefaultImage : defaultImage)
+    )
+  }
+  
+  // 목록 항목 클릭 시 handleMarkerClick 호출하여 마커와 동일하게 처리
+  const handleStoreItemClick = () => {
+    handleMarkerClick(currentStore)
+  }
+  
+  return (
+    <div style={style} className="px-2 py-0.5">
+      <div
+        key={currentStore.id}
+        ref={(el) => (storeItemRefs.current[currentStore.id] = el)}
+        className={`store-item flex items-center p-2 border rounded-lg cursor-pointer transition-all duration-200 ${
+          selectedStoreId === currentStore.id
+            ? 'border-blue-500 bg-blue-50 shadow-md'
+            : 'border-gray-200 hover:bg-gray-50'
+        }`}
+        onClick={handleStoreItemClick}
+        data-store-id={currentStore.id}
+        id={`store-item-${currentStore.id}`}
+      >
+        <div className="w-16 h-16 bg-gray-200 rounded-md mr-3 overflow-hidden">
+          <img
+            src={getStoreImage()}
+            alt={currentStore.name || currentStore.storeName || '가게 이미지'}
+            className="w-full h-full object-cover rounded-md"
+            loading="lazy"
+            onError={(e) => {
+              e.target.onerror = null
+              e.target.src = currentStore.type === 'bakery'
+                ? storeDefaultImage
+                : defaultImage
+            }}
+          />
+        </div>
+
+        <div className="flex-1">
+          <h4 
+            className="font-bold text-sm truncate"
+            title={currentStore.storeName || currentStore.name || '가게명 없음'}
+          >
+            {(currentStore.storeName || currentStore.name || '가게명 없음').length > 20
+              ? (
+                currentStore.storeName || 
+                currentStore.name || 
+                '가게명 없음'
+              ).substring(0, 20) + '...'
+              : currentStore.storeName || currentStore.name || '가게명 없음'}
+          </h4>
+
+          <div className="flex items-center flex-wrap gap-1 mt-1">
+            {((currentStore.discount && currentStore.discount !== '0%') || currentStore.isDiscountOpen === true) && (
+              <span className="inline-block px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                {currentStore.discount 
+                  ? `${currentStore.discount} 할인` 
+                  : '마감 할인중'}
+              </span>
+            )}
+
+            {currentStore.hasRandomLocation && (
+              <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-800 text-xs rounded-full">
+                위치 추정
+              </span>
+            )}
+            
+            {currentStore.isGeocodedLocation && (
+              <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                주소기반 위치
+              </span>
+            )}
+          </div>
+
+          <p 
+            className="text-xs text-gray-500 mt-1 truncate"
+            title={currentStore.address || '주소 정보 없음'}
+          >
+            {simplifyAddress(currentStore.address || '주소 정보 없음').length > 20
+              ? simplifyAddress(
+                  currentStore.address || '주소 정보 없음',
+                ).substring(0, 20) + '...'
+              : simplifyAddress(currentStore.address || '주소 정보 없음')}
+          </p>
+
+          <div className="flex items-center mt-1">
+            <div className="flex items-center text-xs text-yellow-500 mr-2">
+              <span className="mr-1">★</span>
+              <span>
+                {currentStore.averageRating || currentStore.avgRatingGoogle
+                  ? (
+                      currentStore.averageRating || 
+                      currentStore.avgRatingGoogle
+                    ).toFixed(1)
+                  : '0.0'}
+              </span>
+              <span className="text-gray-500 ml-1">
+                {currentStore.reviews 
+                  ? Array.isArray(currentStore.reviews)
+                    ? currentStore.reviews.length
+                    : 0
+                  : currentStore.reviewCount || 0}
+              </span>
+            </div>
+            <button
+              className="ml-auto text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full hover:bg-blue-600 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleStoreDetail(currentStore.id)
+              }}
+            >
+              상세보기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function MapPage() {
   const navigate = useNavigate()
@@ -21,8 +166,8 @@ function MapPage() {
   const [filteredStores, setFilteredStores] = useState([])
   const [selectedStoreId, setSelectedStoreId] = useState(null)
   const [mapCenter, setMapCenter] = useState({
-    lat: 37.5665, // 서울 시청 기본값 (현재 위치가 가져와지기 전까지 임시 사용)
-    lng: 126.978,
+    lat: 33.4996, //제주 구름스퀘어
+    lng: 126.5302,
   })
   const [mapLevel, setMapLevel] = useState(3)
   const [mapLoaded, setMapLoaded] = useState(false)
@@ -38,27 +183,31 @@ function MapPage() {
   const [storeListExpanded, setStoreListExpanded] = useState(false)
   const mapContainerRef = useRef(null)
 
-  // API 기본 URL 직접 설정
-  const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
-
   // 카테고리 옵션 추가
   const categoryOptions = [
     { id: 1, name: '한식', icon: '🍚' },
-    { id: 2, name: '일식', icon: '🍱' },
-    { id: 3, name: '중식', icon: '🥢' },
-    { id: 4, name: '양식', icon: '🍝' },
+    { id: 4, name: '일식', icon: '🍱' },
+    { id: 2, name: '중식', icon: '🥢' },
+    { id: 3, name: '양식', icon: '🍝' },
     { id: 5, name: '카페/베이커리', icon: '🍞' },
     { id: 6, name: '샐러드/청과', icon: '🥗' },
   ]
 
   // 카테고리 선택 핸들러 추가
   const handleCategorySelect = (categoryId) => {
-    setCategoryFilter(categoryFilter === categoryId ? '' : categoryId)
+    // 이미 선택된 카테고리를 다시 선택하면 필터 해제
+    if (categoryFilter === categoryId) {
+      setCategoryFilter('')
+    } else {
+      setCategoryFilter(categoryId)
+    }
+
+    // 필터링된 가게 목록 업데이트
+    filterStores(searchQuery, categoryId, showDiscountOnly)
   }
 
   // 사용자 위치 가져오기 함수
   const getUserLocation = () => {
-    console.log('지도 - 사용자 위치 가져오기 시도')
     return new Promise((resolve, reject) => {
       if (navigator.geolocation) {
         const options = {
@@ -66,27 +215,22 @@ function MapPage() {
           timeout: 10000,
           maximumAge: 0,
         }
-
+        
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords
             const location = { lat: latitude, lng: longitude }
-            console.log('지도 - 사용자 위치:', location)
             setUserLocation(location)
             setMapCenter(location)
             resolve(location)
           },
           (error) => {
-            console.error('지도 - 위치 정보를 가져오는데 실패했습니다:', error)
             reject(error)
           },
           options,
         )
       } else {
-        const error = new Error(
-          '이 브라우저에서는 위치 정보를 지원하지 않습니다.',
-        )
-        console.error('지도 - ' + error.message)
+        const error = new Error('이 브라우저에서는 위치 정보를 지원하지 않습니다.')
         reject(error)
       }
     })
@@ -95,10 +239,9 @@ function MapPage() {
   // 사용자 위치 가져오기
   useEffect(() => {
     getUserLocation().catch((error) => {
-      console.warn('지도 - 위치 정보 가져오기 실패, 기본 위치 사용:', error)
-      // 위치 정보 가져오기 실패 시 기본 위치 사용 (서울 시청)
-      const defaultLocation = { lat: 37.5665, lng: 126.978 }
-      setUserLocation(defaultLocation) // 기본 위치도 userLocation에 저장
+      // 위치 정보 가져오기 실패 시 제주 구름스퀘어로 기본 위치 설정
+      const defaultLocation = { lat: 33.4996, lng: 126.5302 }
+      setUserLocation(defaultLocation)
       setMapCenter(defaultLocation)
     })
   }, [])
@@ -110,10 +253,9 @@ function MapPage() {
         setLoading(true)
 
         // 가게 데이터 가져오기
-        console.log('가게 정보 불러오는 중...')
         try {
           // 할인중인 가게만 보여주기 옵션이 선택된 경우 API 파라미터 추가
-          let apiUrl = `${API_BASE_URL}/api/v1/stores`
+          let apiUrl = `${API_BASE_URL}/stores`
           if (showDiscountOnly) {
             apiUrl += '?isDiscountOpen=true'
           }
@@ -121,22 +263,101 @@ function MapPage() {
           // 직접 axios로 API 호출
           const response = await axios.get(apiUrl)
           const storesData = response.data
-          console.log('가게 데이터:', storesData)
 
           if (!storesData || storesData.length === 0) {
-            console.log('가게 데이터가 없습니다.')
             setLoading(false)
             return
           }
 
-          // 가게 목록 처리 - 유효한 좌표를 가진 가게만 포함
-          const storesWithValidLocation = storesData
-            .map((store) => {
+          // 가게 목록 처리 - 실제 주소 위치 사용
+          const processStoreWithLocation = async (store) => {
+            // 위도와 경도 데이터 처리
+            // latitude, longitude 필드가 우선 (백엔드 실제 주소 좌표)
+            let lat = store.latitude ? parseFloat(store.latitude) : null
+            let lng = store.longitude ? parseFloat(store.longitude) : null
+
+            // latitude, longitude가 없으면 lat, lng 필드 확인
+            if (!lat || isNaN(lat)) {
+              lat = store.lat ? parseFloat(store.lat) : null
+            }
+            if (!lng || isNaN(lng)) {
+              lng = store.lng ? parseFloat(store.lng) : null
+            }
+
+            // 좌표가 유효하지 않은 경우 (null, NaN, 0)
+            if (
+              !lat ||
+              isNaN(lat) ||
+              !lng ||
+              isNaN(lng) ||
+              (lat === 0 && lng === 0)
+            ) {
+              // 주소가 있는 경우, 지오코딩 API를 사용하여 좌표 가져오기 시도
+              if (store.address && store.address.trim() !== '') {
+                try {
+                  // 맵이 로드된 후에만 지오코딩 수행
+                  if (mapLoaded && window.kakao && window.kakao.maps && window.kakao.maps.services) {
+                    const coords = await getCoordinatesFromAddress(store.address)
+                    
+                    if (coords) {
+                      return {
+                        ...store,
+                        lat: coords.lat,
+                        lng: coords.lng,
+                        hasRandomLocation: false,
+                        isGeocodedLocation: true,
+                      }
+                    }
+                  }
+                } catch (geoError) {
+                  // 지오코딩 실패 - 무시
+                }
+              }
+              
+              // 지오코딩 실패 또는 주소 없음 - 랜덤 위치 생성
+              // 현재 위치 중심으로 랜덤한 위치 생성 (반경 500m 이내)
+              const centerLat = userLocation ? userLocation.lat : 37.5665
+              const centerLng = userLocation ? userLocation.lng : 126.978
+              
+              const randomLat = centerLat + (Math.random() - 0.5) * 0.01 // 약 ±500m
+              const randomLng = centerLng + (Math.random() - 0.5) * 0.01
+              
+              return {
+                ...store,
+                lat: randomLat,
+                lng: randomLng,
+                hasRandomLocation: true, // 랜덤 위치 표시
+              }
+            }
+
+            return {
+              ...store,
+              lat: lat,
+              lng: lng,
+              hasRandomLocation: false,
+            }
+          }
+
+          // 모든 가게 정보 비동기 처리
+          const storesWithLocationPromises = storesData.map(processStoreWithLocation)
+          const storesWithValidLocation = await Promise.all(storesWithLocationPromises)
+
+          setStores(storesWithValidLocation)
+          setFilteredStores(storesWithValidLocation)
+        } catch (error) {
+          // 오류가 있으면 getStores 함수로 재시도
+          try {
+            const storesData = await getStores()
+            const storeList = Array.isArray(storesData)
+              ? storesData
+              : storesData?.data || []
+            
+            // 모든 가게 정보 비동기 처리 - 재시도 경우
+            const processStoreWithLocation = async (store) => {
               // 위도와 경도 데이터 처리
-              // latitude, longitude 필드가 우선 (백엔드 실제 주소 좌표)
               let lat = store.latitude ? parseFloat(store.latitude) : null
               let lng = store.longitude ? parseFloat(store.longitude) : null
-
+              
               // latitude, longitude가 없으면 lat, lng 필드 확인
               if (!lat || isNaN(lat)) {
                 lat = store.lat ? parseFloat(store.lat) : null
@@ -144,8 +365,8 @@ function MapPage() {
               if (!lng || isNaN(lng)) {
                 lng = store.lng ? parseFloat(store.lng) : null
               }
-
-              // 유효하지 않은 좌표인 경우 (null, NaN, 0)
+              
+              // 좌표가 유효하지 않은 경우 (null, NaN, 0)
               if (
                 !lat ||
                 isNaN(lat) ||
@@ -153,213 +374,277 @@ function MapPage() {
                 isNaN(lng) ||
                 (lat === 0 && lng === 0)
               ) {
-                // 유효하지 않은 좌표를 가진 가게는 지도에 표시하지 않음
-                console.log(
-                  `매장 ${store.id}(${store.name || store.storeName}): 유효한 좌표 없음, 지도에 표시하지 않음`,
-                )
+                // 주소가 있는 경우, 지오코딩 시도
+                if (store.address && store.address.trim() !== '' && mapLoaded) {
+                  try {
+                    const coords = await getCoordinatesFromAddress(store.address)
+                    
+                    if (coords) {
+                      return {
+                        ...store,
+                        lat: coords.lat,
+                        lng: coords.lng,
+                        hasRandomLocation: false,
+                        isGeocodedLocation: true,
+                      }
+                    }
+                  } catch (geoError) {
+                    // 지오코딩 실패 - 무시
+                  }
+                }
+                
+                // 지오코딩 실패 - 랜덤 위치
+                const centerLat = userLocation ? userLocation.lat : 37.5665
+                const centerLng = userLocation ? userLocation.lng : 126.978
+                
+                const randomLat = centerLat + (Math.random() - 0.5) * 0.01
+                const randomLng = centerLng + (Math.random() - 0.5) * 0.01
+                
                 return {
                   ...store,
-                  lat: null,
-                  lng: null,
-                  hasValidLocation: false, // 유효한 위치 없음 표시
+                  lat: randomLat,
+                  lng: randomLng,
+                  hasRandomLocation: true,
                 }
               }
-
-              console.log(
-                `매장 ${store.id}(${store.name || store.storeName}): 좌표 확인 - 위도 ${lat}, 경도 ${lng}`,
-              )
+              
               return {
                 ...store,
                 lat: lat,
                 lng: lng,
-                hasValidLocation: true,
+                hasRandomLocation: false,
               }
-            })
-            // 유효한 좌표를 가진 가게만 필터링 (지도에 표시)
-            .filter(store => store.hasValidLocation)
-
-          console.log(
-            `총 ${storesWithValidLocation.length}개 매장 정보 로드 완료 (유효한 좌표 있는 매장만)`,
-          )
-          setStores(storesWithValidLocation)
-          setFilteredStores(storesWithValidLocation)
-        } catch (error) {
-          console.error('가게 정보 로드 실패:', error)
-          // 오류가 있으면 getStores 함수로 재시도
-          try {
-            const storesData = await getStores()
-            console.log('getStores 함수로 재시도:', storesData)
-            const storeList = Array.isArray(storesData)
-              ? storesData
-              : storesData?.data || []
-
-            // 위치 정보 처리 - 유효한 좌표를 가진 가게만 포함
-            const storesWithLocation = storeList
-              .map((store) => {
-                // 위도와 경도 데이터 처리
-                // latitude, longitude 필드가 우선 (백엔드 실제 주소 좌표)
-                let lat = store.latitude ? parseFloat(store.latitude) : null
-                let lng = store.longitude ? parseFloat(store.longitude) : null
-
-                // latitude, longitude가 없으면 lat, lng 필드 확인
-                if (!lat || isNaN(lat)) {
-                  lat = store.lat ? parseFloat(store.lat) : null
-                }
-                if (!lng || isNaN(lng)) {
-                  lng = store.lng ? parseFloat(store.lng) : null
-                }
-
-                // 유효하지 않은 좌표 처리
-                if (
-                  !lat ||
-                  isNaN(lat) ||
-                  !lng ||
-                  isNaN(lng) ||
-                  (lat === 0 && lng === 0)
-                ) {
-                  // 유효하지 않은 좌표를 가진 가게는 지도에 표시하지 않음
-                  return {
-                    ...store,
-                    lat: null,
-                    lng: null,
-                    hasValidLocation: false, // 유효한 위치 없음 표시
-                  }
-                }
-
-                return {
-                  ...store,
-                  lat: lat,
-                  lng: lng,
-                  hasValidLocation: true,
-                }
-              })
-              // 유효한 좌표를 가진 가게만 필터링 (지도에 표시)
-              .filter(store => store.hasValidLocation)
-
+            }
+            
+            const storesWithLocationPromises = storeList.map(processStoreWithLocation)
+            const storesWithLocation = await Promise.all(storesWithLocationPromises)
+            
             setStores(storesWithLocation)
             setFilteredStores(storesWithLocation)
           } catch (retryError) {
-            console.error('getStores 함수 재시도 실패:', retryError)
+            // 재시도 실패 - 무시
           }
         }
 
         setLoading(false)
       } catch (error) {
-        console.error('데이터 로딩 중 오류 발생:', error)
         setLoading(false)
       }
     }
 
-    fetchData()
-  }, [userLocation, showDiscountOnly])
+    // 맵이 로드된 후에만 데이터 가져오기 시작
+    if (mapLoaded) {
+      fetchData()
+    }
+  }, [userLocation, showDiscountOnly, mapLoaded])
 
   // 카카오맵 로드 확인
   useEffect(() => {
-    const loadKakaoMap = () => {
+    // 카카오맵 SDK 로더 함수 - 더 체계적인 방식으로 개선
+    const loadKakaoMap = async () => {
+      // 이미 로드된 경우 바로 반환
       if (window.kakao && window.kakao.maps) {
         setMapLoaded(true)
-      } else {
-        console.log('카카오맵 SDK를 로드합니다...')
-        const script = document.createElement('script')
+        return
+      }
 
+      try {
         // API 키 설정
         const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY
-        script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_API_KEY}&libraries=services,clusterer,drawing&autoload=false`
-        script.async = true
-
-        script.onload = () => {
-          window.kakao.maps.load(() => {
-            console.log('카카오맵 로드 완료')
-            setMapLoaded(true)
+        
+        // 스크립트가 이미 존재하는지 확인
+        const existingScript = document.getElementById('kakao-maps-sdk')
+        if (existingScript) {
+          return new Promise((resolve) => {
+            existingScript.onload = () => {
+              if (!window.kakao.maps) {
+                window.kakao.maps.load(() => {
+                  setMapLoaded(true)
+                  resolve()
+                })
+              } else {
+                setMapLoaded(true)
+                resolve()
+              }
+            }
           })
         }
-
-        script.onerror = (error) => {
-          console.error('카카오맵 로드 실패:', error)
-          alert(
-            '지도 로딩에 실패했습니다. 카카오 개발자 센터에서 현재 도메인이 등록되어 있는지 확인해주세요.',
-          )
-        }
-
-        document.head.appendChild(script)
+        
+        // 스크립트 생성 및 로드
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+          script.id = 'kakao-maps-sdk'
+          script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_API_KEY}&libraries=services,clusterer,drawing&autoload=false`
+          script.async = true
+          script.defer = true
+          
+          script.onload = () => {
+            window.kakao.maps.load(() => {
+              setMapLoaded(true)
+              resolve()
+            })
+          }
+          
+          script.onerror = (error) => {
+            alert('지도 로딩에 실패했습니다. 카카오 개발자 센터에서 현재 도메인이 등록되어 있는지 확인해주세요.')
+            reject(error)
+          }
+          
+          document.head.appendChild(script)
+        })
+      } catch (error) {
+        alert('지도 로딩 중 오류가 발생했습니다.')
       }
     }
 
     loadKakaoMap()
   }, [])
 
-  // 검색어, 할인 필터, 카테고리가 변경될 때 가게 목록 필터링
-  useEffect(() => {
-    if (stores.length === 0) return
+  // 주소를 기반으로 좌표를 얻는 지오코딩 함수 추가
+  const getCoordinatesFromAddress = async (address) => {
+    if (!address || address.trim() === '') {
+      return null
+    }
+    
+    return new Promise((resolve, reject) => {
+      if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
+        reject(new Error('카카오맵 서비스가 로드되지 않았습니다.'))
+        return
+      }
+      
+      // 지오코딩 서비스 객체 생성
+      const geocoder = new window.kakao.maps.services.Geocoder()
+      
+      // 주소로 좌표 검색
+      geocoder.addressSearch(address, (result, status) => {
+        // 정상적으로 검색이 완료됐으면
+        if (status === window.kakao.maps.services.Status.OK) {
+          const coords = {
+            lat: parseFloat(result[0].y),
+            lng: parseFloat(result[0].x),
+          }
+          resolve(coords)
+        } else {
+          reject(new Error(`지오코딩 실패: ${status}`))
+        }
+      })
+    })
+  }
 
+  // 검색어, 카테고리, 할인 필터가 변경될 때 가게 목록 필터링
+  const filterStores = useCallback((query, category, discountOnly) => {
+    if (stores.length === 0) return
+    
     let result = [...stores]
-    console.log('필터링 전 가게 수:', result.length)
 
     // 검색어 필터링
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+    if (query && query.trim() !== '') {
+      const lowerQuery = query.toLowerCase()
       result = result.filter((store) => {
-        const storeName = store.storeName || store.name || ''
-        const address = store.address || ''
-        return (
-          storeName.toLowerCase().includes(query) ||
-          address.toLowerCase().includes(query)
-        )
+        const storeName = (store.name || store.storeName || '').toLowerCase()
+        const storeAddress = (store.address || '').toLowerCase()
+        return storeName.includes(lowerQuery) || storeAddress.includes(lowerQuery)
       })
-      console.log('검색 필터링 후 가게 수:', result.length)
     }
 
     // 카테고리 필터링
-    if (categoryFilter) {
-      result = result.filter((store) => {
-        return store.categoryId === categoryFilter
-      })
-      console.log('카테고리 필터링 후 가게 수:', result.length)
+    if (category && category !== 'all') {
+      result = result.filter((store) => store.categoryId === category)
     }
 
-    setFilteredStores(result)
-  }, [searchQuery, stores, categoryFilter])
+    // 할인 매장만 필터링
+    if (discountOnly) {
+      result = result.filter((store) => 
+        store.isDiscountOpen === true || 
+        (store.discount && store.discount !== '0%')
+      )
+    }
 
-  // 마커 클릭 핸들러
+    // 유효하지 않은 좌표 필터링
+    result = result.filter(store => {
+      return store && 
+             store.id && // ID가 있는지 확인
+             store.lat && store.lng && // 좌표가 있는지 확인
+             !isNaN(store.lat) && !isNaN(store.lng) && // 숫자인지 확인
+             !(store.lat === 0 && store.lng === 0); // 0,0이 아닌지 확인
+    });
+
+    // 중복 ID 제거
+    const uniqueStores = [];
+    const seenIds = new Set();
+    for (const store of result) {
+      if (!seenIds.has(store.id)) {
+        seenIds.add(store.id);
+        uniqueStores.push(store);
+      }
+    }
+
+    setFilteredStores(uniqueStores)
+  }, [stores])
+
+  // 검색어, 카테고리, 할인 필터가 변경될 때 필터링 실행
+  useEffect(() => {
+    filterStores(searchQuery, categoryFilter, showDiscountOnly)
+  }, [searchQuery, categoryFilter, showDiscountOnly, filterStores])
+
+  // 가게 마커 클릭 핸들러 개선
   const handleMarkerClick = useCallback((store) => {
-    console.log('마커 클릭:', store?.id, store?.name || store?.storeName)
-
-    // store가 null인 경우 선택 해제 후 종료
+    // store가 null이면 선택 해제
     if (!store) {
       setSelectedStoreId(null)
       return
     }
 
-    // 항상 인포윈도우가 표시되도록 설정 - 토글 방식 제거
-    setSelectedStoreId(store.id)
-
-    // 선택된 가게로 지도 중심 이동
-    setMapCenter({ lat: store.lat, lng: store.lng })
-
-    // 가게 목록 최소화 (오버레이가 더 잘 보이도록)
-    setStoreListExpanded(false)
-
-    // 지도 레벨 조정 (더 가깝게 보이도록)
-    setMapLevel(3)
-
-    // 선택된 가게로 목록 스크롤
-    if (storeItemRefs.current[store.id] && storeListRef.current) {
-      // 약간의 지연을 두고 스크롤 (UI 업데이트 후에 실행되도록)
+    // 이미 선택된 상태에서 같은 마커를 클릭한 경우에도 상태 업데이트
+    // 리액트에서 같은 값으로 setState를 호출하면 렌더링이 발생하지 않으므로
+    // 명시적으로 다른 값을 설정했다가 다시 원래 값으로 설정
+    if (selectedStoreId === store.id) {
+      setSelectedStoreId(null)
+      
+      // 약간의 지연 후 다시 선택 상태로 설정
       setTimeout(() => {
-        storeItemRefs.current[store.id].scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        })
-      }, 100)
+        setSelectedStoreId(store.id)
+      }, 10)
+    } else {
+      // 다른 마커 선택
+      setSelectedStoreId(store.id)
     }
-  }, [])
+    
+    // 지도 중심 이동
+    setTimeout(() => {
+      setMapCenter({ lat: store.lat, lng: store.lng })
+      setMapLevel(3) // 적절한 줌 레벨로 설정
+    }, 50)
+  }, [selectedStoreId])
+
+  // 지도 클릭 핸들러 개선
+  const handleMapClick = (map, mouseEvent) => {
+    // 마커나 오버레이 클릭의 경우 전파 중단 확인
+    if (mouseEvent && mouseEvent._stopPropagation === true) {
+      return
+    }
+    
+    // 글로벌 마커 클릭 플래그 확인
+    if (window._markerClickInProgress === true) {
+      return
+    }
+    
+    // 마커 선택 해제
+    if (selectedStoreId) {
+      setSelectedStoreId(null)
+    }
+    
+    // 가게 목록 축소
+    if (storeListExpanded) {
+      setStoreListExpanded(false)
+    }
+  }
 
   // 줌 레벨 변경 핸들러 추가
   const handleZoomChange = (newLevel) => {
     // 최소 레벨 1, 최대 레벨 14로 제한
     const level = Math.max(1, Math.min(14, newLevel))
     setMapLevel(level)
-    console.log('줌 레벨 변경:', level)
     // 줌 변경 시 가게 목록 상태를 변경하지 않도록 함
   }
 
@@ -371,27 +656,16 @@ function MapPage() {
   // 사용자 위치로 이동하는 핸들러 - 현재 위치 다시 가져오기
   const handleMoveToCurrentLocation = async () => {
     try {
-      console.log('지도 - 현재 위치로 이동 요청')
       // 위치 정보 새로 가져오기 시도
+      setLoading(true) // 로딩 표시 추가
       const location = await getUserLocation()
-      console.log('지도 - 현재 위치로 이동:', location)
       setMapCenter(location)
       setMapLevel(3) // 줌 레벨 설정
+      setLoading(false) // 로딩 완료
     } catch (error) {
-      console.error('지도 - 현재 위치로 이동 실패:', error)
+      console.error('현재 위치로 이동 실패:', error)
       alert('현재 위치를 가져올 수 없습니다. 위치 접근 권한을 확인해주세요.')
-    }
-  }
-
-  // 지도 클릭 핸들러
-  const handleMapClick = (map, mouseEvent) => {
-    // 특정 조건 제거 - 마커와 오버레이를 제외한 모든 클릭에서 처리되도록
-    if (mouseEvent && !mouseEvent._stopPropagation) {
-      // 확장된 목록이 있을 때만 최소화
-      if (storeListExpanded) {
-        setStoreListExpanded(false)
-      }
-      // 인포윈도우는 그대로 유지 (마커 클릭 시에만 변경)
+      setLoading(false) // 에러 발생해도 로딩 종료
     }
   }
 
@@ -404,13 +678,12 @@ function MapPage() {
 
   // 검색 핸들러
   const handleSearch = (query) => {
-    console.log('검색어:', query)
     setSearchQuery(query)
-    // 검색어 변경 후에는 매장 목록 확장
-    setStoreListExpanded(true)
+    // 필터링된 가게 목록 업데이트
+    filterStores(query, categoryFilter, showDiscountOnly)
   }
 
-  // 주소 간소화 함수 추가
+  // 주소 간소화 및 글자수 제한 함수
   const simplifyAddress = (address) => {
     if (!address) return '주소 정보 없음'
     // "대한민국" 제거
@@ -433,6 +706,25 @@ function MapPage() {
         </div>
       )
     }
+    
+    // 중복 ID 체크 및 유효한 좌표 확인
+    const validStores = filteredStores.filter((store, index, self) => {
+      // ID가 없는 경우 제외
+      if (!store.id) return false;
+      
+      // 고유 ID만 포함 (중복 제거)
+      const isUniqueId = index === self.findIndex(s => s.id === store.id);
+      
+      // 유효한 좌표인지 확인
+      const hasValidCoords = 
+        store.lat && 
+        store.lng && 
+        !isNaN(store.lat) && 
+        !isNaN(store.lng) &&
+        !(store.lat === 0 && store.lng === 0);
+        
+      return isUniqueId && hasValidCoords;
+    });
 
     return (
       <Map
@@ -441,46 +733,72 @@ function MapPage() {
         style={{ width: '100%', height: '100%' }}
         ref={mapRef}
         onClick={handleMapClick}
+        disableDoubleClickZoom={true}
       >
-        {/* 현재 위치 마커 */}
+        {/* 사용자 위치 마커 - 빨간색 마커 사용 */}
         {userLocation && (
           <MapMarker
             position={userLocation}
             image={{
-              src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
-              size: { width: 24, height: 35 },
+              src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', // 카카오 기본 빨간색 마커로 변경
+              size: { width: 35, height: 35 }, // 크기 약간 키움
             }}
-            title="내 위치"
+            zIndex={10}
+            onClick={() => {
+              setMapCenter(userLocation)
+              setMapLevel(3)
+            }}
           />
         )}
 
-        {/* 가게 마커 클러스터링 추가 */}
+        {/* 가게 마커 클러스터링 설정 */}
         <MarkerClusterer
           averageCenter={true}
           minLevel={5}
+          calculator={[20, 50, 100]}
           disableClickZoom={false}
+          gridSize={60}
           styles={[
             {
               width: '50px',
               height: '50px',
-              background: 'rgba(51, 204, 255, .8)',
+              background: 'rgba(51, 153, 255, .8)',
               borderRadius: '25px',
-              color: '#000',
+              color: '#fff',
               textAlign: 'center',
               fontWeight: 'bold',
               lineHeight: '50px',
             },
+            {
+              width: '55px',
+              height: '55px',
+              background: 'rgba(0, 102, 204, .8)',
+              borderRadius: '28px',
+              color: '#fff',
+              textAlign: 'center',
+              fontWeight: 'bold',
+              lineHeight: '55px',
+            },
+            {
+              width: '60px',
+              height: '60px',
+              background: 'rgba(0, 51, 153, .8)',
+              borderRadius: '30px',
+              color: '#fff',
+              textAlign: 'center',
+              fontWeight: 'bold',
+              lineHeight: '60px',
+            }
           ]}
         >
-          {/* 가게 마커 */}
-          {filteredStores.map((store) => (
+          {/* 가게 마커 - 유효성 검증된 데이터만 사용 */}
+          {validStores.map((store) => (
             <StoreMarker
-              key={store.id}
+              key={`store-marker-${store.id}`}
               store={store}
               isSelected={selectedStoreId === store.id}
               onClick={handleMarkerClick}
               onDetail={handleStoreDetail}
-              userLocation={userLocation}
             />
           ))}
         </MarkerClusterer>
@@ -488,103 +806,74 @@ function MapPage() {
     )
   }
 
-  // 가게 목록 부분 수정 - z-index 변경
+  // 가상화된 목록을 위한 메모이제이션된 아이템 데이터
+  const itemData = useMemo(() => ({
+    store: filteredStores,
+    selectedStoreId,
+    storeItemRefs,
+    handleMarkerClick,
+    handleStoreDetail,
+    simplifyAddress,
+  }), [
+    filteredStores,
+    selectedStoreId,
+    handleMarkerClick,
+    handleStoreDetail,
+    simplifyAddress,
+  ]);
+  
+  // 가게 목록 부분 수정 - 슬라이딩 시트 스타일로 개선
   const renderStoreList = () => {
-    if (filteredStores.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-8">
-          <p className="text-gray-500 mb-2">검색 결과가 없습니다</p>
-          <button
-            onClick={() => {
-              setSearchQuery('')
-              setCategoryFilter('')
-              setShowDiscountOnly(false)
-            }}
-            className="text-sm text-gray-600 underline"
-          >
-            검색 조건 초기화
-          </button>
-        </div>
-      )
-    }
-
+    // 상태에 따른 목록 높이 계산
+    const listHeight = storeListExpanded
+      ? window.innerHeight * 0.6
+      : window.innerHeight * 0.25
+    
     return (
       <div
-        className="overflow-y-auto max-h-[calc(100%-56px)]"
         ref={storeListRef}
+        className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg overflow-hidden z-10 transition-all duration-300 ${
+          storeListExpanded ? 'h-3/5' : 'h-1/4'
+        }`}
         onScroll={handleStoreListScroll}
+        onClick={() => !storeListExpanded && setStoreListExpanded(true)}
       >
-        {filteredStores.map((store) => {
-          const isSelected = selectedStoreId === store.id
-          const itemRef = React.createRef()
-          storeItemRefs.current[store.id] = itemRef
+        <div className="sticky top-0 w-full flex justify-center pt-2 pb-1 bg-white z-10">
+          <div 
+            className="w-12 h-1 bg-gray-300 rounded-full cursor-pointer" 
+            onClick={(e) => {
+              e.stopPropagation();
+              setStoreListExpanded(!storeListExpanded);
+            }}
+          ></div>
+        </div>
 
-          return (
-            <div
-              key={store.id}
-              ref={itemRef}
-              className={`p-3 border-b flex items-start cursor-pointer relative ${
-                isSelected ? 'bg-yellow-50' : ''
-              }`}
-              onClick={() => handleStoreDetail(store.id)}
-            >
-              {/* 가게 이미지 */}
-              <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
-                <img
-                  src={store.storeImg || defaultImage}
-                  alt={store.name || store.storeName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null
-                    e.target.src = defaultImage
-                  }}
-                />
-              </div>
+        <div className="p-3 pb-0">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-bold">주변 가게 ({filteredStores.length})</h3>
+          </div>
 
-              {/* 가게 정보 */}
-              <div className="ml-3 flex-grow">
-                <h3 className="font-medium text-gray-900 mb-0.5 pr-14">
-                  {store.name || store.storeName || '이름 없는 가게'}
-                </h3>
-                
-                <p className="text-xs text-gray-500 mb-1">
-                  {simplifyAddress(store.address) || '주소 정보 없음'}
-                </p>
-                <div className="flex items-center text-xs">
-                  {/* 별점 */}
-                  <span className="text-yellow-500 font-medium">
-                    ★ {(store.avgRating || store.averageRating || 0).toFixed(1)}
-                  </span>
-                  
-                  {/* 할인 정보 */}
-                  {((store.discount && store.discount !== '0%') || 
-                    store.isDiscountOpen === true) && (
-                    <span className="ml-2 bg-red-100 text-red-700 px-1.5 rounded-sm">
-                      {store.discount || '할인중'}
-                    </span>
-                  )}
-                </div>
+          <div className="space-y-0.5">
+            {filteredStores.length > 0 ? (
+              <List
+                className="StoreList"
+                height={listHeight - 70} // 헤더 높이 등을 고려해 조정
+                itemCount={filteredStores.length}
+                itemSize={90} // 각 아이템의 높이 축소
+                width="100%"
+                itemData={itemData}
+              >
+                {StoreItem}
+              </List>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                {loading
+                  ? '가게 정보를 불러오는 중...'
+                  : '표시할 가게가 없습니다.'}
               </div>
-
-              {/* 우측 화살표 아이콘 */}
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
-            </div>
-          )
-        })}
+            )}
+          </div>
+        </div>
       </div>
     )
   }
@@ -594,23 +883,46 @@ function MapPage() {
       {/* 헤더 */}
       <Header title="지도" />
 
-      {/* 검색 영역 */}
-      <div className="px-4 py-2 border-b">
+      {/* 하이라이트 스타일 추가 */}
+      <style>{`
+        .highlight-store {
+          animation: pulse 1.5s ease-in-out;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            background-color: rgba(219, 234, 254, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            background-color: rgba(219, 234, 254, 0.9);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            background-color: rgba(219, 234, 254, 0.5);
+          }
+        }
+      `}</style>
+
+      {/* 검색 영역을 홈페이지 스타일로 수정 */}
+      <div className="px-4 py-3 border-b">
         <SearchBar
-          placeholder="가게 이름, 메뉴 검색"
+          placeholder="가게 이름 검색"
           initialValue={searchQuery}
           onSearch={handleSearch}
         />
       </div>
 
       {/* 카테고리 필터 영역 */}
-      <div className="px-4 py-3 border-b">
-        <div className="flex justify-between">
+      <div className="px-4 py-3 border-b overflow-x-auto">
+        <div className="flex justify-between min-w-max">
           {categoryOptions.map((option) => (
             <button
               key={option.id}
               onClick={() => handleCategorySelect(option.id)}
-              className={`flex flex-col items-center justify-center ${
+              className={`flex flex-col items-center justify-center mx-1 ${
                 categoryFilter === option.id
                   ? 'text-yellow-600'
                   : 'text-gray-600'

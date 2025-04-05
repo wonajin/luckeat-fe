@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
 import { useAuth } from '../context/AuthContext'
 import Navigation from '../components/layout/Navigation'
+import * as userApi from '../api/userApi'
 
 function EditProfilePage() {
   const navigate = useNavigate()
-  const { user, updateNickname, updatePassword, deleteAccount } = useAuth()
+  const { user, updateNickname, updatePassword, deleteAccount, logout } = useAuth()
 
   // 상태 관리
   const [nickname, setNickname] = useState('')
@@ -18,6 +19,8 @@ function EditProfilePage() {
 
   // 모달 상태
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [deletionSuccessful, setDeletionSuccessful] = useState(false)
 
   // 토스트 메시지 상태
   const [showToast, setShowToast] = useState(false)
@@ -25,6 +28,7 @@ function EditProfilePage() {
 
   // 유효성 검사 메시지
   const [nicknameError, setNicknameError] = useState('')
+  const [nicknameSuccess, setNicknameSuccess] = useState('')
   const [currentPasswordError, setCurrentPasswordError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
@@ -43,25 +47,26 @@ function EditProfilePage() {
     }
   }, [user])
 
+  // 성공 모달 상태 확인
+  useEffect(() => {
+    console.log('성공 모달 상태 변경:', showSuccessModal)
+  }, [showSuccessModal])
+
   // 닉네임 변경 핸들러
   const handleNicknameChange = (e) => {
-    const value = e.target.value
+    // 앞뒤 공백 제거
+    const value = e.target.value.trim()
     setNickname(value)
-
+    
     // 닉네임 유효성 검사
-    if (value === originalNickname) {
-      setIsNicknameSame(true)
+    if (value.length < 2 || value.length > 10) {
+      setNicknameError('닉네임은 2자 이상 10자 이하여야 합니다.')
+    } else if (value === originalNickname) {
       setNicknameError('')
+      setIsNicknameSame(true)
     } else {
+      setNicknameError('')
       setIsNicknameSame(false)
-
-      if (value.length < 2) {
-        setNicknameError('닉네임은 최소 2자 이상이어야 합니다.')
-      } else if (value.length > 10) {
-        setNicknameError('닉네임은 최대 10자까지 작성가능합니다.')
-      } else {
-        setNicknameError('')
-      }
     }
   }
 
@@ -75,13 +80,20 @@ function EditProfilePage() {
       return
     }
     
-    // 한글이 아닌 경우 상태 업데이트
-    setCurrentPassword(e.target.value)
+    // 한글이 아닌 경우 상태 업데이트 (공백 제거)
+    const value = e.target.value.replace(/\s+/g, '')
+    setCurrentPassword(value)
     
-    if (!e.target.value) {
+    if (!value) {
       setCurrentPasswordError('현재 비밀번호를 입력해주세요.')
     } else {
       setCurrentPasswordError('')
+      // 새 비밀번호가 입력되어 있고 현재 비밀번호와 동일한 경우 체크
+      if (newPassword && value === newPassword) {
+        setPasswordError('새 비밀번호는 현재 비밀번호와 달라야 합니다.')
+      } else if (newPassword && passwordError === '새 비밀번호는 현재 비밀번호와 달라야 합니다.') {
+        setPasswordError('')
+      }
     }
   }
 
@@ -95,25 +107,30 @@ function EditProfilePage() {
       return
     }
     
-    // 한글이 아닌 경우 상태 업데이트
-    const value = e.target.value
+    // 한글이 아닌 경우 상태 업데이트 (공백 제거)
+    const value = e.target.value.replace(/\s+/g, '')
     setNewPassword(value)
 
+    // 새 비밀번호 유효성 검사
     if (!value) {
       setPasswordError('새로운 비밀번호를 입력해주세요.')
     } else if (value.length < 8 || value.length > 20) {
       setPasswordError('비밀번호는 8자 이상, 20자 이하여야 합니다.')
+    } else if (value === currentPassword && currentPassword) {
+      setPasswordError('새 비밀번호는 현재 비밀번호와 달라야 합니다.')
     } else {
       setPasswordError('')
     }
 
     // 비밀번호 확인 일치 여부 검사
-    if (confirmPassword && value !== confirmPassword) {
-      setPasswordsNotMatch(true)
-      setConfirmPasswordError('비밀번호가 일치하지 않습니다.')
-    } else if (confirmPassword) {
-      setPasswordsNotMatch(false)
-      setConfirmPasswordError('')
+    if (confirmPassword) {
+      if (value !== confirmPassword) {
+        setPasswordsNotMatch(true)
+        setConfirmPasswordError('비밀번호가 일치하지 않습니다.')
+      } else {
+        setPasswordsNotMatch(false)
+        setConfirmPasswordError('')
+      }
     }
   }
 
@@ -127,11 +144,14 @@ function EditProfilePage() {
       return
     }
     
-    // 한글이 아닌 경우 상태 업데이트
-    const value = e.target.value
+    // 한글이 아닌 경우 상태 업데이트 (공백 제거)
+    const value = e.target.value.replace(/\s+/g, '')
     setConfirmPassword(value)
 
-    if (value !== newPassword) {
+    if (!value) {
+      setPasswordsNotMatch(false)
+      setConfirmPasswordError('비밀번호 확인을 입력해주세요.')
+    } else if (value !== newPassword) {
       setPasswordsNotMatch(true)
       setConfirmPasswordError('비밀번호가 일치하지 않습니다.')
     } else {
@@ -149,41 +169,29 @@ function EditProfilePage() {
     }, 3000)
   }
 
-  // 닉네임 수정 처리
+  // 닉네임 수정 제출
   const handleNicknameSubmit = async () => {
-    // 닉네임 유효성 검사
-    if (!nickname) {
-      setNicknameError('닉네임을 입력해주세요.')
+    if (isNicknameSame) {
+      setNicknameError('변경할 닉네임을 입력해주세요.')
       return
     }
 
-    if (nickname === originalNickname) {
-      showToastMessage('변경된 내용이 없습니다.')
+    if (nickname.length < 2 || nickname.length > 10) {
+      setNicknameError('닉네임은 2자 이상 10자 이하여야 합니다.')
       return
     }
-
-    if (nickname.length < 2) {
-      setNicknameError('닉네임은 최소 2자 이상이어야 합니다.')
-      return
-    }
-
-    if (nickname.length > 10) {
-      setNicknameError('닉네임은 최대 10자까지 작성가능합니다.')
-      return
-    }
-
-    setIsLoading(true)
 
     try {
+      setIsLoading(true)
+      setNicknameError('')
+      
       const result = await updateNickname(nickname)
+      
       if (result.success) {
+        setNicknameSuccess('닉네임이 성공적으로 변경되었습니다.')
+        setNicknameError('')
         setOriginalNickname(nickname)
         setIsNicknameSame(true)
-        showToastMessage('닉네임이 수정되었습니다.')
-        // 수정 완료 시 홈화면으로 이동
-        setTimeout(() => {
-          navigate('/')
-        }, 1500)
       } else {
         if (result.message && result.message.includes('중복')) {
           setNicknameError('중복된 닉네임입니다.')
@@ -216,6 +224,16 @@ function EditProfilePage() {
       return
     }
 
+    if (newPassword === currentPassword) {
+      setPasswordError('새 비밀번호는 현재 비밀번호와 달라야 합니다.')
+      return
+    }
+
+    if (!confirmPassword) {
+      setConfirmPasswordError('비밀번호 확인을 입력해주세요.')
+      return
+    }
+
     if (newPassword !== confirmPassword) {
       setPasswordsNotMatch(true)
       setConfirmPasswordError('비밀번호가 일치하지 않습니다.')
@@ -237,7 +255,9 @@ function EditProfilePage() {
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
+        setCurrentPasswordError('')
         setPasswordError('')
+        setConfirmPasswordError('')
         setPasswordsNotMatch(false)
         // 수정 완료 시 홈화면으로 이동
         setTimeout(() => {
@@ -266,21 +286,44 @@ function EditProfilePage() {
     setIsLoading(true)
 
     try {
-      const result = await deleteAccount()
+
+      // 회원 탈퇴 API 호출만 수행하고, 로컬 스토리지는 건드리지 않음
+      const result = await userApi.deleteAccount()
+      
       if (result.success) {
-        showToastMessage('회원 탈퇴가 완료되었습니다.')
-        setTimeout(() => {
-          navigate('/')
-        }, 1500)
+        // 탈퇴 성공 시, 로컬 스토리지는 건드리지 않고 모달만 표시
+        setShowDeleteModal(false)
+        setDeletionSuccessful(true)
+        setShowSuccessModal(true)
       } else {
         alert(result.message || '회원 탈퇴에 실패했습니다.')
         setShowDeleteModal(false)
       }
     } catch (error) {
+      console.error('회원 탈퇴 중 오류:', error)
       alert('회원 탈퇴 중 오류가 발생했습니다.')
       setShowDeleteModal(false)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // 회원 탈퇴 완료 처리 (모달 확인 버튼 클릭 시)
+  const handleConfirmDeletion = () => {
+    console.log('확인 버튼 클릭, 탈퇴 완료 처리 시작')
+    // 모달 닫기
+    setShowSuccessModal(false)
+    
+    // 실제 로그아웃 처리 (로컬 스토리지 삭제)
+    if (deletionSuccessful) {
+      // 로컬 스토리지 직접 접근 대신 로그아웃 함수 사용
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      console.log('로컬 스토리지 정보 삭제 완료')
+      
+      // 로그인 페이지로 즉시 이동 (history API 사용)
+      window.location.replace('/')
     }
   }
 
@@ -314,13 +357,16 @@ function EditProfilePage() {
             onChange={handleNicknameChange}
             className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300"
           />
-          {isNicknameSame && (
+          {isNicknameSame && !nicknameSuccess && (
             <p className="text-gray-500 text-sm mt-1">
               * 변경할 닉네임을 입력해주세요.
             </p>
           )}
           {nicknameError && (
             <p className="text-red-500 text-sm mt-1">* {nicknameError}</p>
+          )}
+          {nicknameSuccess && (
+            <p className="text-green-500 text-sm mt-1">* {nicknameSuccess}</p>
           )}
 
           <div className="mt-3">
@@ -349,11 +395,17 @@ function EditProfilePage() {
             value={currentPassword}
             onChange={handleCurrentPasswordChange}
             placeholder="현재 비밀번호를 입력해주세요."
-            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300 mb-2"
+            className={`w-full p-2 bg-gray-100 rounded-lg border ${
+              currentPasswordError ? 'border-red-500' : 'border-gray-300'
+            } mb-2`}
           />
-          {currentPasswordError && (
+          {currentPasswordError ? (
             <p className="text-red-500 text-sm mb-2">
               * {currentPasswordError}
+            </p>
+          ) : (
+            <p className="text-gray-500 text-xs mb-2">
+              * 현재 사용중인 비밀번호를 입력해주세요.
             </p>
           )}
 
@@ -363,10 +415,16 @@ function EditProfilePage() {
             value={newPassword}
             onChange={handlePasswordChange}
             placeholder="새로운 비밀번호를 입력해주세요."
-            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300 mb-2"
+            className={`w-full p-2 bg-gray-100 rounded-lg border ${
+              passwordError ? 'border-red-500' : 'border-gray-300'
+            } mb-2`}
           />
-          {passwordError && (
+          {passwordError ? (
             <p className="text-red-500 text-sm mb-2">* {passwordError}</p>
+          ) : (
+            <p className="text-gray-500 text-xs mb-2">
+              * 8~20자의 영문, 숫자, 특수문자를 조합하여 입력해주세요.
+            </p>
           )}
 
           <label className="block text-sm font-medium mb-1">
@@ -377,11 +435,21 @@ function EditProfilePage() {
             value={confirmPassword}
             onChange={handleConfirmPasswordChange}
             placeholder="비밀번호를 다시 한번 입력해주세요."
-            className="w-full p-2 bg-gray-100 rounded-lg border border-gray-300"
+            className={`w-full p-2 bg-gray-100 rounded-lg border ${
+              confirmPasswordError ? 'border-red-500' : 'border-gray-300'
+            }`}
           />
-          {passwordsNotMatch && (
+          {confirmPasswordError ? (
             <p className="text-red-500 text-sm mt-1">
               * {confirmPasswordError}
+            </p>
+          ) : confirmPassword ? (
+            <p className="text-green-500 text-xs mt-1">
+              * 비밀번호가 일치합니다.
+            </p>
+          ) : (
+            <p className="text-gray-500 text-xs mt-1">
+              * 새 비밀번호를 한번 더 입력해주세요.
             </p>
           )}
 
@@ -394,7 +462,8 @@ function EditProfilePage() {
                 !newPassword ||
                 !confirmPassword ||
                 passwordsNotMatch ||
-                !!passwordError
+                !!passwordError ||
+                !!currentPasswordError
               }
               className={`px-4 py-3 rounded-lg w-full ${
                 isLoading ||
@@ -402,7 +471,8 @@ function EditProfilePage() {
                 !newPassword ||
                 !confirmPassword ||
                 passwordsNotMatch ||
-                !!passwordError
+                !!passwordError ||
+                !!currentPasswordError
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-[#F7B32B] hover:bg-[#E09D18] active:bg-[#D08D08]'
               } text-white font-medium transition-colors`}
@@ -460,6 +530,28 @@ function EditProfilePage() {
                 } text-white font-bold rounded-lg transition-colors`}
               >
                 {isLoading ? '처리 중...' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 회원 탈퇴 완료 모달 */}
+      {showSuccessModal === true && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-5 w-4/5 max-w-xs">
+            <h3 className="font-bold text-lg text-center mb-4">
+              회원 탈퇴가 완료되었습니다.
+            </h3>
+            <p className="text-center text-gray-600 mb-4">
+              그동안 이용해 주셔서 감사합니다.
+            </p>
+            <div className="flex justify-center">
+              <button
+                onClick={handleConfirmDeletion}
+                className="px-4 py-2 bg-[#F7B32B] text-white font-bold rounded-lg hover:bg-[#E09D18] active:bg-[#D08D08] transition-colors"
+              >
+                확인
               </button>
             </div>
           </div>

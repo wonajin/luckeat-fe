@@ -1,9 +1,10 @@
 import apiClient from './apiClient'
+import { API_ENDPOINTS } from '../config/apiConfig'
 
 // 가게의 상품 목록 조회
 export const getStoreProducts = async (storeId) => {
   try {
-    const response = await apiClient.get(`/api/v1/stores/${storeId}/products`)
+    const response = await apiClient.get(`/stores/${storeId}/products`)
     return response.data
   } catch (error) {
     console.error('상품 목록 조회 오류:', error)

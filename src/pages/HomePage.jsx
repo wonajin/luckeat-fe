@@ -12,13 +12,14 @@ import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import luckeatLogo from '../assets/images/luckeat-logo.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
+import { API_BASE_URL } from '../config/apiConfig'
 
 function HomePage() {
   const navigate = useNavigate()
   const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('전체')
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
@@ -38,31 +39,34 @@ function HomePage() {
   const [autoSlide, setAutoSlide] = useState(true)
   const autoSlideInterval = useRef(null)
   const [slideDirection, setSlideDirection] = useState('right')
-  const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net/api/v1'
 
   const cardNews = [
     {
       id: 1,
       image: banner01,
-      link: '/intro',
+      /*페이지 추후 추가 후 연결
+      link: '/intro',*/
     },
     {
       id: 2,
       image: banner02,
-      link: '/jeju-special',
+      /*페이지 추후 추가 후 연결
+      link: '/jeju-special',*/
     },
     {
       id: 3,
       image: banner03,
-      link: '/partner',
+      /*페이지 추후 추가 후 연결
+       link: '/partner',*/
     },
   ]
-
+ // 카테고리 옵션 추가
   const categoryOptions = [
+    { id: 'all', name: '전체', icon: '🔍' },
     { id: 1, name: '한식', icon: '🍚' },
-    { id: 2, name: '일식', icon: '🍱' },
-    { id: 3, name: '중식', icon: '🥢' },
-    { id: 4, name: '양식', icon: '🍝' },
+    { id: 4, name: '일식', icon: '🍱' },
+    { id: 2, name: '중식', icon: '🥢' },
+    { id: 3, name: '양식', icon: '🍝' },
     { id: 5, name: '카페/베이커리', icon: '🍞' },
     { id: 6, name: '샐러드/청과', icon: '🥗' },
   ]
@@ -100,6 +104,18 @@ function HomePage() {
     setAutoSlide(true)
   }
 
+  // 주소에서 '대한민국' 제거하는 함수
+  const simplifyAddress = (address) => {
+    if (!address) return '주소 정보 없음'
+    // "대한민국" 제거
+    let simplified = address.replace(/^대한민국\s+/, '')
+    // 20자 제한 (20자가 넘으면 "..." 표시)
+    if (simplified.length > 20) {
+      simplified = simplified.substring(0, 20) + '...'
+    }
+    return simplified
+  }
+
   // 서버에서 페이지별로 데이터 가져오기
   const fetchStores = useCallback(async (page = 1, reset = false) => {
     try {
@@ -122,13 +138,10 @@ function HomePage() {
       }
 
       // 카테고리 필터링
-      if (categoryFilter) {
+      if (categoryFilter && categoryFilter !== '전체') {
         const category = categoryOptions.find(opt => opt.name === categoryFilter)
         if (category) {
-          console.log('카테고리 필터 적용:', category.name, category.id);
           queryParams.append('categoryId', category.id)
-        } else {
-          console.log('카테고리를 찾을 수 없음:', categoryFilter);
         }
       }
 
@@ -138,27 +151,43 @@ function HomePage() {
       }
 
       // 정렬 옵션
-      let sortBy = '';
+      let sortBy = ''
+      let orderBy = ''
+      let orderDirection = ''
+      
       switch (sortOption) {
         case '가까운 순':
-          sortBy = 'distance';
-          break;
+          sortBy = 'distance'
+          orderBy = 'distance'
+          orderDirection = 'asc'
+          break
         case '리뷰 많은 순':
-          sortBy = 'reviewCount';
-          break;
+          sortBy = 'reviewCount'
+          orderBy = 'reviewCount'
+          orderDirection = 'desc'
+          break
         case '공유 많은 순':
-          sortBy = 'shareCount';
-          break;
+          sortBy = 'shareCount'
+          orderBy = 'shareCount'
+          orderDirection = 'desc'
+          break
         case '별점 높은 순':
-          sortBy = 'avgRating';
-          break;
+          sortBy = 'avgRating'
+          orderBy = 'avgRating'
+          orderDirection = 'desc'
+          break
         default:
-          sortBy = 'distance';
+          sortBy = 'distance'
+          orderBy = 'distance'
+          orderDirection = 'asc'
       }
-      queryParams.append('sort', sortBy);
-
-      console.log('요청 URL:', url + (queryParams.toString() ? `?${queryParams.toString()}` : ''));
-
+      
+      // 다양한 정렬 파라미터 형식을 시도 (백엔드 API가 어떤 형식을 사용하는지에 따라)
+      queryParams.append('sort', sortBy)
+      queryParams.append('sortBy', sortBy) 
+      queryParams.append('orderBy', orderBy)
+      queryParams.append('orderDirection', orderDirection)
+      
       // 쿼리 파라미터가 있으면 URL에 추가
       if (queryParams.toString()) {
         url += `?${queryParams.toString()}`
@@ -167,9 +196,6 @@ function HomePage() {
       try {
         const response = await fetch(url)
         const data = await response.json()
-        
-        // 응답 데이터 로깅
-        console.log('API 응답 데이터 길이:', data.length);
         
         // 데이터가 없거나 배열이 아닌 경우 처리
         if (!data || !Array.isArray(data)) {
@@ -185,21 +211,49 @@ function HomePage() {
         
         // 페이지가 1이거나 reset이 true면 데이터 초기화
         if (page === 1 || reset) {
-          setStores(data)
+          // 클라이언트 측 정렬 적용 (백엔드에서 정렬이 제대로 작동하지 않는 경우)
+          // 필드가 없는 경우를 처리하기 위한 안전 조치
+          const sortData = [...data].sort((a, b) => {
+            // 기본값 설정 (필드가 없는 경우 사용)
+            const defaultA = 0
+            const defaultB = 0
+            
+            switch (sortOption) {
+              case '가까운 순':
+                return (a.distance || defaultA) - (b.distance || defaultB)
+              case '리뷰 많은 순':
+                return (b.reviewCount || defaultB) - (a.reviewCount || defaultA)
+              case '공유 많은 순':
+                return (b.shareCount || defaultB) - (a.shareCount || defaultA)
+              case '별점 높은 순':
+                return (b.avgRatingGoogle || defaultB) - (a.avgRatingGoogle || defaultA)
+              default:
+                return (a.distance || defaultA) - (b.distance || defaultB)
+            }
+          })
+          
+          setStores(sortData)
           
           // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
-          let filteredData = [...data];
-          if (categoryFilter) {
-            const category = categoryOptions.find(opt => opt.name === categoryFilter);
+          let filteredData = [...sortData]
+          
+          // 카테고리 필터링
+          if (categoryFilter && categoryFilter !== '전체') {
+            const category = categoryOptions.find(opt => opt.name === categoryFilter)
             if (category) {
-              console.log('클라이언트 측 카테고리 필터링 적용:', category.name, category.id);
               filteredData = filteredData.filter(store => {
-                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0]);
-                console.log('가게 카테고리 ID 확인:', store.storeName, storeCategoryId);
-                return String(storeCategoryId) === String(category.id);
-              });
-              console.log('필터링 후 가게 수:', filteredData.length);
+                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0])
+                return String(storeCategoryId) === String(category.id)
+              })
             }
+          }
+          
+          // 검색어 필터링 - 클라이언트 측에서도 적용
+          if (searchQuery && searchQuery.trim() !== '') {
+            filteredData = filteredData.filter(store => {
+              const storeName = store.storeName || store.name || ''
+              return storeName.toLowerCase().includes(searchQuery.toLowerCase())
+            })
           }
           
           setDisplayedStores(filteredData)
@@ -208,22 +262,41 @@ function HomePage() {
           setTotalStoreCount(filteredData.length)
         } else {
           // 이미 로드된 데이터에 추가
-          setStores(prev => [...prev, ...data])
+          // 클라이언트 측 정렬 적용 (백엔드에서 정렬이 제대로 작동하지 않는 경우)
+          const sortData = [...data].sort((a, b) => {
+            // 기본값 설정 (필드가 없는 경우 사용)
+            const defaultA = 0
+            const defaultB = 0
+            
+            switch (sortOption) {
+              case '가까운 순':
+                return (a.distance || defaultA) - (b.distance || defaultB)
+              case '리뷰 많은 순':
+                return (b.reviewCount || defaultB) - (a.reviewCount || defaultA)
+              case '공유 많은 순':
+                return (b.shareCount || defaultB) - (a.shareCount || defaultA)
+              case '별점 높은 순':
+                return (b.avgRatingGoogle || defaultB) - (a.avgRatingGoogle || defaultA)
+              default:
+                return (a.distance || defaultA) - (b.distance || defaultB)
+            }
+          })
+          
+          setStores(prev => [...prev, ...sortData])
           
           // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
-          let filteredData = [...data];
-          if (categoryFilter) {
-            const category = categoryOptions.find(opt => opt.name === categoryFilter);
+          let filteredData = [...sortData]
+          if (categoryFilter && categoryFilter !== '전체') {
+            const category = categoryOptions.find(opt => opt.name === categoryFilter)
             if (category) {
-              console.log('클라이언트 측 카테고리 필터링 적용(추가 데이터):', category.name, category.id);
               filteredData = filteredData.filter(store => {
-                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0]);
-                return String(storeCategoryId) === String(category.id);
-              });
+                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0])
+                return String(storeCategoryId) === String(category.id)
+              })
             }
           }
           
-          const updatedFilteredData = [...filteredStores, ...filteredData];
+          const updatedFilteredData = [...filteredStores, ...filteredData]
           setDisplayedStores(prev => [...prev, ...filteredData])
           setFilteredStores(updatedFilteredData)
           // 총 가게 수 업데이트 (필터링된 데이터로 계산)
@@ -234,7 +307,7 @@ function HomePage() {
         setHasMore(data.length === storesPerPage)
         setCurrentPage(page)
       } catch (error) {
-        console.error('API 호출 오류:', error);
+        //console.error('API 호출 오류:', error)
         // 오류 발생 시 조용히 처리하고 사용자에게 오류 메시지 표시
         if (page === 1) {
           setStores([])
@@ -244,7 +317,7 @@ function HomePage() {
         setHasMore(false)
       }
     } catch (error) {
-      console.error('fetchStores 오류:', error);
+      //dconsole.error('fetchStores 오류:', error)
       // 전체 오류 처리
       if (page === 1) {
         setStores([])
@@ -256,11 +329,10 @@ function HomePage() {
       setLoading(false)
       setLoadingMore(false)
     }
-  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, API_BASE_URL]);
+  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, API_BASE_URL])
 
   // 초기 데이터 로드 및 필터 변경 시 데이터 다시 로드
   useEffect(() => {
-    console.log('필터 변경됨:', { categoryFilter, searchQuery, showDiscountOnly, sortOption });
     // 필터가 변경되면 페이지를 1로 초기화하고 데이터 다시 로드
     setCurrentPage(1) // 페이지 리셋
     setDisplayedStores([]) // 표시된 가게 초기화
@@ -268,7 +340,7 @@ function HomePage() {
     setFilteredStores([]) // 필터링된 가게도 초기화
     setHasMore(true) // 더 불러올 데이터가 있다고 가정
     fetchStores(1, true)
-  }, [fetchStores, showDiscountOnly, categoryFilter, searchQuery, sortOption]);
+  }, [fetchStores, showDiscountOnly, categoryFilter, searchQuery, sortOption])
 
   // 스크롤 이벤트 핸들러 최적화 (디바운싱 적용)
   const handleScroll = useCallback(() => {
@@ -328,13 +400,18 @@ function HomePage() {
   }, [])
 
   const handleCategorySelect = (category) => {
-    console.log('카테고리 선택:', category);
-    // 이미 선택된 카테고리를 다시 클릭하면 해제
+    // "전체" 카테고리 처리
+    if (category === '전체') {
+      setCategoryFilter('전체')
+      setSearchQuery('') // 검색어 초기화 추가
+      return
+    }
+    
+    // 이미 선택된 카테고리를 다시 클릭하면 해제하고 전체로 돌아감
     if (categoryFilter === category) {
-      console.log('카테고리 해제');
-      setCategoryFilter('')
+      setCategoryFilter('전체')
+      setSearchQuery('') // 검색어 초기화 추가
     } else {
-      console.log('카테고리 설정:', category);
       setCategoryFilter(category)
     }
   }
@@ -353,12 +430,41 @@ function HomePage() {
     navigate(link)
   }
 
+  const handleSearch = (query) => {
+    setSearchQuery(query)
+    
+    // 검색어가 비었을 때 (사용자가 검색어를 지웠을 때)
+    if (!query || query.trim() === '') {
+      setSearchQuery('')
+      fetchStores(1, true)
+      return
+    }
+    
+    // 검색어가 있을 경우 현재 데이터에서 즉시 필터링 적용
+    
+    // 현재 표시된 가게 목록에서 검색어로 필터링
+    const filteredResults = stores.filter(store => {
+      const storeName = store.storeName || store.name || ''
+      return storeName.toLowerCase().includes(query.toLowerCase())
+    })
+    
+    setFilteredStores(filteredResults)
+    setDisplayedStores(filteredResults)
+    setTotalStoreCount(filteredResults.length)
+  }
+
   return (
     <div className="flex flex-col h-full relative">
       <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-30">
         <h1
           className="text-2xl font-bold text-yellow-500"
-          onClick={() => navigate(0)}
+          onClick={() => {
+            setCategoryFilter('전체');
+            setSearchQuery('');
+            setShowDiscountOnly(false);
+            setSortOption('가까운 순');
+            navigate(0);
+          }}
         >
           <img src={luckeatLogo} alt="럭킷" className="h-6" />
         </h1>
@@ -401,7 +507,7 @@ function HomePage() {
         onScroll={handleScroll}
       >
         <div className="px-4 py-2 border-b">
-          <SearchBar initialValue={searchQuery} onSearch={setSearchQuery} />
+          <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
         </div>
 
         <div
@@ -510,29 +616,47 @@ function HomePage() {
           <h3 className="text-base font-medium mb-2">
             어떤 음식을 찾으시나요?
           </h3>
-          <div className="flex justify-between">
-            {categoryOptions.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => handleCategorySelect(option.name)}
-                className={`flex flex-col items-center justify-center ${
-                  categoryFilter === option.name
-                    ? 'text-yellow-600'
-                    : 'text-gray-600'
-                }`}
-              >
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between gap-1">
+              {categoryOptions.slice(0, 4).map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleCategorySelect(option.name)}
+                  className={`px-2 py-2 rounded-full flex items-center justify-center gap-1 ${
                     categoryFilter === option.name
-                      ? 'bg-yellow-100 border-2 border-yellow-400'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
+                      ? 'bg-yellow-400 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  } transition-colors`}
+                  style={{ 
+                    minWidth: '80px',
+                    width: '80px'
+                  }}
                 >
-                  <span className="text-lg">{option.icon}</span>
-                </div>
-                <span className="text-xs font-medium">{option.name}</span>
-              </button>
-            ))}
+                  <span>{option.icon}</span>
+                  <span className="text-sm font-medium">{option.name}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-between gap-1">
+              {categoryOptions.slice(4).map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleCategorySelect(option.name)}
+                  className={`px-2 py-2 rounded-full flex items-center justify-center gap-1 ${
+                    categoryFilter === option.name
+                      ? 'bg-yellow-400 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  } transition-colors`}
+                  style={{ 
+                    minWidth: '80px',
+                    width: option.name === '카페/베이커리' ? '120px' : option.name === '샐러드/청과' ? '120px' : '90px'
+                  }}
+                >
+                  <span>{option.icon}</span>
+                  <span className="text-sm font-medium">{option.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -665,10 +789,7 @@ function HomePage() {
                       className="text-sm text-gray-500 truncate"
                       title={store.address || '주소 정보 없음'}
                     >
-                      {(store.address || '주소 정보 없음').length > 20
-                        ? (store.address || '주소 정보 없음').substring(0, 20) +
-                          '...'
-                        : store.address || '주소 정보 없음'}
+                      {simplifyAddress(store.address)}
                     </p>
                     <div className="flex items-center">
                       <div className="flex items-center text-sm text-yellow-500 mr-2">
@@ -708,12 +829,12 @@ function HomePage() {
                 <button 
                   className="mt-2 text-blue-500 underline"
                   onClick={() => {
-                    setCategoryFilter('');
+                    setCategoryFilter('전체');
                     setSearchQuery('');
                     setShowDiscountOnly(false);
                   }}
                 >
-                  필터 초기화하기
+                  전체 카테고리보기
                 </button>
               ) : null}
             </div>

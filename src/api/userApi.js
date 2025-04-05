@@ -23,6 +23,17 @@ export const register = async (userData) => {
     if (requestData.userType) {
       delete requestData.userType
     }
+    
+    // 비밀번호 인코딩 (보안 강화)
+    if (requestData.password) {
+      try {
+        // Base64 인코딩 적용
+        requestData.password = btoa(requestData.password)
+      } catch (encodeError) {
+        console.error('비밀번호 인코딩 중 오류:', encodeError)
+        // 인코딩 실패 시 원본 비밀번호 유지 (서버측 보안에 의존)
+      }
+    }
 
     // 프록시를 통한 요청
     const response = await apiClient.post(API_ENDPOINTS.REGISTER, requestData)
@@ -46,8 +57,22 @@ export const register = async (userData) => {
 // 로그인
 export const login = async (credentials) => {
   try {
+    // 요청 데이터 복사 (원본 데이터 변경 방지)
+    const requestData = { ...credentials }
+    
+    // 비밀번호 인코딩 (보안 강화)
+    if (requestData.password) {
+      try {
+        // Base64 인코딩 적용
+        requestData.password = btoa(requestData.password)
+      } catch (encodeError) {
+        console.error('비밀번호 인코딩 중 오류:', encodeError)
+        // 인코딩 실패 시 원본 비밀번호 유지
+      }
+    }
+    
     // 프록시를 통한 요청
-    const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
+    const response = await apiClient.post(API_ENDPOINTS.LOGIN, requestData)
 
     // HTML 응답인지 확인
     if (typeof response.data === 'string' && 

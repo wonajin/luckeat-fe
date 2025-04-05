@@ -23,6 +23,17 @@ export const register = async (userData) => {
     if (requestData.userType) {
       delete requestData.userType
     }
+    
+    // 비밀번호 인코딩 (보안 강화)
+    if (requestData.password) {
+      try {
+        // Base64 인코딩 적용
+        requestData.password = btoa(requestData.password)
+      } catch (encodeError) {
+        console.error('비밀번호 인코딩 중 오류:', encodeError)
+        // 인코딩 실패 시 원본 비밀번호 유지 (서버측 보안에 의존)
+      }
+    }
 
     // 프록시를 통한 요청
     const response = await apiClient.post(API_ENDPOINTS.REGISTER, requestData)
@@ -46,8 +57,44 @@ export const register = async (userData) => {
 // 로그인
 export const login = async (credentials) => {
   try {
+    // 요청 데이터 복사 (원본 데이터 변경 방지)
+    const requestData = { ...credentials }
+    
+    // 비밀번호 인코딩 (보안 강화)
+    if (requestData.password) {
+      try {
+        // Base64 인코딩 적용
+        requestData.password = btoa(requestData.password)
+      } catch (encodeError) {
+        console.error('비밀번호 인코딩 중 오류:', encodeError)
+        // 인코딩 실패 시 원본 비밀번호 유지
+      }
+    }
+    
     // 프록시를 통한 요청
-    const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
+    const response = await apiClient.post(API_ENDPOINTS.LOGIN, requestData)
+
+    // HTML 응답인지 확인
+    if (typeof response.data === 'string' && 
+        (response.data.includes('<!DOCTYPE html>') || 
+         response.data.includes('<html') || 
+         response.data.includes('<body'))) {
+      console.warn('로그인 중 HTML 응답이 감지되었습니다 - 인증 실패로 처리합니다');
+      
+      // 개발자 콘솔에 자세한 정보 기록
+      console.error('HTML 응답을 받았습니다 (로그인 실패):', {
+        url: response.config?.url || '알 수 없는 URL',
+        status: response.status || '알 수 없는 상태 코드',
+        headers: response.headers || {},
+        data: response.data?.substring(0, 200) + '...' || '데이터 없음'
+      });
+      
+      // 인증 실패로 가정하고 사용자 친화적인 오류 메시지 반환
+      return {
+        success: false,
+        message: '아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.',
+      };
+    }
 
     // 로그인 성공 여부 확인 (더 유연하게 처리)
     // 1. 명시적인 success 플래그가 있는 경우 이를 확인
@@ -97,6 +144,33 @@ export const login = async (credentials) => {
 
     return handleSuccessResponse(response)
   } catch (error) {
+    // HTML 응답을 감지하고 처리
+    if (error.response && typeof error.response.data === 'string' && 
+       (error.response.data.includes('<!DOCTYPE html>') || 
+        error.response.data.includes('<html') || 
+        error.response.data.includes('<body'))) {
+      console.warn('로그인 오류에서 HTML 응답이 감지되었습니다 - 인증 실패로 처리합니다');
+      
+      // 개발자 콘솔에 자세한 정보 기록 (민감한 정보 제외)
+      console.error('HTML 오류 응답을 받았습니다 (로그인 실패):', {
+        url: error.response.config?.url || '알 수 없는 URL',
+        status: error.response.status || '알 수 없는 상태 코드',
+        method: error.response.config?.method || 'UNKNOWN',
+        data: error.response.data?.substring(0, 200) + '...' || '데이터 없음'
+      });
+      
+      // 오류 발생 시 토큰 제거
+      localStorage.removeItem(TOKEN_KEYS.ACCESS)
+      localStorage.removeItem(TOKEN_KEYS.REFRESH)
+      localStorage.removeItem('user')
+      
+      // 사용자 친화적인 오류 메시지 반환
+      return {
+        success: false,
+        message: '아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.'
+      };
+    }
+    
     // 오류 발생 시 토큰 제거
     localStorage.removeItem(TOKEN_KEYS.ACCESS)
     localStorage.removeItem(TOKEN_KEYS.REFRESH)

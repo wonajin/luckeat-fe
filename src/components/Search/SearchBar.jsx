@@ -31,9 +31,8 @@ function SearchBar({
         ];
         
         setStores(mockStores);
-        console.log('가게 데이터 로드 완료 (Mock)', mockStores.length);
       } catch (error) {
-        console.error('가게 데이터 로드 실패:', error);
+        // 오류 무시
       } finally {
         setIsLoading(false);
       }
@@ -51,8 +50,6 @@ function SearchBar({
       }
 
       try {
-        console.log('검색어 필터링 시작:', query);
-        
         // 로컬에서 필터링 (Mock 데이터 사용)
         const filtered = stores
           .filter((store) => {
@@ -61,10 +58,9 @@ function SearchBar({
           })
           .slice(0, 5); // 최대 5개까지만 표시
         
-        console.log('필터링 결과:', filtered.length, '개 항목');
         setSuggestions(filtered);
       } catch (error) {
-        console.error('가게 검색 중 오류:', error);
+        // 오류 무시
         setIsLoading(false);
       }
     }, 300),
@@ -99,9 +95,7 @@ function SearchBar({
 
   const handleSearch = () => {
     if (onSearch && searchQuery.trim()) {
-      console.log('SearchBar: 검색 실행 시도 - 검색어:', searchQuery);
       onSearch(searchQuery);
-      console.log('SearchBar: onSearch 함수 호출 완료');
       setShowSuggestions(false);
     }
   }
@@ -124,13 +118,11 @@ function SearchBar({
 
   const handleSuggestionClick = (suggestion) => {
     if (!suggestion) {
-      console.error('잘못된 가게 데이터:', suggestion);
       return;
     }
     
     const storeName = suggestion.storeName || suggestion.name || '';
     if (!storeName) {
-      console.error('가게 이름이 없습니다:', suggestion);
       return;
     }
     

@@ -19,6 +19,7 @@ import ProductManagementPage from './pages/ProductManagementPage'
 import EditStorePage from './pages/EditStorePage'
 import StoreReservationsPage from './pages/StoreReservationsPage'
 import UserReservationsPage from './pages/UserReservationsPage'
+import NotFoundPage from './pages/NotFoundPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
@@ -97,6 +98,7 @@ function AppRoutes() {
         <Route path="/edit-store" element={<EditStorePage />} />
         <Route path="/store/:storeId/reservation" element={<StoreReservationsPage />} />
         <Route path="/reservation" element={<UserReservationsPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </AuthWrapper>
   )

@@ -145,7 +145,7 @@ export const handleSuccessResponse = (response) => {
       // 명시적인 성공 플래그가 없는 경우:
       // 1. HTTP 상태 코드로 성공 여부 판단 (200, 201인 경우 성공)
       // 2. 토큰이 있는 경우 로그인 성공으로 간주
-      isSuccess = (statusCode === 200 || statusCode === 201);
+      isSuccess = (statusCode === 200 || statusCode === 201 || statusCode === 204);
       
       // 로그인 응답으로 보이는 경우 (accessToken이 있는 경우)
       if (responseData.accessToken) {

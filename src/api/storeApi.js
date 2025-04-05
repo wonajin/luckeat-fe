@@ -225,12 +225,9 @@ export const getMyStore = async () => {
 // 상품 상세 정보 조회
 export const getProductById = async (storeId, productId) => {
   try {
-    const response = await axios.get(
-      `/api/v1/stores/${storeId}/products/${productId}`,
-    )
+    const response = await apiClient.get(`/stores/${storeId}/products/${productId}`)
     return response.data
   } catch (error) {
-    console.error('상품 정보 조회 실패:', error)
     throw error
   }
 }

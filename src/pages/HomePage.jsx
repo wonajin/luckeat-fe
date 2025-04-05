@@ -12,6 +12,7 @@ import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
 import luckeatLogo from '../assets/images/luckeat-logo.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
+import { API_BASE_URL } from '../config/apiConfig'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -38,7 +39,6 @@ function HomePage() {
   const [autoSlide, setAutoSlide] = useState(true)
   const autoSlideInterval = useRef(null)
   const [slideDirection, setSlideDirection] = useState('right')
-  const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net/api/v1'
 
   const cardNews = [
     {

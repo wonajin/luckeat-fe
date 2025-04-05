@@ -18,7 +18,7 @@ function SignupPage() {
 
   // 디버깅용 - 팝업 표시 상태 변경 감지
   useEffect(() => {
-    console.log('팝업 표시 상태 변경:', showSuccessPopup)
+    // 팝업 상태 변경 감지
   }, [showSuccessPopup])
 
   // 이메일 입력 처리 - 공백 제거 및 소문자 변환
@@ -131,10 +131,7 @@ function SignupPage() {
         userType,
       }
       
-      console.log('회원가입 요청 데이터:', userData)
-      
       const response = await signup(userData)
-      console.log('회원가입 응답:', response)
       
       if (response.success) {
         // 성공 팝업 표시
@@ -164,7 +161,6 @@ function SignupPage() {
         }
       }
     } catch (error) {
-      console.error('회원가입 오류:', error)
       setError(
         '회원가입 중 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.'
       )
@@ -175,22 +171,18 @@ function SignupPage() {
 
   // 로그인 페이지로 이동
   const goToLogin = () => {
-    console.log('로그인 페이지로 이동')
     setShowSuccessPopup(false) // 팝업 닫기
     navigate('/login')
   }
 
   // 홈 화면으로 이동
   const goToHome = () => {
-    console.log('홈 화면으로 이동')
     setShowSuccessPopup(false) // 팝업 닫기
     navigate('/')
   }
 
   // 회원가입 성공 팝업 렌더링
   const renderSuccessPopup = () => {
-    console.log('팝업 렌더링 함수 호출됨, 상태:', showSuccessPopup)
-
     if (!showSuccessPopup) return null
 
     return (
@@ -238,8 +230,6 @@ function SignupPage() {
       </div>
     )
   }
-
-  console.log('SignupPage 렌더링, 팝업 상태:', showSuccessPopup)
 
   return (
     <div className="flex flex-col h-full">

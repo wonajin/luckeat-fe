@@ -30,7 +30,6 @@ export const register = async (userData) => {
         // Base64 인코딩 적용
         requestData.password = btoa(requestData.password)
       } catch (encodeError) {
-        console.error('비밀번호 인코딩 중 오류:', encodeError)
         // 인코딩 실패 시 원본 비밀번호 유지 (서버측 보안에 의존)
       }
     }
@@ -66,7 +65,6 @@ export const login = async (credentials) => {
         // Base64 인코딩 적용
         requestData.password = btoa(requestData.password)
       } catch (encodeError) {
-        console.error('비밀번호 인코딩 중 오류:', encodeError)
         // 인코딩 실패 시 원본 비밀번호 유지
       }
     }

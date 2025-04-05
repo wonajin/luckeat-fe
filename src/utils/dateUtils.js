@@ -12,7 +12,6 @@ export const formatDate = (dateString) => {
       day: 'numeric',
     }).replace(/\.\s*$/, '') // 마지막 점 제거
   } catch (error) {
-    console.error('날짜 형식 변환 오류:', error)
     return '날짜 정보 없음'
   }
 }
@@ -31,7 +30,6 @@ export const formatTime = (timeString) => {
       hour12: true
     })
   } catch (error) {
-    console.error('시간 형식 변환 오류:', error)
     return '시간 정보 없음'
   }
 }
@@ -54,7 +52,6 @@ export const formatDateTime = (dateTimeString) => {
       hour12: true
     }).replace(/\.\s*$/, '') // 마지막 점 제거
   } catch (error) {
-    console.error('날짜 시간 형식 변환 오류:', error)
     return '날짜 시간 정보 없음'
   }
 }

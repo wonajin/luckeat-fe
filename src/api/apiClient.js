@@ -24,10 +24,7 @@ const apiClient = axios.create({
   withCredentials: true, // CORS 요청 시 쿠키와 인증 헤더 포함
   headers: {
     'Content-Type': 'application/json',
-
-
   },
-  withCredentials: false, // CORS 인증 정보 전송 설정
 })
 
 // 요청 인터셉터 설정
@@ -58,8 +55,8 @@ apiClient.interceptors.request.use(
       config.headers['Authorization'] = `Bearer ${token}`
     }
 
-    // 시간대 설정 제거 (CORS 오류 해결)
-    // config.headers['X-Timezone'] = koreaTimeZone
+    // 시간대 설정
+    config.headers['X-Timezone'] = koreaTimeZone
 
     return config
   },

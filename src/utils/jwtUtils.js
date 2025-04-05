@@ -19,7 +19,6 @@ export const decodeToken = (token) => {
     const payload = atob(base64Payload.replace(/-/g, '+').replace(/_/g, '/'))
     return JSON.parse(payload)
   } catch (error) {
-    console.error('토큰 디코딩 오류:', error)
     return null
   }
 }
@@ -42,7 +41,6 @@ export const isTokenExpired = (token) => {
 
     return currentTime >= expirationTime
   } catch (error) {
-    console.error('토큰 만료 확인 오류:', error)
     return true // 오류 발생 시 만료된 것으로
   }
 }

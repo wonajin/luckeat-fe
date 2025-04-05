@@ -17,7 +17,6 @@ export const createReservation = async (storeId, reservationData) => {
       data: response.data,
     }
   } catch (error) {
-    console.error('예약 생성 오류:', error)
     return {
       success: false,
       message: error.response?.data?.message || '예약 생성에 실패했습니다.',
@@ -32,7 +31,6 @@ export const createReservation = async (storeId, reservationData) => {
  */
 export const updateReservationStatus = async (statusData) => {
   try {
-
     const response = await apiClient.post(
       '/api/v1/reservation/status',
       statusData,
@@ -42,7 +40,6 @@ export const updateReservationStatus = async (statusData) => {
       data: response.data,
     }
   } catch (error) {
-    console.error('예약 상태 변경 오류:', error)
     return {
       success: false,
       message:
@@ -66,7 +63,6 @@ export const cancelReservation = async (reservationId) => {
       data: response.data,
     }
   } catch (error) {
-    console.error('예약 취소 오류:', error)
     return {
       success: false,
       message: error.response?.data?.message || '예약 취소에 실패했습니다.',
@@ -89,7 +85,6 @@ export const getStoreReservations = async (storeId) => {
       data: response.data,
     }
   } catch (error) {
-    console.error('가게사장 예약 목록 조회 오류:', error)
     return {
       success: false,
       message: error.response?.data?.message || '예약 목록 조회에 실패했습니다.',
@@ -113,7 +108,6 @@ export const getStorePendingReservations = async (storeId) => {
       data: response.data,
     }
   } catch (error) {
-    console.error('가게 펜딩 목록 조회 오류:', error)
     return {
       success: false,
       message: error.response?.data?.message || '펜딩 예약 목록 조회에 실패했습니다.',
@@ -135,7 +129,6 @@ export const getUserReservations = async (userId) => {
       data: response.data,
     }
   } catch (error) {
-    console.error('고객 예약 목록 조회 오류:', error)
     return {
       success: false,
       message: error.response?.data?.message || '예약 목록 조회에 실패했습니다.',
@@ -143,7 +136,6 @@ export const getUserReservations = async (userId) => {
     }
   }
 }
-
 
 /**
  * 사용자별 완료된 예약 목록 조회 
@@ -168,7 +160,6 @@ export const getUserCompletedReservations = async () => {
     
     // 유효한 userId가 없는 경우 처리
     if (!userId) {
-      console.error('유효한 사용자 ID를 찾을 수 없습니다.')
       return {
         success: false,
         message: '유효한 사용자 ID를 찾을 수 없습니다.',
@@ -218,7 +209,6 @@ export const getUserCompletedReservations = async () => {
       }
     }
   } catch (error) {
-    console.error('완료된 예약 목록 조회 오류:', error)
     return {
       success: false,
       message:
@@ -245,7 +235,6 @@ export const getUserEcoStats = async () => {
       data: response.data,
     }
   } catch (error) {
-    console.error('환경 기여 통계 조회 오류:', error)
     return {
       success: false,
       message:

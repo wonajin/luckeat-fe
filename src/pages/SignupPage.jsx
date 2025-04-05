@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
@@ -13,6 +13,7 @@ function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [nickname, setNickname] = useState('')
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
 
@@ -23,8 +24,11 @@ function SignupPage() {
 
   // 이메일 입력 처리 - 공백 제거 및 소문자 변환
   const handleEmailInput = (e) => {
-    // 입력값에서 모든 공백 제거 후 소문자로 변환
-    const value = e.target.value.replace(/\s+/g, '').toLowerCase()
+    // 이메일 입력 시 이메일 오류 메시지 초기화
+    setEmailError('')
+    
+    // 모든 공백 제거
+    const value = e.target.value.replace(/\s+/g, '')
     setEmail(value)
   }
 
@@ -66,17 +70,18 @@ function SignupPage() {
   const handleSignup = async (e) => {
     e.preventDefault()
     setError('')
+    setEmailError('')
     
     // 폼 유효성 검사 강화
     if (!email) {
-      setError('이메일을 입력해주세요.')
+      setEmailError('이메일을 입력해주세요.')
       return
     }
     
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      setError('유효한 이메일 형식이 아닙니다.\n올바른 이메일 주소를 입력해주세요.')
+      setEmailError('유효한 이메일 형식이 아닙니다.\n올바른 이메일 주소를 입력해주세요.')
       return
     }
     
@@ -149,7 +154,7 @@ function SignupPage() {
         // 오류 메시지 개선
         if (response.message.includes('이미 존재')) {
           if (response.message.includes('이메일')) {
-            setError('이미 가입된 이메일입니다.\n다른 이메일로 시도하거나 로그인해 주세요.')
+            setEmailError('이미 가입된 이메일입니다.\n다른 이메일로 시도하거나 로그인해 주세요.')
           } else if (response.message.includes('닉네임')) {
             setError('이미 사용 중인 닉네임입니다.\n다른 닉네임을 입력해 주세요.')
           } else {
@@ -194,12 +199,12 @@ function SignupPage() {
     if (!showSuccessPopup) return null
 
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-        <div className="bg-white p-6 rounded-lg shadow-xl w-11/12 max-w-md">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 p-4 overflow-y-auto">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-sm mx-auto">
+          <div className="text-center p-5">
+            <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <svg
-                className="w-8 h-8 text-green-600"
+                className="w-7 h-7 text-green-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -213,22 +218,22 @@ function SignupPage() {
                 ></path>
               </svg>
             </div>
-            <h3 className="text-xl font-bold mb-2">회원가입 완료!</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-lg font-bold mb-2">회원가입 완료!</h3>
+            <p className="text-gray-600 text-sm mb-5">
               럭키트 회원가입이 성공적으로 완료되었습니다.
               <br />
               로그인 후 다양한 서비스를 이용해보세요.
             </p>
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-2">
               <button
                 onClick={goToLogin}
-                className="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg hover:bg-yellow-600 transition-colors"
+                className="w-full py-2 bg-yellow-500 text-white font-bold rounded-lg hover:bg-yellow-600 transition-colors text-sm"
               >
                 로그인하러 가기
               </button>
               <button
                 onClick={goToHome}
-                className="w-full py-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors"
+                className="w-full py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors text-sm"
               >
                 홈 화면으로 가기
               </button>
@@ -312,12 +317,18 @@ function SignupPage() {
                 placeholder="이메일 주소를 입력해주세요."
                 value={email}
                 onChange={handleEmailInput}
-                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                className={`w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none ${
+                  emailError ? 'border border-red-500' : ''
+                }`}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                로그인 시 사용할 이메일 주소를 입력하세요. (예: example@example.com)
-              </p>
+              {emailError ? (
+                <p className="text-red-500 text-xs mt-1">{emailError}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  로그인 시 사용할 이메일 주소를 입력하세요. (예: example@example.com)
+                </p>
+              )}
             </div>
 
             <div>

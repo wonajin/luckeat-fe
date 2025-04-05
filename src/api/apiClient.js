@@ -14,7 +14,9 @@ export const TOKEN_KEYS = {
 // 한국 시간대 설정
 const koreaTimeZone = 'Asia/Seoul'
 const now = new Date()
-const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: koreaTimeZone }))
+const koreaTime = new Date(
+  now.toLocaleString('en-US', { timeZone: koreaTimeZone }),
+)
 Date.prototype.getTimezoneOffset = function() {
   return -540 // 한국 시간대 UTC+9
 }
@@ -65,24 +67,70 @@ apiClient.interceptors.request.use(
   },
 )
 
+// 로그 관리 및 보안 강화
+const safeLogError = (message, error, includeStack = false) => {
+  // 프로덕션 환경에서는 로깅하지 않음
+  if (process.env.NODE_ENV === 'production') {
+    return;
+  }
+  
+  // 개발 환경에서만 상세 로그 출력
+  const safeError = {
+    message: error.message || '알 수 없는 오류',
+    name: error.name,
+    status: error.response?.status,
+    statusText: error.response?.statusText,
+    url: error.config?.url 
+      ? error.config.url.replace(/\/\/[^\/]+\//, '//[도메인]/')
+      : '알 수 없는 URL',
+  }
+  
+  if (includeStack && error.stack) {
+    safeError.stack = error.stack.split('\n').slice(0, 3).join('\n')
+  }
+  
+  console.error(message, safeError, error)
+}
+
 // HTML 응답인지 확인하는 함수
 const isHtmlResponse = (response) => {
   // Content-Type 헤더 확인
-  const contentType = response.headers && response.headers['content-type'];
+  const contentType = response.headers && response.headers['content-type']
   if (contentType && contentType.includes('text/html')) {
-    return true;
+    // 개발 환경에서만 HTML 응답 로깅
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('HTML 응답 감지됨 (Content-Type 기반)', {
+        url: response.config?.url 
+          ? response.config.url.replace(/\/\/[^\/]+\//, '//[도메인]/') 
+          : '알 수 없는 URL',
+        method: response.config?.method || 'GET',
+        status: response.status,
+      })
+    }
+    return true
   }
   
   // 데이터가 HTML인지 문자열 기반으로 확인
   if (typeof response.data === 'string' && 
-     (response.data.includes('<!DOCTYPE html>') || 
-      response.data.includes('<html') || 
-      response.data.includes('<body'))) {
-    return true;
+      (response.data.includes('<!DOCTYPE html>') || 
+       response.data.includes('<html') || 
+       response.data.includes('<body'))) {
+    // 개발 환경에서만 HTML 응답 로깅
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('HTML 응답 감지됨 (내용 기반)', {
+        url: response.config?.url 
+          ? response.config.url.replace(/\/\/[^\/]+\//, '//[도메인]/') 
+          : '알 수 없는 URL',
+        method: response.config?.method || 'GET',
+        status: response.status,
+        preview: (response.data || '').substring(0, 100) + '...',
+      })
+    }
+    return true
   }
   
-  return false;
-};
+  return false
+}
 
 // HTML 응답을 사용자 친화적인 오류 메시지로 변환
 const transformHtmlResponse = (response) => {
@@ -94,7 +142,7 @@ const transformHtmlResponse = (response) => {
         success: false,
         message: '해당 이메일로 가입된 계정이 없습니다.'
       }
-    };
+    }
   }
   
   // 기본 변환
@@ -104,15 +152,15 @@ const transformHtmlResponse = (response) => {
       success: false,
       message: '서버에서 예상치 못한 응답을 받았습니다. 잠시 후 다시 시도해주세요.'
     }
-  };
-};
+  }
+}
 
 // 응답 인터셉터 설정
 apiClient.interceptors.response.use(
   (response) => {
     // HTML 응답 감지 및 변환
     if (isHtmlResponse(response)) {
-      return transformHtmlResponse(response);
+      return transformHtmlResponse(response)
     }
   
     // UTC 시간을 한국 시간으로 변환하는 함수
@@ -172,12 +220,12 @@ apiClient.interceptors.response.use(
   (error) => {
     // HTML 응답 감지 (오류 객체 내부)
     if (error.response && isHtmlResponse(error.response)) {
-      const transformedResponse = transformHtmlResponse(error.response);
+      const transformedResponse = transformHtmlResponse(error.response)
       return Promise.reject({
         ...error,
         response: transformedResponse,
         message: transformedResponse.data.message
-      });
+      })
     }
   
     // 에러 처리
@@ -189,44 +237,54 @@ apiClient.interceptors.response.use(
         const errorMessage = data.message || ERROR_MESSAGES.UNAUTHORIZED
 
         // 토큰 만료인 경우
-        if (errorMessage === ERROR_MESSAGES.TOKEN_EXPIRED) {
+        if (errorMessage === ERROR_MESSAGES.TOKEN_EXPIRED || 
+            errorMessage.includes('만료') || 
+            errorMessage.includes('expired')) {
           // 토큰 제거 및 로그인 페이지로 리다이렉션
           localStorage.removeItem(TOKEN_KEYS.ACCESS)
           localStorage.removeItem(TOKEN_KEYS.REFRESH)
           localStorage.removeItem('user')
-          window.location.href = '/login'
+          
+          // 연속적인 리다이렉션 방지
+          const currentPath = window.location.pathname;
+          if (!currentPath.includes('/login')) {
+            // 현재 경로가 로그인 페이지가 아닌 경우에만 리다이렉션
+            window.location.href = '/login'
+          }
         }
       }
 
-      // 권한 에러 (403)
+      // 권한 에러 (403) - 보안 로깅 강화
       else if (status === 403) {
-        // 권한 없음 처리
+        safeLogError('권한 오류 발생', error);
       }
 
       // 리소스 없음 (404)
       else if (status === 404) {
-        const notFoundMessage =
-          data.message || '요청한 리소스를 찾을 수 없습니다.'
+        const notFoundMessage = data.message || '요청한 리소스를 찾을 수 없습니다.'
+        safeLogError('리소스 없음', error);
       }
 
       // 유효성 검사 실패 (400)
       else if (status === 400) {
-        // 잘못된 요청 처리
+        safeLogError('잘못된 요청', error);
       }
 
       // 중복 에러 (409)
       else if (status === 409) {
-        // 리소스 중복 오류 처리
+        safeLogError('리소스 중복', error);
       }
 
       // 서버 에러 (500)
-      else if (status === 500) {
-        // 서버 오류 처리
+      else if (status >= 500) {
+        safeLogError('서버 오류', error, true);
       }
     } else if (error.request) {
       // 응답을 받지 못함 처리
+      safeLogError('응답 없음', error);
     } else {
       // 요청 설정 중 오류 처리
+      safeLogError('요청 설정 오류', error);
     }
 
     return Promise.reject(error)

@@ -14,13 +14,96 @@ function SignupPage() {
   const [nickname, setNickname] = useState('')
   const [error, setError] = useState('')
   const [emailError, setEmailError] = useState('')
+  const [nicknameError, setNicknameError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [confirmPasswordError, setConfirmPasswordError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [showErrorPopup, setShowErrorPopup] = useState(false)
+  const [errorPopupMessage, setErrorPopupMessage] = useState('')
+  const [errorPopupTitle, setErrorPopupTitle] = useState('')
+  
+  // 각 필드별 터치 상태 추적 (포커스 아웃 후에만 오류 메시지 표시)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const [nicknameTouched, setNicknameTouched] = useState(false)
+  const [passwordTouched, setPasswordTouched] = useState(false)
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false)
 
   // 디버깅용 - 팝업 표시 상태 변경 감지
   useEffect(() => {
     console.log('팝업 표시 상태 변경:', showSuccessPopup)
   }, [showSuccessPopup])
+
+  // 이메일 유효성 검사 함수
+  const validateEmail = () => {
+    if (!email) {
+      setEmailError('이메일을 입력해주세요.')
+      return false
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setEmailError('유효한 이메일 형식이 아닙니다.\n올바른 이메일 주소를 입력해주세요.')
+      return false
+    }
+    
+    setEmailError('')
+    return true
+  }
+  
+  // 닉네임 유효성 검사 함수
+  const validateNickname = () => {
+    if (!nickname) {
+      setNicknameError('닉네임을 입력해주세요.')
+      return false
+    }
+    
+    if (nickname.length < 2 || nickname.length > 10) {
+      setNicknameError('닉네임은 2자 이상 10자 이하로 입력해주세요.')
+      return false
+    }
+    
+    setNicknameError('')
+    return true
+  }
+  
+  // 비밀번호 유효성 검사 함수
+  const validatePassword = () => {
+    if (!password) {
+      setPasswordError('비밀번호를 입력해주세요.')
+      return false
+    }
+    
+    if (password.length < 8) {
+      setPasswordError('비밀번호는 8자 이상이어야 합니다.')
+      return false
+    }
+    
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,}$/
+    if (!passwordRegex.test(password)) {
+      setPasswordError('비밀번호는 최소 8자 이상이며,\n영문자와 숫자를 모두 포함해야 합니다.')
+      return false
+    }
+    
+    setPasswordError('')
+    return true
+  }
+  
+  // 비밀번호 확인 유효성 검사 함수
+  const validateConfirmPassword = () => {
+    if (!confirmPassword) {
+      setConfirmPasswordError('비밀번호를 다시 입력해주세요.')
+      return false
+    }
+    
+    if (password !== confirmPassword) {
+      setConfirmPasswordError('비밀번호가 일치하지 않습니다. 다시 확인해주세요.')
+      return false
+    }
+    
+    setConfirmPasswordError('')
+    return true
+  }
 
   // 이메일 입력 처리 - 공백 제거 및 소문자 변환
   const handleEmailInput = (e) => {
@@ -31,12 +114,25 @@ function SignupPage() {
     const value = e.target.value.replace(/\s+/g, '')
     setEmail(value)
   }
+  
+  // 이메일 포커스 아웃 핸들러
+  const handleEmailBlur = () => {
+    setEmailTouched(true)
+    validateEmail()
+  }
 
   // 닉네임 입력 처리 - 앞뒤 공백 제거
   const handleNicknameInput = (e) => {
     // 입력값에서 앞뒤 공백 제거
     const value = e.target.value.trim()
     setNickname(value)
+    setNicknameError('')
+  }
+  
+  // 닉네임 포커스 아웃 핸들러
+  const handleNicknameBlur = () => {
+    setNicknameTouched(true)
+    validateNickname()
   }
 
   // 한글 입력을 막는 함수
@@ -51,6 +147,18 @@ function SignupPage() {
     const value = e.target.value.replace(/\s+/g, '')
     // 한글이 아닌 경우 상태 업데이트
     setPassword(value)
+    setPasswordError('')
+    
+    // 비밀번호 변경 시 비밀번호 확인 필드 재검증
+    if (confirmPasswordTouched && confirmPassword) {
+      validateConfirmPassword()
+    }
+  }
+  
+  // 비밀번호 포커스 아웃 핸들러
+  const handlePasswordBlur = () => {
+    setPasswordTouched(true)
+    validatePassword()
   }
 
   // 한글 입력을 막는 함수 (비밀번호 확인용)
@@ -65,59 +173,45 @@ function SignupPage() {
     const value = e.target.value.replace(/\s+/g, '')
     // 한글이 아닌 경우 상태 업데이트
     setConfirmPassword(value)
+    setConfirmPasswordError('')
+  }
+  
+  // 비밀번호 확인 포커스 아웃 핸들러
+  const handleConfirmPasswordBlur = () => {
+    setConfirmPasswordTouched(true)
+    validateConfirmPassword()
+  }
+
+  // 오류 팝업 닫기
+  const closeErrorPopup = () => {
+    setShowErrorPopup(false)
+  }
+
+  // 오류 팝업 표시
+  const showError = (title, message) => {
+    setErrorPopupTitle(title)
+    setErrorPopupMessage(message)
+    setShowErrorPopup(true)
   }
 
   const handleSignup = async (e) => {
     e.preventDefault()
     setError('')
-    setEmailError('')
     
-    // 폼 유효성 검사 강화
-    if (!email) {
-      setEmailError('이메일을 입력해주세요.')
-      return
-    }
+    // 모든 필드의 유효성 검사 수행
+    const isEmailValid = validateEmail()
+    const isNicknameValid = validateNickname()
+    const isPasswordValid = validatePassword()
+    const isConfirmPasswordValid = validateConfirmPassword()
     
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setEmailError('유효한 이메일 형식이 아닙니다.\n올바른 이메일 주소를 입력해주세요.')
-      return
-    }
+    // 모든 필드 터치 상태로 설정 (에러 메시지 표시용)
+    setEmailTouched(true)
+    setNicknameTouched(true)
+    setPasswordTouched(true)
+    setConfirmPasswordTouched(true)
     
-    if (!nickname) {
-      setError('닉네임을 입력해주세요.')
-      return
-    }
-
-    // 닉네임 길이 검사
-    if (nickname.length < 2 || nickname.length > 10) {
-      setError('닉네임은 2자 이상 10자 이하로 입력해주세요.')
-      return
-    }
-    
-    if (!password) {
-      setError('비밀번호를 입력해주세요.')
-      return
-    }
-    
-    // 비밀번호 길이 검사
-    if (password.length < 8) {
-      setError('비밀번호는 8자 이상이어야 합니다.')
-      return
-    }
-    
-    // 비밀번호 복잡성 검사 (최소한 하나의 문자와 숫자)
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,}$/
-    if (!passwordRegex.test(password)) {
-      setError(
-        '비밀번호는 최소 8자 이상이며,\n영문자와 숫자를 모두 포함해야 합니다.'
-      )
-      return
-    }
-    
-    if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다. 다시 확인해주세요.')
+    // 유효성 검사에 실패한 경우 제출 중단
+    if (!isEmailValid || !isNicknameValid || !isPasswordValid || !isConfirmPasswordValid) {
       return
     }
     
@@ -150,19 +244,60 @@ function SignupPage() {
         setConfirmPassword('')
         setNickname('')
         setUserType('일반')
+        // 모든 오류 메시지 및 터치 상태 초기화
+        setEmailError('')
+        setNicknameError('')
+        setPasswordError('')
+        setConfirmPasswordError('')
+        setEmailTouched(false)
+        setNicknameTouched(false)
+        setPasswordTouched(false)
+        setConfirmPasswordTouched(false)
+        setError('')
       } else {
         // 오류 메시지 개선
         if (response.message.includes('이미 존재')) {
           if (response.message.includes('이메일')) {
             setEmailError('이미 가입된 이메일입니다.\n다른 이메일로 시도하거나 로그인해 주세요.')
+            setEmailTouched(true)
+            // 이메일 중복 오류 모달 표시
+            showError(
+              '이메일 중복',
+              '이미 가입된 이메일입니다.\n다른 이메일로 시도하거나 로그인해 주세요.'
+            )
           } else if (response.message.includes('닉네임')) {
-            setError('이미 사용 중인 닉네임입니다.\n다른 닉네임을 입력해 주세요.')
+            setNicknameError('이미 사용 중인 닉네임입니다.\n다른 닉네임을 입력해 주세요.')
+            setNicknameTouched(true)
+            // 닉네임 중복 오류 모달 표시
+            showError(
+              '닉네임 중복',
+              '이미 사용 중인 닉네임입니다.\n다른 닉네임을 입력해 주세요.'
+            )
           } else {
             setError(response.message)
+            // 일반 오류 모달 표시
+            showError('회원가입 오류', response.message)
           }
         } else if (response.message.includes('필수')) {
+          // 필수 정보 누락 오류 모달 표시
+          showError(
+            '필수 정보 누락',
+            '모든 필수 정보를 입력해주세요.\n누락된 정보가 없는지 확인하세요.'
+          )
           setError('모든 필수 정보를 입력해주세요.\n누락된 정보가 없는지 확인하세요.')
+        } else if (response.message.includes('서버') || response.status >= 500) {
+          // 서버 오류 모달 표시
+          showError(
+            '서버 오류',
+            '서버에 일시적인 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.'
+          )
+          setError('서버에 일시적인 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.')
         } else {
+          // 기타 오류 모달 표시
+          showError(
+            '회원가입 실패',
+            response.message || '회원가입에 실패했습니다.\n다시 시도해주세요.'
+          )
           setError(
             response.message || '회원가입에 실패했습니다.\n다시 시도해주세요.'
           )
@@ -170,6 +305,11 @@ function SignupPage() {
       }
     } catch (error) {
       console.error('회원가입 오류:', error)
+      // 예외 발생 시 오류 모달 표시
+      showError(
+        '오류 발생',
+        '회원가입 중 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.'
+      )
       setError(
         '회원가입 중 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.'
       )
@@ -237,6 +377,61 @@ function SignupPage() {
               >
                 홈 화면으로 가기
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 오류 팝업 렌더링
+  const renderErrorPopup = () => {
+    if (!showErrorPopup) return null
+
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 p-4 overflow-y-auto">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-sm mx-auto">
+          <div className="text-center p-5">
+            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg
+                className="w-7 h-7 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold mb-2">{errorPopupTitle}</h3>
+            <p className="text-gray-600 text-sm mb-5">
+              {errorPopupMessage.split('\n').map((line, index) => (
+                <React.Fragment key={index}>
+                  {line}
+                  {index < errorPopupMessage.split('\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
+            </p>
+            <div className="flex flex-col space-y-2">
+              <button
+                onClick={closeErrorPopup}
+                className="w-full py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-colors text-sm"
+              >
+                확인
+              </button>
+              {errorPopupTitle === '이메일 중복' && (
+                <button
+                  onClick={goToLogin}
+                  className="w-full py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                >
+                  로그인하러 가기
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -317,17 +512,17 @@ function SignupPage() {
                 placeholder="이메일 주소를 입력해주세요."
                 value={email}
                 onChange={handleEmailInput}
+                onBlur={handleEmailBlur}
                 className={`w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none ${
-                  emailError ? 'border border-red-500' : ''
+                  emailError && emailTouched ? 'border border-red-500' : ''
                 }`}
                 required
               />
-              {emailError ? (
+              <p className="text-xs text-gray-500 mt-1">
+                로그인 시 사용할 이메일 주소를 입력하세요. (예: example@example.com)
+              </p>
+              {emailError && emailTouched && (
                 <p className="text-red-500 text-xs mt-1">{emailError}</p>
-              ) : (
-                <p className="text-xs text-gray-500 mt-1">
-                  로그인 시 사용할 이메일 주소를 입력하세요. (예: example@example.com)
-                </p>
               )}
             </div>
 
@@ -340,12 +535,18 @@ function SignupPage() {
                 placeholder="닉네임을 입력해주세요."
                 value={nickname}
                 onChange={handleNicknameInput}
-                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                onBlur={handleNicknameBlur}
+                className={`w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none ${
+                  nicknameError && nicknameTouched ? 'border border-red-500' : ''
+                }`}
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
                 2~10자 이내로 입력해주세요. 서비스 내에서 표시될 이름입니다.
               </p>
+              {nicknameError && nicknameTouched && (
+                <p className="text-red-500 text-xs mt-1">{nicknameError}</p>
+              )}
             </div>
 
             <div>
@@ -357,12 +558,18 @@ function SignupPage() {
                 placeholder="비밀번호를 입력해주세요."
                 value={password}
                 onChange={handlePasswordInput}
-                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                onBlur={handlePasswordBlur}
+                className={`w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none ${
+                  passwordError && passwordTouched ? 'border border-red-500' : ''
+                }`}
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
                 <span className="font-medium">안전한 비밀번호 조건:</span> 8자 이상, 영문 소문자, 숫자를 각각 최소 1개 포함해야 합니다.
               </p>
+              {passwordError && passwordTouched && (
+                <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+              )}
             </div>
 
             <div>
@@ -374,12 +581,18 @@ function SignupPage() {
                 placeholder="비밀번호를 다시 입력해주세요."
                 value={confirmPassword}
                 onChange={handleConfirmPasswordInput}
-                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                onBlur={handleConfirmPasswordBlur}
+                className={`w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none ${
+                  confirmPasswordError && confirmPasswordTouched ? 'border border-red-500' : ''
+                }`}
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
                 위에서 입력한 비밀번호와 동일하게 입력해주세요.
               </p>
+              {confirmPasswordError && confirmPasswordTouched && (
+                <p className="text-red-500 text-xs mt-1">{confirmPasswordError}</p>
+              )}
             </div>
           </div>
 
@@ -405,6 +618,9 @@ function SignupPage() {
       
       {/* 회원가입 성공 팝업 - renderSuccessPopup 함수 사용 */}
       {renderSuccessPopup()}
+      
+      {/* 오류 팝업 - renderErrorPopup 함수 사용 */}
+      {renderErrorPopup()}
 
       <Navigation />
     </div>

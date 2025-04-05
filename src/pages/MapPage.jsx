@@ -12,6 +12,7 @@ import myLocationMarker from '../assets/images/my_locatoin_maker.png'
 import axios from 'axios'
 import SearchBar from '../components/Search/SearchBar'
 import { FixedSizeList as List } from 'react-window'
+import { API_BASE_URL } from '../config/apiConfig'
 
 // 가게 항목 렌더링 컴포넌트
 const StoreItem = ({ data, index, style }) => {
@@ -182,9 +183,6 @@ function MapPage() {
   const [storeListExpanded, setStoreListExpanded] = useState(false)
   const mapContainerRef = useRef(null)
 
-  // API 기본 URL 직접 설정
-  const API_BASE_URL = 'https://dxa66rf338pjr.cloudfront.net'
-
   // 카테고리 옵션 추가
   const categoryOptions = [
     { id: 1, name: '한식', icon: '🍚' },
@@ -257,7 +255,7 @@ function MapPage() {
         // 가게 데이터 가져오기
         try {
           // 할인중인 가게만 보여주기 옵션이 선택된 경우 API 파라미터 추가
-          let apiUrl = `${API_BASE_URL}/api/v1/stores`
+          let apiUrl = `${API_BASE_URL}/stores`
           if (showDiscountOnly) {
             apiUrl += '?isDiscountOpen=true'
           }

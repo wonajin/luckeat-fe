@@ -30,6 +30,9 @@ const API_ENDPOINTS = {
   // 리뷰
   REVIEWS: '/reviews',
   REVIEW_DETAIL: (id) => `/reviews/${id}`,
+
+  // 이미지 업로드
+  IMAGES: (type) => `/images/${type}`,
 }
 
 // API URL 생성 함수 (프록시 사용)

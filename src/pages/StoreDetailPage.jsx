@@ -114,16 +114,11 @@ function StoreDetailPage() {
       try {
         setLoading(true)
         setError(null)
-        console.log(`가게 상세 정보 요청 - 가게 ID: ${id}`)
 
         const response = await getStoreById(id)
-        console.log('가게 상세 정보 응답:', response)
 
         if (response.success) {
           const storeData = response.data
-
-          // 이미지 URL 확인 및 디버깅
-          console.log('가게 이미지 URL:', storeData.storeImg)
 
           // 이미지 미리 로드 시도
           if (storeData.storeImg) {
@@ -141,20 +136,13 @@ function StoreDetailPage() {
           if (isGoogleMapsImage(storeData.storeImg)) {
           }
 
-          // JSON으로 응답 객체 로깅 (민감 정보 제외)
-          const safeStoreData = { ...storeData }
-          console.log('가게 데이터:', JSON.stringify(safeStoreData, null, 2))
-
           setStore(storeData)
-          console.log('지도 정보:', storeData.latitude, storeData.longitude) // 디버깅용
           // 맵 로드 완료 처리
           setMapLoaded(true)
         } else {
-          console.error('가게 정보 불러오기 실패:', response.message)
           setError(response.message || '가게 정보를 불러오는데 실패했습니다')
         }
       } catch (err) {
-        console.error('가게 정보 불러오기 중 예외 발생:', err)
         setError('가게 정보를 불러오는데 실패했습니다')
       } finally {
         setLoading(false)
@@ -175,7 +163,6 @@ function StoreDetailPage() {
         const productData = await getProductById(id, store.products[0].id)
         setProductInfo(productData)
       } catch (error) {
-        console.error('상품 정보 가져오기 실패:', error)
         setProductError('상품 정보를 불러오는데 실패했습니다')
       } finally {
         setProductLoading(false)
@@ -188,7 +175,6 @@ function StoreDetailPage() {
   // 카카오맵 스크립트 로드 확인
   useEffect(() => {
     if (!window.kakao?.maps) {
-      console.log('카카오맵 API가 로드되지 않았습니다. 다시 로드합니다.')
       // 카카오맵 스크립트 로드
       const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY
       const script = document.createElement('script')
@@ -198,12 +184,10 @@ function StoreDetailPage() {
 
       script.onload = () => {
         window.kakao.maps.load(() => {
-          console.log('카카오맵 API 로드 완료')
           setMapLoaded(true)
         })
       }
     } else {
-      console.log('카카오맵 API가 이미 로드되어 있습니다.')
       setMapLoaded(true)
     }
   }, [])
@@ -487,7 +471,6 @@ function StoreDetailPage() {
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
               onError={(e) => {
-                console.error('이미지 로드 오류:', store.storeImg)
                 e.target.onerror = null // 무한 루프 방지
                 e.target.src = defaultImage
               }}

@@ -197,7 +197,8 @@ function HomePage() {
         setLoadingMore(true)
       }
 
-      let url = `${API_BASE_URL}/stores`
+      // API 경로 설정
+      let url = `https://dxa66rf338pjr.cloudfront.net/api/v1/stores`
       let queryParams = new URLSearchParams()
 
       // 페이지네이션 파라미터 추가
@@ -252,16 +253,19 @@ function HomePage() {
       // 정렬 파라미터 추가
       queryParams.append('sort', sort)
       
-      // 위치 정보는 가까운 순 정렬에만 포함되도록 위에서 처리함
-      
       // 쿼리 파라미터가 있으면 URL에 추가
       if (queryParams.toString()) {
         url += `?${queryParams.toString()}`
       }
 
       try {
-        const response = await fetch(url)
-        const data = await response.json()
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API 응답 오류: ${response.status}`);
+        }
+        
+        const data = await response.json();
         
         // 새로운 페이지네이션 응답 형식 처리
         if (!data || !data.content) {
@@ -276,7 +280,12 @@ function HomePage() {
         }
 
         const newStores = data.content
-        setTotalStoreCount(data.totalElements)
+        
+        // 전체 가게 수 업데이트 (페이지 0일 때만 또는 리셋 시)
+        if (page === 0 || reset) {
+          setTotalStoreCount(data.totalElements || 0)
+        }
+        
         setHasMore(!data.last) // 마지막 페이지가 아니면 더 로드할 수 있음
         
         // 페이지가 0이거나 reset이 true면 데이터 초기화
@@ -293,29 +302,29 @@ function HomePage() {
 
         setCurrentPage(page)
       } catch (error) {
-        //console.error('API 호출 오류:', error)
         // 오류 발생 시 조용히 처리하고 사용자에게 오류 메시지 표시
         if (page === 0) {
           setStores([])
           setDisplayedStores([])
           setFilteredStores([])
+          setTotalStoreCount(0)
         }
         setHasMore(false)
       }
     } catch (error) {
-      //console.error('fetchStores 오류:', error)
       // 전체 오류 처리
       if (page === 0) {
         setStores([])
         setDisplayedStores([])
         setFilteredStores([])
+        setTotalStoreCount(0)
       }
       setHasMore(false)
     } finally {
       setLoading(false)
       setLoadingMore(false)
     }
-  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, API_BASE_URL, userLocation])
+  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, userLocation])
 
   // 초기 데이터 로드 및 필터 변경 시 데이터 다시 로드
   useEffect(() => {
@@ -721,9 +730,8 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {categoryFilter ? `${categoryFilter} 맛집` : '전체 맛집'} (
-              {totalStoreCount.toString().replace('*', '')}
-              )
+              {categoryFilter !== '전체' ? `${categoryFilter} 맛집` : '전체 맛집'} 
+              {totalStoreCount > 0 && ` (${totalStoreCount})`}
             </h2>
           </div>
 
@@ -846,25 +854,25 @@ function HomePage() {
       {/* 위치 정보 동의 모달 */}
       {showLocationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-5">
             <h3 className="text-lg font-bold mb-2">위치 정보 이용 동의</h3>
-            <p className="text-gray-700 mb-4">
+            <p className="text-gray-700 mb-3 text-sm">
               가까운 순으로 정렬하기 위해 현재 위치 정보가 필요합니다. 
               위치 정보 이용에 동의하시겠습니까?
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-xs text-gray-500 mb-4">
               동의하시면 브라우저에서 위치 정보 접근 권한을 요청합니다.
               위치 정보는 가까운 맛집을 찾는 용도로만 사용되며 저장되지 않습니다.
             </p>
             <div className="flex justify-end space-x-2">
               <button
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
                 onClick={handleLocationPermissionDecline}
               >
                 취소
               </button>
               <button
-                className="px-4 py-2 bg-yellow-500 rounded-lg text-white hover:bg-yellow-600"
+                className="px-3 py-1.5 bg-yellow-500 rounded-lg text-sm text-white hover:bg-yellow-600"
                 onClick={handleLocationPermissionAgree}
               >
                 동의

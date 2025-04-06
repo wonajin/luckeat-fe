@@ -45,6 +45,7 @@ function HomePage() {
     lng: 126.5302,
   })
   const [locationPermissionRequested, setLocationPermissionRequested] = useState(false)
+  const [showLocationModal, setShowLocationModal] = useState(false)
 
   const cardNews = [
     {
@@ -127,50 +128,57 @@ function HomePage() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
+          const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          })
-          setLocationPermissionRequested(true)
+          };
+          setUserLocation(newLocation);
+          setLocationPermissionRequested(true);
+          
           // 위치 권한 획득 후 바로 가까운 순으로 정렬된 데이터 가져오기
-          fetchStores(0, true)
+          fetchStores(0, true);
         },
         (error) => {
-          console.log('위치 정보를 가져올 수 없습니다:', error)
-          alert('위치 정보 접근에 실패했습니다. 기본 위치를 사용합니다.')
+          console.log('위치 정보를 가져올 수 없습니다:', error);
+          alert('위치 정보 접근에 실패했습니다. 기본 위치를 사용합니다.');
           // 위치 권한 거부 시에도 가까운 순으로 정렬된 데이터 가져오기 (기본 위치 사용)
-          setLocationPermissionRequested(true)
-          fetchStores(0, true)
+          setLocationPermissionRequested(true);
+          fetchStores(0, true);
         },
         { enableHighAccuracy: true }
-      )
+      );
     } else {
-      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다. 기본 위치를 사용합니다.')
-      setLocationPermissionRequested(true)
-      fetchStores(0, true)
+      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다. 기본 위치를 사용합니다.');
+      setLocationPermissionRequested(true);
+      fetchStores(0, true);
     }
-  }
+  };
 
   // 정렬 옵션 변경 핸들러
   const handleSortOptionChange = (option) => {
+    // 가까운 순 선택 시 위치 권한이 필요함
     if (option === '가까운 순' && !locationPermissionRequested) {
-      // 가까운 순 선택 시 위치 권한 요청
-      getUserLocation()
+      // 가까운 순 선택 시 위치 권한 요청을 위한 모달 표시
+      setShowLocationModal(true);
+      return;
     }
     
-    setSortOption(option)
-    setShowSortOptions(false)
-    
-    // 가까운 순이 아니거나 이미 위치 권한을 받은 경우 바로 데이터 가져오기
-    if (option !== '가까운 순' || locationPermissionRequested) {
-      // 페이지 리셋 및 데이터 다시 로드
-      setCurrentPage(0)
-      setDisplayedStores([])
-      setStores([])
-      setFilteredStores([])
-      setHasMore(true)
-      fetchStores(0, true)
-    }
+    setSortOption(option);
+    setShowSortOptions(false);
+  };
+
+  // 위치 권한 동의 처리
+  const handleLocationPermissionAgree = () => {
+    setShowLocationModal(false);
+    setSortOption('가까운 순');
+    getUserLocation();
+  };
+
+  // 위치 권한 거부 처리
+  const handleLocationPermissionDecline = () => {
+    setShowLocationModal(false)
+    // 기본 옵션으로 돌아가기
+    setSortOption('공유 많은 순')
   }
 
   // 서버에서 페이지별로 데이터 가져오기
@@ -182,6 +190,7 @@ function HomePage() {
         setLoadingMore(true)
       }
 
+      // API_BASE_URL 사용
       let url = `${API_BASE_URL}/stores`
       let queryParams = new URLSearchParams()
 
@@ -237,16 +246,19 @@ function HomePage() {
       // 정렬 파라미터 추가
       queryParams.append('sort', sort)
       
-      // 위치 정보는 가까운 순 정렬에만 포함되도록 위에서 처리함
-      
       // 쿼리 파라미터가 있으면 URL에 추가
       if (queryParams.toString()) {
         url += `?${queryParams.toString()}`
       }
 
       try {
-        const response = await fetch(url)
-        const data = await response.json()
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API 응답 오류: ${response.status}`);
+        }
+        
+        const data = await response.json();
         
         // 새로운 페이지네이션 응답 형식 처리
         if (!data || !data.content) {
@@ -261,7 +273,12 @@ function HomePage() {
         }
 
         const newStores = data.content
-        setTotalStoreCount(data.totalElements)
+        
+        // 전체 가게 수 업데이트 (페이지 0일 때만 또는 리셋 시)
+        if (page === 0 || reset) {
+          setTotalStoreCount(data.totalElements || 0)
+        }
+        
         setHasMore(!data.last) // 마지막 페이지가 아니면 더 로드할 수 있음
         
         // 페이지가 0이거나 reset이 true면 데이터 초기화
@@ -278,22 +295,22 @@ function HomePage() {
 
         setCurrentPage(page)
       } catch (error) {
-        //console.error('API 호출 오류:', error)
         // 오류 발생 시 조용히 처리하고 사용자에게 오류 메시지 표시
         if (page === 0) {
           setStores([])
           setDisplayedStores([])
           setFilteredStores([])
+          setTotalStoreCount(0)
         }
         setHasMore(false)
       }
     } catch (error) {
-      //console.error('fetchStores 오류:', error)
       // 전체 오류 처리
       if (page === 0) {
         setStores([])
         setDisplayedStores([])
         setFilteredStores([])
+        setTotalStoreCount(0)
       }
       setHasMore(false)
     } finally {
@@ -717,9 +734,8 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {categoryFilter ? `${categoryFilter} 맛집` : '전체 맛집'} (
-              {totalStoreCount.toString().replace('*', '')}
-              )
+              {categoryFilter !== '전체' ? `${categoryFilter} 맛집` : '전체 맛집'} 
+              {totalStoreCount > 0 && ` (${totalStoreCount})`}
             </h2>
           </div>
 
@@ -733,7 +749,7 @@ function HomePage() {
               {displayedStores.map((store, index) => (
                 <div
                   key={store.id || store.storeId || index}
-                  className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer"
+                  className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer bg-white shadow-sm"
                   onClick={() => handleStoreClick(store)}
                 >
                   <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
@@ -838,6 +854,37 @@ function HomePage() {
         `
       }}
       />
+
+      {/* 위치 정보 동의 모달 */}
+      {showLocationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-5">
+            <h3 className="text-lg font-bold mb-2">위치 정보 이용 동의</h3>
+            <p className="text-gray-700 mb-3 text-sm">
+              가까운 순으로 정렬하기 위해 현재 위치 정보가 필요합니다. 
+              위치 정보 이용에 동의하시겠습니까?
+            </p>
+            <p className="text-xs text-gray-500 mb-4">
+              동의하시면 브라우저에서 위치 정보 접근 권한을 요청합니다.
+              위치 정보는 가까운 맛집을 찾는 용도로만 사용되며 저장되지 않습니다.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
+                onClick={handleLocationPermissionDecline}
+              >
+                취소
+              </button>
+              <button
+                className="px-3 py-1.5 bg-yellow-500 rounded-lg text-sm text-white hover:bg-yellow-600"
+                onClick={handleLocationPermissionAgree}
+              >
+                동의
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -58,8 +58,6 @@ function StoreDetailPage() {
 
     // 구글 이미지 URL인 경우 CORS 이슈가 있을 수 있으므로 특별히 처리
     if (isGoogleMapsImage(imageUrl)) {
-      console.log('구글 맵스 이미지 URL 감지:', imageUrl)
-
       // 가게 이름이 있으면 그에 맞는 일반적인 이미지를 표시
       // 예: 베이커리 가게인 경우 베이커리 이미지
       if (
@@ -92,7 +90,6 @@ function StoreDetailPage() {
             resolve(location)
           },
           (error) => {
-            console.error('위치 정보를 가져오는데 실패했습니다:', error)
             reject(error)
           },
           { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
@@ -101,7 +98,6 @@ function StoreDetailPage() {
         const error = new Error(
           '이 브라우저에서는 위치 정보를 지원하지 않습니다.',
         )
-        console.error(error.message)
         reject(error)
       }
     })
@@ -110,7 +106,6 @@ function StoreDetailPage() {
   // 페이지 로드 시 사용자 위치 가져오기 시도
   useEffect(() => {
     getCurrentPosition().catch((err) => {
-      console.warn('현재 위치를 가져오지 못했습니다:', err.message)
     })
   }, [])
 
@@ -134,10 +129,8 @@ function StoreDetailPage() {
           if (storeData.storeImg) {
             const img = new Image()
             img.onload = () => {
-              console.log('이미지 미리 로드 성공:', storeData.storeImg)
             }
             img.onerror = () => {
-              console.error('이미지 미리 로드 실패:', storeData.storeImg)
               // 이미지 로드 실패 시, 이미지 URL을 null로 설정해서 기본 이미지 표시
               storeData.storeImg = null
             }
@@ -146,7 +139,6 @@ function StoreDetailPage() {
 
           // 구글 이미지인지 확인
           if (isGoogleMapsImage(storeData.storeImg)) {
-            console.log('구글 맵스 이미지 URL 감지됨')
           }
 
           // JSON으로 응답 객체 로깅 (민감 정보 제외)
@@ -231,7 +223,8 @@ function StoreDetailPage() {
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 2000)
       })
-      .catch((err) => console.error('클립보드 복사 실패:', err))
+      .catch((err) => {
+      })
   }
 
   // 전화번호 복사 기능
@@ -243,7 +236,8 @@ function StoreDetailPage() {
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 2000)
       })
-      .catch((err) => console.error('클립보드 복사 실패:', err))
+      .catch((err) => {
+      })
   }
 
   // 공유 기능
@@ -263,7 +257,8 @@ function StoreDetailPage() {
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 2000)
       })
-      .catch((err) => console.error('클립보드 복사 실패:', err))
+      .catch((err) => {
+      })
   }
 
   // 스크롤 관련 함수

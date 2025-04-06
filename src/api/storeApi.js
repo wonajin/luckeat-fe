@@ -1,9 +1,8 @@
 import apiClient from './apiClient'
-import { processImageData } from './uploadApi'
-import { API_BASE_URL, API_DIRECT_URL } from '../config/apiConfig'
+import { processImageData, uploadImage, uploadMultipleImages } from './uploadApi'
+import { API_BASE_URL, API_DIRECT_URL, API_ENDPOINTS } from '../config/apiConfig'
 import { TOKEN_KEYS } from './apiClient'
 import axios from 'axios'
-
 
 // 가게 등록 (이미지 업로드 지원)
 export const registerStore = async (storeData, storeImage) => {

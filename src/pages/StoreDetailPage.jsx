@@ -58,8 +58,6 @@ function StoreDetailPage() {
 
     // 구글 이미지 URL인 경우 CORS 이슈가 있을 수 있으므로 특별히 처리
     if (isGoogleMapsImage(imageUrl)) {
-      console.log('구글 맵스 이미지 URL 감지:', imageUrl)
-
       // 가게 이름이 있으면 그에 맞는 일반적인 이미지를 표시
       // 예: 베이커리 가게인 경우 베이커리 이미지
       if (
@@ -92,7 +90,6 @@ function StoreDetailPage() {
             resolve(location)
           },
           (error) => {
-            console.error('위치 정보를 가져오는데 실패했습니다:', error)
             reject(error)
           },
           { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
@@ -101,7 +98,6 @@ function StoreDetailPage() {
         const error = new Error(
           '이 브라우저에서는 위치 정보를 지원하지 않습니다.',
         )
-        console.error(error.message)
         reject(error)
       }
     })
@@ -110,7 +106,6 @@ function StoreDetailPage() {
   // 페이지 로드 시 사용자 위치 가져오기 시도
   useEffect(() => {
     getCurrentPosition().catch((err) => {
-      console.warn('현재 위치를 가져오지 못했습니다:', err.message)
     })
   }, [])
 
@@ -119,25 +114,18 @@ function StoreDetailPage() {
       try {
         setLoading(true)
         setError(null)
-        console.log(`가게 상세 정보 요청 - 가게 ID: ${id}`)
 
         const response = await getStoreById(id)
-        console.log('가게 상세 정보 응답:', response)
 
         if (response.success) {
           const storeData = response.data
-
-          // 이미지 URL 확인 및 디버깅
-          console.log('가게 이미지 URL:', storeData.storeImg)
 
           // 이미지 미리 로드 시도
           if (storeData.storeImg) {
             const img = new Image()
             img.onload = () => {
-              console.log('이미지 미리 로드 성공:', storeData.storeImg)
             }
             img.onerror = () => {
-              console.error('이미지 미리 로드 실패:', storeData.storeImg)
               // 이미지 로드 실패 시, 이미지 URL을 null로 설정해서 기본 이미지 표시
               storeData.storeImg = null
             }
@@ -146,23 +134,15 @@ function StoreDetailPage() {
 
           // 구글 이미지인지 확인
           if (isGoogleMapsImage(storeData.storeImg)) {
-            console.log('구글 맵스 이미지 URL 감지됨')
           }
 
-          // JSON으로 응답 객체 로깅 (민감 정보 제외)
-          const safeStoreData = { ...storeData }
-          console.log('가게 데이터:', JSON.stringify(safeStoreData, null, 2))
-
           setStore(storeData)
-          console.log('지도 정보:', storeData.latitude, storeData.longitude) // 디버깅용
           // 맵 로드 완료 처리
           setMapLoaded(true)
         } else {
-          console.error('가게 정보 불러오기 실패:', response.message)
           setError(response.message || '가게 정보를 불러오는데 실패했습니다')
         }
       } catch (err) {
-        console.error('가게 정보 불러오기 중 예외 발생:', err)
         setError('가게 정보를 불러오는데 실패했습니다')
       } finally {
         setLoading(false)
@@ -183,7 +163,6 @@ function StoreDetailPage() {
         const productData = await getProductById(id, store.products[0].id)
         setProductInfo(productData)
       } catch (error) {
-        console.error('상품 정보 가져오기 실패:', error)
         setProductError('상품 정보를 불러오는데 실패했습니다')
       } finally {
         setProductLoading(false)
@@ -196,7 +175,6 @@ function StoreDetailPage() {
   // 카카오맵 스크립트 로드 확인
   useEffect(() => {
     if (!window.kakao?.maps) {
-      console.log('카카오맵 API가 로드되지 않았습니다. 다시 로드합니다.')
       // 카카오맵 스크립트 로드
       const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY
       const script = document.createElement('script')
@@ -206,12 +184,10 @@ function StoreDetailPage() {
 
       script.onload = () => {
         window.kakao.maps.load(() => {
-          console.log('카카오맵 API 로드 완료')
           setMapLoaded(true)
         })
       }
     } else {
-      console.log('카카오맵 API가 이미 로드되어 있습니다.')
       setMapLoaded(true)
     }
   }, [])
@@ -231,7 +207,8 @@ function StoreDetailPage() {
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 2000)
       })
-      .catch((err) => console.error('클립보드 복사 실패:', err))
+      .catch((err) => {
+      })
   }
 
   // 전화번호 복사 기능
@@ -243,7 +220,8 @@ function StoreDetailPage() {
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 2000)
       })
-      .catch((err) => console.error('클립보드 복사 실패:', err))
+      .catch((err) => {
+      })
   }
 
   // 공유 기능
@@ -263,7 +241,8 @@ function StoreDetailPage() {
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 2000)
       })
-      .catch((err) => console.error('클립보드 복사 실패:', err))
+      .catch((err) => {
+      })
   }
 
   // 스크롤 관련 함수
@@ -315,17 +294,17 @@ function StoreDetailPage() {
         return
       }
 
-      console.log('출발 위치:', startLocation)
-      console.log('도착 위치:', { lat: store.latitude, lng: store.longitude })
+      
+      
 
       // 카카오맵 길찾기 URL 생성 (출발지->목적지)
       const kakaoMapDirectUrl = `https://map.kakao.com/link/from/내 위치,${startLocation.lat},${startLocation.lng}/to/${store.storeName},${store.latitude},${store.longitude}`
 
       // 새 창에서 카카오맵 열기
       window.open(kakaoMapDirectUrl, '_blank')
-      console.log('길찾기 URL:', kakaoMapDirectUrl)
+      
     } catch (error) {
-      console.error('길찾기 실행 중 오류 발생:', error)
+      
 
       // 에러가 발생해도 기본 URL로 열기 (목적지만 지정)
       const kakaoMapUrl = `https://map.kakao.com/link/to/${store.storeName},${store.latitude},${store.longitude}`
@@ -373,7 +352,7 @@ function StoreDetailPage() {
         isZerowaste: isZerowaste
       }
       
-      console.log('예약 요청 데이터:', reservationData)
+      
       
       // 예약 API 호출
       const result = await createReservation(id, reservationData)
@@ -401,7 +380,7 @@ function StoreDetailPage() {
         toast.error(result.message || '예약에 실패했습니다.')
       }
     } catch (error) {
-      console.error('예약 처리 중 오류:', error)
+      
       toast.error('예약 처리 중 오류가 발생했습니다.')
     } finally {
       setReservationLoading(false)
@@ -492,7 +471,6 @@ function StoreDetailPage() {
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
               onError={(e) => {
-                console.error('이미지 로드 오류:', store.storeImg)
                 e.target.onerror = null // 무한 루프 방지
                 e.target.src = defaultImage
               }}

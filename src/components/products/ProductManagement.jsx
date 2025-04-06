@@ -11,7 +11,7 @@ import { getStoreById } from '../../api/storeApi'
 
 const ProductManagement = () => {
   const { storeId } = useParams()
-  console.log('상품 관리 페이지 storeId:', storeId)
+  
   const [storeName, setStoreName] = useState('')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -42,7 +42,7 @@ const ProductManagement = () => {
         setStoreName(storeData.data.storeName)
       }
     } catch (error) {
-      console.error('상품 목록 로드 실패:', error)
+      
       showToast('상품 목록을 불러오는데 실패했습니다.', 'error')
     } finally {
       setLoading(false)
@@ -231,7 +231,7 @@ const ProductManagement = () => {
       setIsModalVisible(false)
       loadProducts()
     } catch (error) {
-      console.error('럭키트 저장 실패:', error)
+      
       showToast('럭키트 저장에 실패했습니다.', 'error')
     }
   }
@@ -252,7 +252,7 @@ const ProductManagement = () => {
       setConfirmModalVisible(false)
       loadProducts() // 상품 목록 새로고침
     } catch (error) {
-      console.error('럭키트 삭제 실패:', error)
+      
       showToast('럭키트 삭제에 실패했습니다.', 'error')
     }
   }
@@ -275,7 +275,7 @@ const ProductManagement = () => {
         showToast('럭키트 상태 변경에 실패했습니다.', 'error')
       }
     } catch (error) {
-      console.error('럭키트 상태 변경 실패:', error)
+      
       showToast('럭키트 상태 변경에 실패했습니다.', 'error')
     }
   }

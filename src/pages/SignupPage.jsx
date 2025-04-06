@@ -301,7 +301,6 @@ function SignupPage() {
         }
       }
     } catch (error) {
-      console.error('회원가입 오류:', error)
       // 예외 발생 시 오류 모달 표시
       showError(
         '오류 발생',
@@ -431,8 +430,6 @@ function SignupPage() {
       </div>
     )
   }
-
-  console.log('SignupPage 렌더링, 팝업 상태:', showSuccessPopup)
 
   return (
     <div className="flex flex-col h-full">

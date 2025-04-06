@@ -21,6 +21,9 @@ function BusinessPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [toastType, setToastType] = useState('success') // 'success' or 'error'
   const [reservationStatuses, setReservationStatuses] = useState({}) // 예약 상태 저장
+  const [error, setError] = useState(null)
+  const [reservationError, setReservationError] = useState(null)
+  const [logoutError, setLogoutError] = useState(null)
 
   // 사용자 역할 체크
   useEffect(() => {
@@ -106,92 +109,65 @@ function BusinessPage() {
 
         // 사용자 정보 가져오기
         const userResponse = await getUserInfo()
-        if (userResponse.success) {
-          setUserData(userResponse.data)
+        if (!userResponse.success) {
+          setError('사용자 정보를 불러오는데 실패했습니다')
+          return
         }
 
-        // 가게 정보 가져오기
-        const storeResponse = await getMyStore()
-        if (storeResponse.success) {
-          setStoreData(storeResponse.data)
-          console.log('가게 정보:', storeResponse.data)
-          
-          // 스토어 ID가 있으면 대기 중인 예약 목록 가져오기
-          if (storeResponse.data && storeResponse.data.id) {
+        // 가게 정보 가져오기 (판매자인 경우)
+        if (userResponse.data.role === 'SELLER') {
+          // 가게 정보 요청
+          const storeResponse = await getMyStore()
+          if (storeResponse.success) {
+            setStoreData(storeResponse.data)
+
+            // 대기 중인 예약 가져오기
             const pendingResponse = await getStorePendingReservations(storeResponse.data.id)
-            if (pendingResponse.success && pendingResponse.data) {
+            if (pendingResponse.success) {
               setPendingReservations(pendingResponse.data)
             } else {
-              console.error('대기 중인 예약 조회 실패:', pendingResponse.message)
-              // API 실패 시 더미 데이터 사용(개발용)
-              // setPendingReservations(dummyReservations)
+              // 대기 중인 예약 조회 실패 로그 제거
             }
           }
         }
+
+        setUserData(userResponse.data)
       } catch (error) {
-        console.error('데이터 로딩 중 오류:', error)
+        // 데이터 로딩 중 오류 로그 제거
+        setError('데이터를 불러오는데 실패했습니다')
       } finally {
         setLoading(false)
       }
     }
 
-    if (user) {
-      fetchData()
-    }
-  }, [user])
+    fetchData()
+  }, [])
 
   // 예약 상태 업데이트 (승인/거절)
   const handleReservationStatus = async (reservationId, status) => {
     try {
-      setLoading(true)
-      
-      // 상태 업데이트 UI 표시
-      setReservationStatuses(prev => ({
-        ...prev,
-        [reservationId]: status
-      }))
-      
-      // API로 상태 업데이트
-      const statusData = {
-        reservationId: reservationId,
-        status: status
-      }
-      
-      const response = await updateReservationStatus(statusData)
-      
+      const response = await updateReservationStatus(reservationId, {
+        status: status,
+      })
+
       if (response.success) {
-        // 업데이트된 예약 상태에 따른 메시지
-        const message = status === 'CONFIRMED' 
-          ? '예약이 승인되었습니다' 
-          : '예약이 거절되었습니다'
-        // 승인 또는 거절에 따라 토스트 타입 설정
-        const toastType = status === 'CONFIRMED' ? 'success' : 'error'
-        showToastMessage(message, toastType)
-        
-        // 목록에서 제거 (상태 변경이 보이도록 약간 지연)
-        setTimeout(() => {
-          setPendingReservations(prev => 
-            prev.filter(r => r.id !== reservationId)
-          )
-        }, 1000)
+        // 성공 시 상태 업데이트
+        setPendingReservations((prevReservations) =>
+          prevReservations.filter((res) => res.id !== reservationId),
+        )
+        // 새로운 알림 목록 가져오기
+        if (storeData) {
+          const pendingResponse = await getStorePendingReservations(storeData.id)
+          if (pendingResponse.success) {
+            setPendingReservations(pendingResponse.data)
+          }
+        }
       } else {
-        showToastMessage(`예약 상태 변경 실패: ${response.message}`, 'error')
-        // 상태 업데이트 실패 시 UI 원복
-        setReservationStatuses(prev => ({
-          ...prev,
-          [reservationId]: undefined
-        }))
+        setReservationError(response.message)
       }
     } catch (error) {
-      console.error('예약 상태 변경 중 오류:', error)
-      showToastMessage('예약 상태 변경 중 오류가 발생했습니다', 'error')
-      // 상태 업데이트 실패 시 UI 원복
-      setReservationStatuses(prev => ({
-        ...prev,
-        [reservationId]: undefined
-      }))
-    } finally {
-      setLoading(false)
+      // 예약 상태 변경 중 오류 로그 제거
+      setReservationError('예약 상태 변경 중 오류가 발생했습니다')
     }
   }
 
@@ -209,19 +185,47 @@ function BusinessPage() {
     try {
       const result = await logout()
       if (result.success) {
-        navigate('/')
+        // 로그아웃 성공 시 처리
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
+        navigate('/login')
       } else {
-        console.error('로그아웃 실패:', result.message)
+        // 로그아웃 실패 로그 제거
+        setLogoutError(result.message)
       }
     } catch (error) {
-      console.error('로그아웃 중 오류 발생:', error)
-    } finally {
-      setShowLogoutModal(false)
+      // 로그아웃 중 오류 발생 로그 제거
+      setLogoutError('로그아웃 처리 중 오류가 발생했습니다')
     }
   }
 
   // API에서 가져온 사용자 정보가 없으면, 로컬 상태의 사용자 정보 사용
   const displayUser = userData || user || {}
+
+  // 가게 상세보기 이동
+  const handleStoreDetail = () => {
+    if (storeData && storeData.id) {
+      // 가게 상세보기 이동 로그 제거
+      navigate(`/stores/${storeData.id}`)
+    }
+  }
+
+  // 럭키트 관리 페이지 이동
+  const handleProductManagement = () => {
+    if (storeData && storeData.id) {
+      // 럭키트 관리 이동 로그 제거
+      navigate(`/stores/${storeData.id}/products`)
+    }
+  }
+
+  // 가게 예약 리스트 페이지 이동
+  const handleReservationsList = () => {
+    if (storeData && storeData.id) {
+      // 가게 예약 리스트 이동 로그 제거
+      navigate(`/stores/${storeData.id}/reservations`)
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -309,12 +313,7 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-                    onClick={() => {
-                      if (storeData) {
-                        console.log('가게 상세보기 이동:', storeData.id);
-                        navigate(`/store/${storeData.id}`);
-                      }
-                    }}
+                    onClick={handleStoreDetail}
                     disabled={!storeData}
                   >
                     <span>가게 상세보기</span>
@@ -325,12 +324,7 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-                    onClick={() => {
-                      if (storeData) {
-                        console.log('럭키트 관리 이동:', storeData.id);
-                        navigate(`/store/${storeData.id}/products`);
-                      }
-                    }}
+                    onClick={handleProductManagement}
                     disabled={!storeData}
                   >
                     <span>럭키트 관리</span>
@@ -341,12 +335,7 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-                    onClick={() => {
-                      if (storeData) {
-                        console.log('가게 예약 리스트 이동:', storeData.id);
-                        navigate(`/store/${storeData.id}/reservation`);
-                      }
-                    }}
+                    onClick={handleReservationsList}
                     disabled={!storeData}
                   >
                     <span>가게 예약 리스트</span>

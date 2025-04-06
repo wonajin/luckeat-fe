@@ -44,6 +44,7 @@ function HomePage() {
     lng: 126.5302,
   })
   const [locationPermissionRequested, setLocationPermissionRequested] = useState(false)
+  const [showLocationModal, setShowLocationModal] = useState(false)
 
   const cardNews = [
     {
@@ -153,8 +154,9 @@ function HomePage() {
   // 정렬 옵션 변경 핸들러
   const handleSortOptionChange = (option) => {
     if (option === '가까운 순' && !locationPermissionRequested) {
-      // 가까운 순 선택 시 위치 권한 요청
-      getUserLocation()
+      // 가까운 순 선택 시 위치 권한 요청을 위한 모달 표시
+      setShowLocationModal(true)
+      return
     }
     
     setSortOption(option)
@@ -170,6 +172,20 @@ function HomePage() {
       setHasMore(true)
       fetchStores(0, true)
     }
+  }
+
+  // 위치 권한 동의 처리
+  const handleLocationPermissionAgree = () => {
+    setShowLocationModal(false)
+    getUserLocation()
+    setSortOption('가까운 순')
+  }
+
+  // 위치 권한 거부 처리
+  const handleLocationPermissionDecline = () => {
+    setShowLocationModal(false)
+    // 기본 옵션으로 돌아가기
+    setSortOption('공유 많은 순')
   }
 
   // 서버에서 페이지별로 데이터 가져오기
@@ -826,6 +842,37 @@ function HomePage() {
         `
       }}
       />
+
+      {/* 위치 정보 동의 모달 */}
+      {showLocationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-bold mb-2">위치 정보 이용 동의</h3>
+            <p className="text-gray-700 mb-4">
+              가까운 순으로 정렬하기 위해 현재 위치 정보가 필요합니다. 
+              위치 정보 이용에 동의하시겠습니까?
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              동의하시면 브라우저에서 위치 정보 접근 권한을 요청합니다.
+              위치 정보는 가까운 맛집을 찾는 용도로만 사용되며 저장되지 않습니다.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                onClick={handleLocationPermissionDecline}
+              >
+                취소
+              </button>
+              <button
+                className="px-4 py-2 bg-yellow-500 rounded-lg text-white hover:bg-yellow-600"
+                onClick={handleLocationPermissionAgree}
+              >
+                동의
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

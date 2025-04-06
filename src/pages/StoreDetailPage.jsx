@@ -294,17 +294,17 @@ function StoreDetailPage() {
         return
       }
 
-      console.log('출발 위치:', startLocation)
-      console.log('도착 위치:', { lat: store.latitude, lng: store.longitude })
+      
+      
 
       // 카카오맵 길찾기 URL 생성 (출발지->목적지)
       const kakaoMapDirectUrl = `https://map.kakao.com/link/from/내 위치,${startLocation.lat},${startLocation.lng}/to/${store.storeName},${store.latitude},${store.longitude}`
 
       // 새 창에서 카카오맵 열기
       window.open(kakaoMapDirectUrl, '_blank')
-      console.log('길찾기 URL:', kakaoMapDirectUrl)
+      
     } catch (error) {
-      console.error('길찾기 실행 중 오류 발생:', error)
+      
 
       // 에러가 발생해도 기본 URL로 열기 (목적지만 지정)
       const kakaoMapUrl = `https://map.kakao.com/link/to/${store.storeName},${store.latitude},${store.longitude}`
@@ -352,7 +352,7 @@ function StoreDetailPage() {
         isZerowaste: isZerowaste
       }
       
-      console.log('예약 요청 데이터:', reservationData)
+      
       
       // 예약 API 호출
       const result = await createReservation(id, reservationData)
@@ -380,7 +380,7 @@ function StoreDetailPage() {
         toast.error(result.message || '예약에 실패했습니다.')
       }
     } catch (error) {
-      console.error('예약 처리 중 오류:', error)
+      
       toast.error('예약 처리 중 오류가 발생했습니다.')
     } finally {
       setReservationLoading(false)

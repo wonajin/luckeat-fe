@@ -145,7 +145,7 @@ function ReviewManagementPage() {
 
       setLoading(false)
     } catch (err) {
-      console.error('데이터 로딩 중 오류 발생:', err)
+      
       setError('리뷰 데이터를 불러오는데 실패했습니다')
       setLoading(false)
     }
@@ -369,7 +369,7 @@ function ReviewManagementPage() {
         }, 1000)
       }
     } catch (error) {
-      console.error('리뷰 작성 중 오류:', error)
+      
     }
   }
 
@@ -446,7 +446,7 @@ function ReviewManagementPage() {
         }, 1000)
       }
     } catch (error) {
-      console.error('리뷰 수정 중 오류:', error)
+      
     }
   }
 
@@ -493,7 +493,7 @@ function ReviewManagementPage() {
         }, 1000)
       }
     } catch (error) {
-      console.error('리뷰 삭제 중 오류:', error)
+      
     } finally {
       setShowDeleteModal(false)
     }

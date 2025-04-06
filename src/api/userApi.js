@@ -23,23 +23,6 @@ export const register = async (userData) => {
     if (requestData.userType) {
       delete requestData.userType
     }
-    
-    // 비밀번호 인코딩 (보안 강화)
-    if (requestData.password) {
-      try {
-        // 한글 문자 및 공백이 있는지 확인 (사용자 입력 오류 방지)
-        const hasInvalidChar = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/.test(requestData.password);
-        if (hasInvalidChar) {
-          // 한글이나 공백이 있는 경우 필터링
-          requestData.password = requestData.password.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/g, '');
-        }
-        
-        // Base64 인코딩 적용
-        requestData.password = btoa(requestData.password)
-      } catch (encodeError) {
-        // 인코딩 실패 시 원본 비밀번호 유지 (서버측 보안에 의존)
-      }
-    }
 
     // 프록시를 통한 요청
     const response = await apiClient.post(API_ENDPOINTS.REGISTER, requestData)
@@ -47,16 +30,6 @@ export const register = async (userData) => {
     const result = handleSuccessResponse(response)
     return result
   } catch (error) {
-    // 이메일 중복 오류 특별 처리
-    if (error.response && error.response.status === 409) {
-      // 이메일 중복 오류 메시지 더 명확하게 제공
-      return {
-        success: false,
-        message: '이미 가입된 이메일입니다. 다른 이메일 주소로 다시 시도하거나 로그인해 주세요.',
-        status: 409,
-      }
-    }
-    
     // 서버 오류(500)인 경우 더 자세한 메시지 제공
     if (error.response && error.response.status === 500) {
       return {
@@ -73,41 +46,8 @@ export const register = async (userData) => {
 // 로그인
 export const login = async (credentials) => {
   try {
-    // 요청 데이터 복사 (원본 데이터 변경 방지)
-    const requestData = { ...credentials }
-    
-    // 비밀번호 인코딩 (보안 강화)
-    if (requestData.password) {
-      try {
-        // 한글 문자 및 공백이 있는지 확인 (사용자 입력 오류 방지)
-        const hasInvalidChar = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/.test(requestData.password);
-        if (hasInvalidChar) {
-          // 한글이나 공백이 있는 경우 필터링
-          requestData.password = requestData.password.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/g, '');
-        }
-        
-        // Base64 인코딩 적용
-        requestData.password = btoa(requestData.password)
-      } catch (encodeError) {
-        // 인코딩 실패 시 원본 비밀번호 유지
-      }
-    }
-    
     // 프록시를 통한 요청
-    const response = await apiClient.post(API_ENDPOINTS.LOGIN, requestData)
-
-    // HTML 응답인지 확인
-    if (typeof response.data === 'string' && 
-        (response.data.includes('<!DOCTYPE html>') || 
-         response.data.includes('<html') || 
-         response.data.includes('<body'))) {
-      
-      // 인증 실패로 가정하고 사용자 친화적인 오류 메시지 반환
-      return {
-        success: false,
-        message: '아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.',
-      };
-    }
+    const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials)
 
     // 로그인 성공 여부 확인 (더 유연하게 처리)
     // 1. 명시적인 success 플래그가 있는 경우 이를 확인
@@ -157,24 +97,6 @@ export const login = async (credentials) => {
 
     return handleSuccessResponse(response)
   } catch (error) {
-    // HTML 응답을 감지하고 처리
-    if (error.response && typeof error.response.data === 'string' && 
-       (error.response.data.includes('<!DOCTYPE html>') || 
-        error.response.data.includes('<html') || 
-        error.response.data.includes('<body'))) {
-      
-      // 오류 발생 시 토큰 제거
-      localStorage.removeItem(TOKEN_KEYS.ACCESS)
-      localStorage.removeItem(TOKEN_KEYS.REFRESH)
-      localStorage.removeItem('user')
-      
-      // 사용자 친화적인 오류 메시지 반환
-      return {
-        success: false,
-        message: '아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해주세요.'
-      };
-    }
-    
     // 오류 발생 시 토큰 제거
     localStorage.removeItem(TOKEN_KEYS.ACCESS)
     localStorage.removeItem(TOKEN_KEYS.REFRESH)
@@ -263,31 +185,7 @@ export const updateNickname = async (nickname) => {
 // 비밀번호 수정
 export const updatePassword = async (passwordData) => {
   try {
-    // 요청 데이터 복사
-    const requestData = { ...passwordData };
-    
-    // 현재 비밀번호와 새 비밀번호 인코딩
-    if (requestData.oldPassword) {
-      try {
-        // 한글/공백 필터링 및 인코딩
-        const filteredOldPassword = requestData.oldPassword.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/g, '');
-        requestData.oldPassword = btoa(filteredOldPassword);
-      } catch (error) {
-        // safeError 호출 제거
-      }
-    }
-    
-    if (requestData.newPassword) {
-      try {
-        // 한글/공백 필터링 및 인코딩
-        const filteredNewPassword = requestData.newPassword.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/g, '');
-        requestData.newPassword = btoa(filteredNewPassword);
-      } catch (error) {
-        // safeError 호출 제거
-      }
-    }
-    
-    const response = await apiClient.patch('/users/password', requestData)
+    const response = await apiClient.patch('/users/password', passwordData)
     return handleSuccessResponse(response)
   } catch (error) {
     return handleErrorResponse(error)

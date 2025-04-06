@@ -26,8 +26,6 @@ export const registerStore = async (storeData, storeImage) => {
 // 가게 목록 조회 (필터링 및 정렬 옵션 지원)
 export const getStores = async (params = {}) => {
   try {
-    console.log('getStores 호출 - 파라미터:', params)
-
     // isDiscountOpen 파라미터가 있는지 확인
     let url = '/stores'
 
@@ -39,56 +37,38 @@ export const getStores = async (params = {}) => {
       params = otherParams
     }
 
-    console.log('API 요청 URL:', url)
-    console.log('API 요청 파라미터(수정됨):', params)
-
-    // 토큰 있는지 확인 (디버깅용)
+    // 토큰 있는지 확인
     const hasToken = localStorage.getItem('accessToken') !== null
-    console.log('인증 토큰 상태:', hasToken ? '토큰 있음' : '토큰 없음')
 
-    // API_BASE_URL에 이미 슬래시가 포함되어 있으므로 'stores'만 사용
+    // API 요청
     const response = await apiClient.get(url, {
       params,
     })
 
-    console.log('가게 목록 조회 응답 전체:', response)
-    console.log('가게 목록 조회 응답 데이터:', response.data)
-    console.log('데이터 타입:', typeof response.data)
-
-    // 이 부분에서 데이터 구조 로깅
-    if (Array.isArray(response.data)) {
-      console.log('배열 길이:', response.data.length)
-    } else if (response.data && typeof response.data === 'object') {
-      console.log('객체 키:', Object.keys(response.data))
+    return {
+      success: true,
+      data: response.data
     }
-
-    return response.data
   } catch (error) {
-    console.error('가게 목록 조회 오류:', error)
-
     // 오류 응답 구조화
     let errorMessage = '가게 목록을 불러오는데 실패했습니다.'
 
     if (error.response) {
       // 서버에서 응답이 왔지만 오류 상태 코드인 경우
       const { status } = error.response
-      console.error(`HTTP 오류 (${status}):`, error.response.data)
 
       if (status === 401) {
         errorMessage =
           '인증이 필요합니다. 로그인 상태가 아니거나 토큰이 만료되었습니다.'
-        console.log('인증 오류 발생: 로그인 없이 계속 진행합니다.')
         // 비로그인 상태에서도 계속 진행할 수 있도록 빈 배열 반환
         return []
       }
     } else if (error.request) {
       // 요청이 전송되었지만 응답이 없는 경우
-      console.error('네트워크 오류: 서버에 연결할 수 없습니다.')
       errorMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.'
     }
 
     // 오류를 던지는 대신 빈 배열 반환
-    console.error(errorMessage)
     return []
   }
 }
@@ -96,14 +76,10 @@ export const getStores = async (params = {}) => {
 // 특정 가게 상세 조회
 export const getStoreById = async (storeId) => {
   try {
-    console.log(`가게 상세 정보 요청: 가게 ID ${storeId}`)
-
     // 현재 액세스 토큰 확인
     const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS)
-    console.log('요청 시 토큰 확인:', accessToken ? '토큰 있음' : '토큰 없음')
 
     const response = await apiClient.get(`/stores/${storeId}`)
-    console.log('가게 상세 정보 응답:', response.data)
 
     // 응답 데이터 확인 및 변환
     const storeData = response.data?.data || response.data
@@ -113,8 +89,6 @@ export const getStoreById = async (storeId) => {
       data: storeData,
     }
   } catch (error) {
-    console.error('가게 상세 정보 조회 오류:', error)
-
     // 구체적인 오류 메시지 제공
     let errorMessage = '가게 정보를 불러오는데 실패했습니다.'
 
@@ -147,14 +121,12 @@ export const updateStore = async (storeId, storeData, storeImage) => {
     // 이미지 처리 (이미지 파일이 있는 경우에만)
     let processedData = storeData
     if (storeImage) {
-      console.log('가게 이미지 업로드 시작:', storeImage.name)
       processedData = await processImageData(
         storeData,
         storeImage,
         'storeImg',
         'stores',
       )
-      console.log('이미지 처리 후 데이터:', processedData.storeImg)
     }
 
     // API 호출
@@ -184,7 +156,6 @@ export const updateStore = async (storeId, storeData, storeImage) => {
       data: response.data,
     }
   } catch (error) {
-    console.error('가게 정보 수정 오류:', error)
     return {
       success: false,
       message:
@@ -216,17 +187,13 @@ export const deleteStore = async (storeId) => {
 // 사용자의 가게 정보 조회
 export const getMyStore = async () => {
   try {
-    console.log('내 가게 정보 요청')
     const response = await apiClient.get('/api/v1/stores/my')
-    console.log('내 가게 정보 응답:', response.data)
 
     return {
       success: true,
       data: response.data,
     }
   } catch (error) {
-    console.error('내 가게 정보 조회 오류:', error)
-
     // 구체적인 오류 메시지 제공
     let errorMessage = '가게 정보를 불러오는데 실패했습니다.'
 
@@ -256,12 +223,9 @@ export const getMyStore = async () => {
 // 상품 상세 정보 조회
 export const getProductById = async (storeId, productId) => {
   try {
-    const response = await axios.get(
-      `/api/v1/stores/${storeId}/products/${productId}`,
-    )
+    const response = await apiClient.get(`/stores/${storeId}/products/${productId}`)
     return response.data
   } catch (error) {
-    console.error('상품 정보 조회 실패:', error)
     throw error
   }
 }

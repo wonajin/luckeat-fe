@@ -21,11 +21,9 @@ Date.prototype.getTimezoneOffset = function() {
 
 // axios 인스턴스 생성
 const apiClient = axios.create({
+  withCredentials: true, // CORS 요청 시 쿠키와 인증 헤더 포함
   headers: {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   },
 })
 
@@ -60,22 +58,63 @@ apiClient.interceptors.request.use(
     // 시간대 설정
     config.headers['X-Timezone'] = koreaTimeZone
 
-    console.log('요청 전송:', config.method.toUpperCase(), config.url)
-    console.log('요청 헤더:', JSON.stringify(config.headers, null, 2))
-    if (config.data) {
-      console.log('요청 데이터:', JSON.stringify(config.data, null, 2))
-    }
     return config
   },
   (error) => {
-    console.error('요청 오류:', error)
     return Promise.reject(error)
   },
 )
 
+// HTML 응답인지 확인하는 함수
+const isHtmlResponse = (response) => {
+  // Content-Type 헤더 확인
+  const contentType = response.headers && response.headers['content-type'];
+  if (contentType && contentType.includes('text/html')) {
+    return true;
+  }
+  
+  // 데이터가 HTML인지 문자열 기반으로 확인
+  if (typeof response.data === 'string' && 
+     (response.data.includes('<!DOCTYPE html>') || 
+      response.data.includes('<html') || 
+      response.data.includes('<body'))) {
+    return true;
+  }
+  
+  return false;
+};
+
+// HTML 응답을 사용자 친화적인 오류 메시지로 변환
+const transformHtmlResponse = (response) => {
+  // 로그인 관련 엔드포인트인 경우
+  if (response.config.url.includes('/login') || response.config.url.includes('/auth')) {
+    return {
+      ...response,
+      data: {
+        success: false,
+        message: '해당 이메일로 가입된 계정이 없습니다.'
+      }
+    };
+  }
+  
+  // 기본 변환
+  return {
+    ...response,
+    data: {
+      success: false,
+      message: '서버에서 예상치 못한 응답을 받았습니다. 잠시 후 다시 시도해주세요.'
+    }
+  };
+};
+
 // 응답 인터셉터 설정
 apiClient.interceptors.response.use(
   (response) => {
+    // HTML 응답 감지 및 변환
+    if (isHtmlResponse(response)) {
+      return transformHtmlResponse(response);
+    }
+  
     // UTC 시간을 한국 시간으로 변환하는 함수
     const convertUTCToKoreaTime = (data) => {
       if (!data) return data
@@ -106,7 +145,6 @@ apiClient.interceptors.response.use(
                   converted[key] = data[key]
                 }
               } catch (error) {
-                console.error('날짜 변환 오류:', error)
                 converted[key] = data[key]
               }
             } else {
@@ -129,25 +167,22 @@ apiClient.interceptors.response.use(
       response.data = convertUTCToKoreaTime(response.data)
     }
 
-    console.log(
-      '응답 수신:',
-      response.status,
-      response.config.method.toUpperCase(),
-      response.config.url,
-      response.data,
-    )
     return response
   },
   (error) => {
+    // HTML 응답 감지 (오류 객체 내부)
+    if (error.response && isHtmlResponse(error.response)) {
+      const transformedResponse = transformHtmlResponse(error.response);
+      return Promise.reject({
+        ...error,
+        response: transformedResponse,
+        message: transformedResponse.data.message
+      });
+    }
+  
     // 에러 처리
     if (error.response) {
       const { status, data, config } = error.response
-      console.error(
-        `응답 오류 [${status}]:`,
-        config.method.toUpperCase(),
-        config.url,
-        data,
-      )
 
       // 인증 에러 (401)
       if (status === 401) {
@@ -165,43 +200,33 @@ apiClient.interceptors.response.use(
 
       // 권한 에러 (403)
       else if (status === 403) {
-        console.error(
-          '권한이 없습니다:',
-          data.message || ERROR_MESSAGES.FORBIDDEN,
-        )
+        // 권한 없음 처리
       }
 
       // 리소스 없음 (404)
       else if (status === 404) {
         const notFoundMessage =
           data.message || '요청한 리소스를 찾을 수 없습니다.'
-        console.error(notFoundMessage)
       }
 
       // 유효성 검사 실패 (400)
       else if (status === 400) {
-        console.error(
-          '잘못된 요청입니다:',
-          data.message || ERROR_MESSAGES.BAD_REQUEST,
-        )
+        // 잘못된 요청 처리
       }
 
       // 중복 에러 (409)
       else if (status === 409) {
-        console.error('리소스 중복 오류:', data.message)
+        // 리소스 중복 오류 처리
       }
 
       // 서버 에러 (500)
       else if (status === 500) {
-        console.error(
-          '서버 오류가 발생했습니다:',
-          data.message || ERROR_MESSAGES.SERVER_ERROR,
-        )
+        // 서버 오류 처리
       }
     } else if (error.request) {
-      console.error('응답을 받지 못했습니다. 네트워크 연결을 확인하세요.')
+      // 응답을 받지 못함 처리
     } else {
-      console.error('요청 설정 중 오류가 발생했습니다:', error.message)
+      // 요청 설정 중 오류 처리
     }
 
     return Promise.reject(error)

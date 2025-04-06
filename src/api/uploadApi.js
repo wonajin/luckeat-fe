@@ -29,14 +29,6 @@ export const uploadImage = async (imageFile, type) => {
     // API_URL 사용
     const uploadUrl = `${API_DIRECT_URL}/api/v1${endpoint}`
     
-    console.log('이미지 업로드 시작:', uploadUrl)
-    console.log(
-      '업로드 이미지 정보:',
-      imageFile.name,
-      imageFile.type,
-      imageFile.size,
-    )
-
     // fetch를 사용한 이미지 업로드
     const response = await fetch(uploadUrl, {
       method: 'POST',
@@ -46,21 +38,16 @@ export const uploadImage = async (imageFile, type) => {
       body: imageFormData,
     })
 
-    console.log('이미지 업로드 응답 상태:', response.status, response.statusText)
-
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('이미지 업로드 응답 에러:', errorText)
       throw new Error(`이미지 업로드 실패: ${response.status} ${response.statusText}`)
     }
 
     const result = await response.json()
-    console.log('이미지 업로드 성공:', result)
 
     // 업로드된 이미지 URL 반환
     return result.imageUrl
   } catch (error) {
-    console.error('이미지 업로드 중 오류 발생:', error)
     throw error
   }
 }
@@ -99,18 +86,12 @@ export const processImageData = async (
     // API_DIRECT_URL 변수를 사용하여 새 URL 생성 (.env의 VITE_API_URL 값이 설정되어 있음)
     const formattedImageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`;
     
-    console.log('이미지 URL 변환:', {
-      원본: imageUrl,
-      변환: formattedImageUrl,
-    })
-
     // 업로드된 이미지 URL을 원본 데이터에 추가
     return {
       ...formData,
       [imageFieldName]: formattedImageUrl,
     }
   } catch (error) {
-    console.error('이미지 업로드 중 오류 발생:', error)
     throw error
   }
 }
@@ -130,7 +111,6 @@ export const uploadMultipleImages = async (imageFiles, type) => {
     const uploadPromises = imageFiles.map(file => uploadImage(file, type));
     return await Promise.all(uploadPromises);
   } catch (error) {
-    console.error('이미지 업로드 중 오류 발생:', error)
     throw error
   }
 }

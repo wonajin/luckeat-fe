@@ -32,7 +32,7 @@ function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showArrows, setShowArrows] = useState(false)
   const [displayedStores, setDisplayedStores] = useState([])
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(0)
   const storesPerPage = 10 // 한 번에 로드할 가게 수 증가
   const [hasMore, setHasMore] = useState(true) // 더 로드할 데이터 여부
   const [totalStoreCount, setTotalStoreCount] = useState(0) // 전체 가게 수 추가
@@ -117,9 +117,9 @@ function HomePage() {
   }
 
   // 서버에서 페이지별로 데이터 가져오기
-  const fetchStores = useCallback(async (page = 1, reset = false) => {
+  const fetchStores = useCallback(async (page = 0, reset = false) => {
     try {
-      if (page === 1) {
+      if (page === 0) {
         setLoading(true)
       } else {
         setLoadingMore(true)
@@ -197,24 +197,26 @@ function HomePage() {
         const response = await fetch(url)
         const data = await response.json()
         
-        // 데이터가 없거나 배열이 아닌 경우 처리
-        if (!data || !Array.isArray(data)) {
-          if (page === 1) {
+        // 새로운 페이지네이션 응답 형식 처리
+        if (!data || !data.content) {
+          if (page === 0) {
             setStores([])
             setDisplayedStores([])
             setFilteredStores([])
-            setTotalStoreCount(0) // 가게가 없는 경우 개수 0으로 설정
+            setTotalStoreCount(0)
           }
           setHasMore(false)
           return
         }
+
+        const newStores = data.content
+        setTotalStoreCount(data.totalElements)
+        setHasMore(!data.last) // 마지막 페이지가 아니면 더 로드할 수 있음
         
-        // 페이지가 1이거나 reset이 true면 데이터 초기화
-        if (page === 1 || reset) {
-          // 클라이언트 측 정렬 적용 (백엔드에서 정렬이 제대로 작동하지 않는 경우)
-          // 필드가 없는 경우를 처리하기 위한 안전 조치
-          const sortData = [...data].sort((a, b) => {
-            // 기본값 설정 (필드가 없는 경우 사용)
+        // 페이지가 0이거나 reset이 true면 데이터 초기화
+        if (page === 0 || reset) {
+          // 클라이언트 측 정렬 적용
+          const sortData = [...newStores].sort((a, b) => {
             const defaultA = 0
             const defaultB = 0
             
@@ -234,7 +236,7 @@ function HomePage() {
           
           setStores(sortData)
           
-          // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
+          // 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
           let filteredData = [...sortData]
           
           // 카테고리 필터링
@@ -258,13 +260,9 @@ function HomePage() {
           
           setDisplayedStores(filteredData)
           setFilteredStores(filteredData)
-          // 첫 페이지인 경우 전체 가게 수를 현재 받은 데이터의 개수로 설정
-          setTotalStoreCount(filteredData.length)
         } else {
-          // 이미 로드된 데이터에 추가
-          // 클라이언트 측 정렬 적용 (백엔드에서 정렬이 제대로 작동하지 않는 경우)
-          const sortData = [...data].sort((a, b) => {
-            // 기본값 설정 (필드가 없는 경우 사용)
+          // 기존 데이터에 새로운 데이터 추가
+          const sortData = [...newStores].sort((a, b) => {
             const defaultA = 0
             const defaultB = 0
             
@@ -284,7 +282,7 @@ function HomePage() {
           
           setStores(prev => [...prev, ...sortData])
           
-          // 추가: 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
+          // 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
           let filteredData = [...sortData]
           if (categoryFilter && categoryFilter !== '전체') {
             const category = categoryOptions.find(opt => opt.name === categoryFilter)
@@ -296,20 +294,23 @@ function HomePage() {
             }
           }
           
-          const updatedFilteredData = [...filteredStores, ...filteredData]
+          // 검색어 필터링 - 클라이언트 측에서도 적용
+          if (searchQuery && searchQuery.trim() !== '') {
+            filteredData = filteredData.filter(store => {
+              const storeName = store.storeName || store.name || ''
+              return storeName.toLowerCase().includes(searchQuery.toLowerCase())
+            })
+          }
+          
           setDisplayedStores(prev => [...prev, ...filteredData])
-          setFilteredStores(updatedFilteredData)
-          // 총 가게 수 업데이트 (필터링된 데이터로 계산)
-          setTotalStoreCount(updatedFilteredData.length)
+          setFilteredStores(prev => [...prev, ...filteredData])
         }
 
-        // 받은 데이터가 요청한 size보다 적으면 더 이상 데이터가 없는 것으로 간주
-        setHasMore(data.length === storesPerPage)
         setCurrentPage(page)
       } catch (error) {
         //console.error('API 호출 오류:', error)
         // 오류 발생 시 조용히 처리하고 사용자에게 오류 메시지 표시
-        if (page === 1) {
+        if (page === 0) {
           setStores([])
           setDisplayedStores([])
           setFilteredStores([])
@@ -319,7 +320,7 @@ function HomePage() {
     } catch (error) {
       //dconsole.error('fetchStores 오류:', error)
       // 전체 오류 처리
-      if (page === 1) {
+      if (page === 0) {
         setStores([])
         setDisplayedStores([])
         setFilteredStores([])
@@ -333,13 +334,13 @@ function HomePage() {
 
   // 초기 데이터 로드 및 필터 변경 시 데이터 다시 로드
   useEffect(() => {
-    // 필터가 변경되면 페이지를 1로 초기화하고 데이터 다시 로드
-    setCurrentPage(1) // 페이지 리셋
+    // 필터가 변경되면 페이지를 0로 초기화하고 데이터 다시 로드
+    setCurrentPage(0) // 페이지 리셋
     setDisplayedStores([]) // 표시된 가게 초기화
     setStores([]) // 저장된 가게 초기화
     setFilteredStores([]) // 필터링된 가게도 초기화
     setHasMore(true) // 더 불러올 데이터가 있다고 가정
-    fetchStores(1, true)
+    fetchStores(0, true)
   }, [fetchStores, showDiscountOnly, categoryFilter, searchQuery, sortOption])
 
   // 스크롤 이벤트 핸들러 최적화 (디바운싱 적용)
@@ -436,7 +437,7 @@ function HomePage() {
     // 검색어가 비었을 때 (사용자가 검색어를 지웠을 때)
     if (!query || query.trim() === '') {
       setSearchQuery('')
-      fetchStores(1, true)
+      fetchStores(0, true)
       return
     }
     

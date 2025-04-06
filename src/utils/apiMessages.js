@@ -123,7 +123,6 @@ export const handleSuccessResponse = (response) => {
   try {
     // response가 null이거나 undefined인 경우 대비
     if (!response) {
-      console.warn('응답 객체가 없습니다.');
       return {
         success: false,
         data: {},
@@ -150,7 +149,6 @@ export const handleSuccessResponse = (response) => {
       // 로그인 응답으로 보이는 경우 (accessToken이 있는 경우)
       if (responseData.accessToken) {
         isSuccess = true;
-        console.log('토큰이 있는 응답 - 성공으로 처리됨');
       }
     }
 
@@ -177,7 +175,6 @@ export const handleSuccessResponse = (response) => {
       message: message,
     };
   } catch (error) {
-    console.error('응답 처리 중 오류 발생:', error);
     return {
       success: false,
       data: responseData || {},

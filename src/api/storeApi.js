@@ -26,50 +26,55 @@ export const registerStore = async (storeData, storeImage) => {
 // 가게 목록 조회 (필터링 및 정렬 옵션 지원)
 export const getStores = async (params = {}) => {
   try {
-    // isDiscountOpen 파라미터가 있는지 확인
-    let url = '/stores'
-
-    // 파라미터에 isDiscountOpen가 있을 때만 URL에 직접 추가
-    if (params.isDiscountOpen === true) {
-      url = `/stores?isDiscountOpen=true`
-      // 다른 파라미터는 그대로 유지하되 isDiscountOpen는 제거
-      const { isDiscountOpen, ...otherParams } = params
-      params = otherParams
+    // API 요청 경로 설정
+    let url = '/api/v1/stores';
+    
+    // URL 매개변수 객체 생성
+    const urlParams = new URLSearchParams();
+    
+    // 모든 매개변수 URL에 추가
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== null && value !== undefined) {
+        urlParams.append(key, value);
+      }
+    }
+    
+    // 매개변수가 있으면 URL에 추가
+    if (urlParams.toString()) {
+      url = `${url}?${urlParams.toString()}`;
     }
 
-    // 토큰 있는지 확인
-    const hasToken = localStorage.getItem('accessToken') !== null
-
     // API 요청
-    const response = await apiClient.get(url, {
-      params,
-    })
+    const response = await apiClient.get(url);
+    
+    // 페이지네이션 응답인지 확인하고 적절히 처리
+    const data = response.data?.content || response.data || [];
 
     return {
       success: true,
-      data: response.data
-    }
+      data
+    };
   } catch (error) {
     // 오류 응답 구조화
-    let errorMessage = '가게 목록을 불러오는데 실패했습니다.'
+    let errorMessage = '가게 목록을 불러오는데 실패했습니다.';
 
     if (error.response) {
       // 서버에서 응답이 왔지만 오류 상태 코드인 경우
-      const { status } = error.response
+      const { status } = error.response;
 
       if (status === 401) {
         errorMessage =
-          '인증이 필요합니다. 로그인 상태가 아니거나 토큰이 만료되었습니다.'
+          '인증이 필요합니다. 로그인 상태가 아니거나 토큰이 만료되었습니다.';
         // 비로그인 상태에서도 계속 진행할 수 있도록 빈 배열 반환
-        return []
+        return [];
       }
     } else if (error.request) {
       // 요청이 전송되었지만 응답이 없는 경우
-      errorMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.'
+      errorMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.';
     }
 
     // 오류를 던지는 대신 빈 배열 반환
-    return []
+    return [];
   }
 }
 

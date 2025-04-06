@@ -37,36 +37,36 @@ function StoreMarker({ store, isSelected, onClick, onDetail }) {
 
   // 마커 클릭 이벤트 처리기
   const handleMarkerClick = (event) => {
-    // 콘솔 로그 제거
-    
     // 이벤트 전파 중지 로직 강화
     if (event) {
       // 모든 가능한 이벤트 중지 메서드 호출
-      if (event.stopPropagation) event.stopPropagation()
-      if (event.preventDefault) event.preventDefault()
-      if (event.cancelBubble !== undefined) event.cancelBubble = true
+      if (event.stopPropagation) event.stopPropagation();
+      if (event.preventDefault) event.preventDefault();
+      if (event.cancelBubble !== undefined) event.cancelBubble = true;
       
       // 카카오맵 이벤트 처리를 위한 플래그 설정
-      event._stopPropagation = true
+      event._stopPropagation = true;
       
       // 원본 DOM 이벤트가 있는 경우에도 전파 중지
       if (event.nativeEvent) {
-        event.nativeEvent.stopPropagation()
-        event.nativeEvent.preventDefault()
+        event.nativeEvent.stopPropagation();
+        event.nativeEvent.preventDefault();
       }
     }
     
-    // 글로벌 플래그 설정 - 다른 곳에서도 확인 가능하도록
+    // 글로벌 플래그 설정 (다른 곳에서 참조할 수 있도록)
     window._markerClickInProgress = true;
     
-    // 클릭 처리
-    onClick(store)
+    // 클릭 처리 - setTimeout으로 비동기 처리하여 이벤트 전파 문제 방지
+    setTimeout(() => {
+      onClick(store);
+    }, 10);
     
     // 타임아웃으로 플래그 초기화
     setTimeout(() => {
       window._markerClickInProgress = false;
     }, 300);
-  }
+  };
 
   // 인포윈도우 닫기 버튼 클릭 핸들러
   const handleOverlayClose = (e) => {

@@ -13,6 +13,7 @@ import luckeatLogo from '../assets/images/luckeat-logo.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 import { API_BASE_URL } from '../config/apiConfig'
+import { debounce } from 'lodash'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -23,7 +24,7 @@ function HomePage() {
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
-  const [sortOption, setSortOption] = useState('가까운 순')
+  const [sortOption, setSortOption] = useState('공유 많은 순')
   const [showSortOptions, setShowSortOptions] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -39,6 +40,12 @@ function HomePage() {
   const [autoSlide, setAutoSlide] = useState(true)
   const autoSlideInterval = useRef(null)
   const [slideDirection, setSlideDirection] = useState('right')
+  const [userLocation, setUserLocation] = useState({
+    lat: 33.4996, // 제주 구름스퀘어 기본값
+    lng: 126.5302,
+  })
+  const [locationPermissionRequested, setLocationPermissionRequested] = useState(false)
+  const [showLocationModal, setShowLocationModal] = useState(false)
 
   const cardNews = [
     {
@@ -116,6 +123,64 @@ function HomePage() {
     return simplified
   }
 
+  // 사용자 위치 가져오기 - 이제 자동으로 실행되지 않음
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setUserLocation(newLocation);
+          setLocationPermissionRequested(true);
+          
+          // 위치 권한 획득 후 바로 가까운 순으로 정렬된 데이터 가져오기
+          fetchStores(0, true);
+        },
+        (error) => {
+          console.log('위치 정보를 가져올 수 없습니다:', error);
+          alert('위치 정보 접근에 실패했습니다. 기본 위치를 사용합니다.');
+          // 위치 권한 거부 시에도 가까운 순으로 정렬된 데이터 가져오기 (기본 위치 사용)
+          setLocationPermissionRequested(true);
+          fetchStores(0, true);
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다. 기본 위치를 사용합니다.');
+      setLocationPermissionRequested(true);
+      fetchStores(0, true);
+    }
+  };
+
+  // 정렬 옵션 변경 핸들러
+  const handleSortOptionChange = (option) => {
+    // 가까운 순 선택 시 위치 권한이 필요함
+    if (option === '가까운 순' && !locationPermissionRequested) {
+      // 가까운 순 선택 시 위치 권한 요청을 위한 모달 표시
+      setShowLocationModal(true);
+      return;
+    }
+    
+    setSortOption(option);
+    setShowSortOptions(false);
+  };
+
+  // 위치 권한 동의 처리
+  const handleLocationPermissionAgree = () => {
+    setShowLocationModal(false);
+    setSortOption('가까운 순');
+    getUserLocation();
+  };
+
+  // 위치 권한 거부 처리
+  const handleLocationPermissionDecline = () => {
+    setShowLocationModal(false)
+    // 기본 옵션으로 돌아가기
+    setSortOption('공유 많은 순')
+  }
+
   // 서버에서 페이지별로 데이터 가져오기
   const fetchStores = useCallback(async (page = 0, reset = false) => {
     try {
@@ -125,6 +190,7 @@ function HomePage() {
         setLoadingMore(true)
       }
 
+      // API_BASE_URL 사용
       let url = `${API_BASE_URL}/stores`
       let queryParams = new URLSearchParams()
 
@@ -132,61 +198,53 @@ function HomePage() {
       queryParams.append('page', page)
       queryParams.append('size', storesPerPage)
 
-      // 할인 중인 가게만 보기 필터
+      // 필터 1: 할인 중인 가게만 보기
       if (showDiscountOnly) {
-        queryParams.append('isDiscountOpen', 'true')
+        queryParams.append('isDiscountOpen', true)
       }
 
-      // 카테고리 필터링
+      // 필터 2: 카테고리 필터링
       if (categoryFilter && categoryFilter !== '전체') {
         const category = categoryOptions.find(opt => opt.name === categoryFilter)
-        if (category) {
+        if (category && category.id !== 'all') {
           queryParams.append('categoryId', category.id)
         }
       }
 
       // 검색어 필터링
       if (searchQuery) {
-        queryParams.append('query', searchQuery)
+        queryParams.append('storeName', searchQuery)
       }
 
-      // 정렬 옵션
-      let sortBy = ''
-      let orderBy = ''
-      let orderDirection = ''
+      // 필터 3: 정렬 옵션 (4가지 중 하나만 선택 가능)
+      let sort = ''
       
       switch (sortOption) {
         case '가까운 순':
-          sortBy = 'distance'
-          orderBy = 'distance'
-          orderDirection = 'asc'
+          sort = 'distance'
+          // 가까운 순 정렬일 때만 위치 정보 추가
+          queryParams.append('lat', userLocation.lat)
+          queryParams.append('lng', userLocation.lng)
           break
         case '리뷰 많은 순':
-          sortBy = 'reviewCount'
-          orderBy = 'reviewCount'
-          orderDirection = 'desc'
+          sort = 'rating'
           break
         case '공유 많은 순':
-          sortBy = 'shareCount'
-          orderBy = 'shareCount'
-          orderDirection = 'desc'
+          sort = 'share'
           break
         case '별점 높은 순':
-          sortBy = 'avgRating'
-          orderBy = 'avgRating'
-          orderDirection = 'desc'
+          sort = 'rating'
           break
         default:
-          sortBy = 'distance'
-          orderBy = 'distance'
-          orderDirection = 'asc'
+          sort = 'distance'
+          // 기본 정렬(가까운 순)일 때도 위치 정보 추가
+          queryParams.append('lat', userLocation.lat)
+          queryParams.append('lng', userLocation.lng)
+          break
       }
       
-      // 다양한 정렬 파라미터 형식을 시도 (백엔드 API가 어떤 형식을 사용하는지에 따라)
-      queryParams.append('sort', sortBy)
-      queryParams.append('sortBy', sortBy) 
-      queryParams.append('orderBy', orderBy)
-      queryParams.append('orderDirection', orderDirection)
+      // 정렬 파라미터 추가
+      queryParams.append('sort', sort)
       
       // 쿼리 파라미터가 있으면 URL에 추가
       if (queryParams.toString()) {
@@ -194,8 +252,13 @@ function HomePage() {
       }
 
       try {
-        const response = await fetch(url)
-        const data = await response.json()
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API 응답 오류: ${response.status}`);
+        }
+        
+        const data = await response.json();
         
         // 새로운 페이지네이션 응답 형식 처리
         if (!data || !data.content) {
@@ -210,127 +273,51 @@ function HomePage() {
         }
 
         const newStores = data.content
-        setTotalStoreCount(data.totalElements)
+        
+        // 전체 가게 수 업데이트 (페이지 0일 때만 또는 리셋 시)
+        if (page === 0 || reset) {
+          setTotalStoreCount(data.totalElements || 0)
+        }
+        
         setHasMore(!data.last) // 마지막 페이지가 아니면 더 로드할 수 있음
         
         // 페이지가 0이거나 reset이 true면 데이터 초기화
         if (page === 0 || reset) {
-          // 클라이언트 측 정렬 적용
-          const sortData = [...newStores].sort((a, b) => {
-            const defaultA = 0
-            const defaultB = 0
-            
-            switch (sortOption) {
-              case '가까운 순':
-                return (a.distance || defaultA) - (b.distance || defaultB)
-              case '리뷰 많은 순':
-                return (b.reviewCount || defaultB) - (a.reviewCount || defaultA)
-              case '공유 많은 순':
-                return (b.shareCount || defaultB) - (a.shareCount || defaultA)
-              case '별점 높은 순':
-                return (b.avgRatingGoogle || defaultB) - (a.avgRatingGoogle || defaultA)
-              default:
-                return (a.distance || defaultA) - (b.distance || defaultB)
-            }
-          })
-          
-          setStores(sortData)
-          
-          // 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
-          let filteredData = [...sortData]
-          
-          // 카테고리 필터링
-          if (categoryFilter && categoryFilter !== '전체') {
-            const category = categoryOptions.find(opt => opt.name === categoryFilter)
-            if (category) {
-              filteredData = filteredData.filter(store => {
-                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0])
-                return String(storeCategoryId) === String(category.id)
-              })
-            }
-          }
-          
-          // 검색어 필터링 - 클라이언트 측에서도 적용
-          if (searchQuery && searchQuery.trim() !== '') {
-            filteredData = filteredData.filter(store => {
-              const storeName = store.storeName || store.name || ''
-              return storeName.toLowerCase().includes(searchQuery.toLowerCase())
-            })
-          }
-          
-          setDisplayedStores(filteredData)
-          setFilteredStores(filteredData)
+          setStores(newStores)
+          setDisplayedStores(newStores)
+          setFilteredStores(newStores)
         } else {
           // 기존 데이터에 새로운 데이터 추가
-          const sortData = [...newStores].sort((a, b) => {
-            const defaultA = 0
-            const defaultB = 0
-            
-            switch (sortOption) {
-              case '가까운 순':
-                return (a.distance || defaultA) - (b.distance || defaultB)
-              case '리뷰 많은 순':
-                return (b.reviewCount || defaultB) - (a.reviewCount || defaultA)
-              case '공유 많은 순':
-                return (b.shareCount || defaultB) - (a.shareCount || defaultA)
-              case '별점 높은 순':
-                return (b.avgRatingGoogle || defaultB) - (a.avgRatingGoogle || defaultA)
-              default:
-                return (a.distance || defaultA) - (b.distance || defaultB)
-            }
-          })
-          
-          setStores(prev => [...prev, ...sortData])
-          
-          // 카테고리 필터링이 활성화된 경우 클라이언트 측에서 추가 필터링 적용
-          let filteredData = [...sortData]
-          if (categoryFilter && categoryFilter !== '전체') {
-            const category = categoryOptions.find(opt => opt.name === categoryFilter)
-            if (category) {
-              filteredData = filteredData.filter(store => {
-                const storeCategoryId = store.categoryId || store.category || (store.categories && store.categories[0])
-                return String(storeCategoryId) === String(category.id)
-              })
-            }
-          }
-          
-          // 검색어 필터링 - 클라이언트 측에서도 적용
-          if (searchQuery && searchQuery.trim() !== '') {
-            filteredData = filteredData.filter(store => {
-              const storeName = store.storeName || store.name || ''
-              return storeName.toLowerCase().includes(searchQuery.toLowerCase())
-            })
-          }
-          
-          setDisplayedStores(prev => [...prev, ...filteredData])
-          setFilteredStores(prev => [...prev, ...filteredData])
+          setStores(prev => [...prev, ...newStores])
+          setDisplayedStores(prev => [...prev, ...newStores])
+          setFilteredStores(prev => [...prev, ...newStores])
         }
 
         setCurrentPage(page)
       } catch (error) {
-        //console.error('API 호출 오류:', error)
         // 오류 발생 시 조용히 처리하고 사용자에게 오류 메시지 표시
         if (page === 0) {
           setStores([])
           setDisplayedStores([])
           setFilteredStores([])
+          setTotalStoreCount(0)
         }
         setHasMore(false)
       }
     } catch (error) {
-      //dconsole.error('fetchStores 오류:', error)
       // 전체 오류 처리
       if (page === 0) {
         setStores([])
         setDisplayedStores([])
         setFilteredStores([])
+        setTotalStoreCount(0)
       }
       setHasMore(false)
     } finally {
       setLoading(false)
       setLoadingMore(false)
     }
-  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, API_BASE_URL])
+  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, API_BASE_URL, userLocation])
 
   // 초기 데이터 로드 및 필터 변경 시 데이터 다시 로드
   useEffect(() => {
@@ -340,6 +327,12 @@ function HomePage() {
     setStores([]) // 저장된 가게 초기화
     setFilteredStores([]) // 필터링된 가게도 초기화
     setHasMore(true) // 더 불러올 데이터가 있다고 가정
+    
+    // 가까운 순이면서 위치 권한이 아직 없는 경우 데이터를 가져오지 않음
+    if (sortOption === '가까운 순' && !locationPermissionRequested) {
+      return
+    }
+    
     fetchStores(0, true)
   }, [fetchStores, showDiscountOnly, categoryFilter, searchQuery, sortOption])
 
@@ -431,28 +424,39 @@ function HomePage() {
     navigate(link)
   }
 
+  // 검색 디바운스 함수 생성 (300ms 지연)
+  const debouncedSearch = useRef(
+    debounce((query) => {
+      setSearchQuery(query)
+      
+      // 검색어가 비었을 때 (사용자가 검색어를 지웠을 때)
+      if (!query || query.trim() === '') {
+        setSearchQuery('')
+        // 모든 필터링 조건을 초기화하고 데이터를 다시 로드
+        setCurrentPage(0)
+        setHasMore(true)
+        fetchStores(0, true)
+        return
+      }
+      
+      // 검색어가 변경되면 백엔드 API를 통해 결과를 가져옵니다
+      setCurrentPage(0)
+      setHasMore(true)
+      // fetchStores가 useEffect를 통해 자동으로 호출됩니다
+    }, 300)
+  ).current
+
   const handleSearch = (query) => {
-    setSearchQuery(query)
-    
-    // 검색어가 비었을 때 (사용자가 검색어를 지웠을 때)
-    if (!query || query.trim() === '') {
-      setSearchQuery('')
-      fetchStores(0, true)
-      return
-    }
-    
-    // 검색어가 있을 경우 현재 데이터에서 즉시 필터링 적용
-    
-    // 현재 표시된 가게 목록에서 검색어로 필터링
-    const filteredResults = stores.filter(store => {
-      const storeName = store.storeName || store.name || ''
-      return storeName.toLowerCase().includes(query.toLowerCase())
-    })
-    
-    setFilteredStores(filteredResults)
-    setDisplayedStores(filteredResults)
-    setTotalStoreCount(filteredResults.length)
+    // 디바운스 함수 호출
+    debouncedSearch(query)
   }
+
+  // 컴포넌트 언마운트 시 디바운스 취소
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel()
+    }
+  }, [debouncedSearch])
 
   return (
     <div className="flex flex-col h-full relative">
@@ -693,45 +697,33 @@ function HomePage() {
                 />
               </svg>
             </button>
-
+            
             {showSortOptions && (
               <div className="absolute right-0 mt-1 w-32 bg-white border rounded-lg shadow-lg z-10">
                 <div className="py-1">
                   <button
-                    className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '가까운 순' ? 'bg-gray-100 font-bold' : ''}`}
-                    onClick={() => {
-                      setSortOption('가까운 순')
-                      setShowSortOptions(false)
-                    }}
-                  >
-                    가까운 순
-                  </button>
-                  <button
-                    className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '리뷰 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
-                    onClick={() => {
-                      setSortOption('리뷰 많은 순')
-                      setShowSortOptions(false)
-                    }}
-                  >
-                    리뷰 많은 순
-                  </button>
-                  <button
                     className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '공유 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
-                    onClick={() => {
-                      setSortOption('공유 많은 순')
-                      setShowSortOptions(false)
-                    }}
+                    onClick={() => handleSortOptionChange('공유 많은 순')}
                   >
                     공유 많은 순
                   </button>
                   <button
+                    className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '리뷰 많은 순' ? 'bg-gray-100 font-bold' : ''}`}
+                    onClick={() => handleSortOptionChange('리뷰 많은 순')}
+                  >
+                    리뷰 많은 순
+                  </button>
+                  <button
                     className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '별점 높은 순' ? 'bg-gray-100 font-bold' : ''}`}
-                    onClick={() => {
-                      setSortOption('별점 높은 순')
-                      setShowSortOptions(false)
-                    }}
+                    onClick={() => handleSortOptionChange('별점 높은 순')}
                   >
                     별점 높은 순
+                  </button>
+                  <button
+                    className={`block w-full text-left px-4 py-2 text-sm ${sortOption === '가까운 순' ? 'bg-gray-100 font-bold' : ''}`}
+                    onClick={() => handleSortOptionChange('가까운 순')}
+                  >
+                    가까운 순
                   </button>
                 </div>
               </div>
@@ -742,9 +734,8 @@ function HomePage() {
         <div className="px-4 pb-28">
           <div className="py-2">
             <h2 className="font-bold text-lg">
-              {categoryFilter ? `${categoryFilter} 맛집` : '전체 맛집'} (
-              {totalStoreCount.toString().replace('*', '')}
-              )
+              {categoryFilter !== '전체' ? `${categoryFilter} 맛집` : '전체 맛집'} 
+              {totalStoreCount > 0 && ` (${totalStoreCount})`}
             </h2>
           </div>
 
@@ -758,7 +749,7 @@ function HomePage() {
               {displayedStores.map((store, index) => (
                 <div
                   key={store.id || store.storeId || index}
-                  className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer"
+                  className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer bg-white shadow-sm"
                   onClick={() => handleStoreClick(store)}
                 >
                   <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
@@ -863,6 +854,37 @@ function HomePage() {
         `
       }}
       />
+
+      {/* 위치 정보 동의 모달 */}
+      {showLocationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-5">
+            <h3 className="text-lg font-bold mb-2">위치 정보 이용 동의</h3>
+            <p className="text-gray-700 mb-3 text-sm">
+              가까운 순으로 정렬하기 위해 현재 위치 정보가 필요합니다. 
+              위치 정보 이용에 동의하시겠습니까?
+            </p>
+            <p className="text-xs text-gray-500 mb-4">
+              동의하시면 브라우저에서 위치 정보 접근 권한을 요청합니다.
+              위치 정보는 가까운 맛집을 찾는 용도로만 사용되며 저장되지 않습니다.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
+                onClick={handleLocationPermissionDecline}
+              >
+                취소
+              </button>
+              <button
+                className="px-3 py-1.5 bg-yellow-500 rounded-lg text-sm text-white hover:bg-yellow-600"
+                onClick={handleLocationPermissionAgree}
+              >
+                동의
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

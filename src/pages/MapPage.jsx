@@ -255,16 +255,28 @@ function MapPage() {
         // 가게 데이터 가져오기
         try {
           // 할인중인 가게만 보여주기 옵션이 선택된 경우 API 파라미터 추가
-          let apiUrl = `${API_BASE_URL}/stores`
+          let apiUrl = `/api/v1/stores`
+          
+          // URL 매개변수 객체 생성
+          const params = new URLSearchParams()
+          
+          // 할인중인 가게만 필터링하는 경우
           if (showDiscountOnly) {
-            apiUrl += '?isDiscountOpen=true'
+            params.append('isDiscountOpen', 'true')
+          }
+          
+          // 매개변수가 있으면 URL에 추가
+          if (params.toString()) {
+            apiUrl += `?${params.toString()}`
           }
 
           // 직접 axios로 API 호출
           const response = await axios.get(apiUrl)
-          const storesData = response.data
+          const storesData = response.data?.content || response.data || []
 
           if (!storesData || storesData.length === 0) {
+            setStores([])
+            setFilteredStores([])
             setLoading(false)
             return
           }
@@ -552,8 +564,9 @@ function MapPage() {
       result = result.filter((store) => store.categoryId === category)
     }
 
-    // 할인 매장만 필터링
-    if (discountOnly) {
+    // 할인 매장만 필터링 - 이미 API 레벨에서 필터링되므로 
+    // 추가 클라이언트 필터링은 showDiscountOnly가 true이고, API 호출이 변경되지 않은 경우만 필요
+    if (discountOnly && !showDiscountOnly) {
       result = result.filter((store) => 
         store.isDiscountOpen === true || 
         (store.discount && store.discount !== '0%')
@@ -580,7 +593,7 @@ function MapPage() {
     }
 
     setFilteredStores(uniqueStores)
-  }, [stores])
+  }, [stores, showDiscountOnly])
 
   // 검색어, 카테고리, 할인 필터가 변경될 때 필터링 실행
   useEffect(() => {
@@ -642,11 +655,24 @@ function MapPage() {
 
   // 줌 레벨 변경 핸들러 추가
   const handleZoomChange = (newLevel) => {
+    if (!mapRef.current) {
+      return;
+    }
+    
     // 최소 레벨 1, 최대 레벨 14로 제한
-    const level = Math.max(1, Math.min(14, newLevel))
-    setMapLevel(level)
-    // 줌 변경 시 가게 목록 상태를 변경하지 않도록 함
-  }
+    const level = Math.max(1, Math.min(14, newLevel));
+    
+    // 현재 지도 중심 가져오기
+    const currentCenter = mapRef.current.getCenter();
+    const centerPosition = {
+      lat: currentCenter.getLat(),
+      lng: currentCenter.getLng()
+    };
+    
+    // 현재 중심을 유지하면서 줌 레벨만 변경
+    setMapCenter(centerPosition);
+    setMapLevel(level);
+  };
 
   // 가게 상세 페이지로 이동
   const handleStoreDetail = (storeId) => {
@@ -655,19 +681,49 @@ function MapPage() {
 
   // 사용자 위치로 이동하는 핸들러 - 현재 위치 다시 가져오기
   const handleMoveToCurrentLocation = async () => {
-    try {
-      // 위치 정보 새로 가져오기 시도
-      setLoading(true) // 로딩 표시 추가
-      const location = await getUserLocation()
-      setMapCenter(location)
-      setMapLevel(3) // 줌 레벨 설정
-      setLoading(false) // 로딩 완료
-    } catch (error) {
-      console.error('현재 위치로 이동 실패:', error)
-      alert('현재 위치를 가져올 수 없습니다. 위치 접근 권한을 확인해주세요.')
-      setLoading(false) // 에러 발생해도 로딩 종료
+    if (!mapRef.current) {
+      alert('지도가 초기화되지 않았습니다. 페이지를 새로고침 해주세요.');
+      return;
     }
-  }
+    
+    try {
+      // 로딩 시작
+      setLoading(true);
+      
+      // navigator를 통해 위치 가져오기
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            const currentPosition = { lat: latitude, lng: longitude };
+            
+            // 상태 업데이트
+            setUserLocation(currentPosition);
+            
+            // 지도 중심 이동 및 줌 레벨 설정
+            setMapCenter({ ...currentPosition });
+            setMapLevel(3);
+            
+            // 로딩 종료
+            setLoading(false);
+          },
+          (error) => {
+            console.error('현재 위치를 가져오는데 실패했습니다:', error);
+            alert('현재 위치를 가져올 수 없습니다. 위치 접근 권한을 확인해주세요.');
+            setLoading(false);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      } else {
+        alert('이 브라우저에서는 위치 정보 기능을 지원하지 않습니다.');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('현재 위치로 이동 실패:', error);
+      alert('현재 위치를 가져올 수 없습니다. 위치 접근 권한을 확인해주세요.');
+      setLoading(false);
+    }
+  };
 
   // 가게 목록 스크롤 핸들러 추가
   const handleStoreListScroll = (e) => {
@@ -745,8 +801,13 @@ function MapPage() {
             }}
             zIndex={10}
             onClick={() => {
-              setMapCenter(userLocation)
-              setMapLevel(3)
+              // 지도 참조가 있는지 확인
+              if (mapRef.current) {
+                // 현재 사용자 위치를 기준으로 중심 설정
+                const currentUserLocation = { ...userLocation };
+                setMapCenter(currentUserLocation);
+                setMapLevel(3);
+              }
             }}
           />
         )}

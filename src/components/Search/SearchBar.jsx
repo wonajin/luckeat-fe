@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getStores } from '../../api/storeApi';
 import { debounce } from 'lodash';
+import { API_BASE_URL } from '../../config/apiConfig';
 
 function SearchBar({ 
   placeholder = '가게이름 검색',
@@ -8,38 +9,11 @@ function SearchBar({
   initialValue = '',
 }) {
   const [searchQuery, setSearchQuery] = useState(initialValue);
-  const [stores, setStores] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const searchContainerRef = useRef(null);
   const MAX_SEARCH_LENGTH = 20; // 최대 입력 글자수 제한
-
-  // 컴포넌트 마운트 시 가게 데이터 로드
-  useEffect(() => {
-    const loadStores = async () => {
-      try {
-        setIsLoading(true);
-        // Mock 데이터 생성 (실제 API가 불안정하므로)
-        const mockStores = [
-          { id: 1, storeName: '맛있는 한식당', categoryId: 1, category: '한식' },
-          { id: 2, storeName: '일식 스시', categoryId: 2, category: '일식' },
-          { id: 3, storeName: '중화요리', categoryId: 3, category: '중식' },
-          { id: 4, storeName: '양식 파스타', categoryId: 4, category: '양식' },
-          { id: 5, storeName: '카페 베이커리', categoryId: 5, category: '카페/베이커리' },
-          { id: 6, storeName: '샐러드 가게', categoryId: 6, category: '샐러드/청과' },
-        ];
-        
-        setStores(mockStores);
-      } catch (error) {
-        // 오류 무시
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadStores();
-  }, []);
 
   // 검색어 입력에 따른 추천 가게 필터링 (디바운싱 적용)
   const debouncedSearch = useRef(
@@ -50,20 +24,24 @@ function SearchBar({
       }
 
       try {
-        // 로컬에서 필터링 (Mock 데이터 사용)
-        const filtered = stores
-          .filter((store) => {
-            const storeName = store.storeName || store.name || '';
-            return storeName.toLowerCase().includes(query.toLowerCase());
-          })
-          .slice(0, 5); // 최대 5개까지만 표시
+        setIsLoading(true);
+        // 백엔드 API를 이용한 검색 자동완성
+        const params = {
+          storeName: query,
+          size: 5 // 최대 5개까지만 표시
+        };
         
-        setSuggestions(filtered);
+        const result = await getStores(params);
+        const stores = result.data || [];
+        
+        setSuggestions(stores);
       } catch (error) {
-        // 오류 무시
+        console.error('검색 자동완성 오류:', error);
+        setSuggestions([]);
+      } finally {
         setIsLoading(false);
       }
-    }, 300),
+    }, 300)
   ).current;
 
   // 입력값이 변경될 때마다 추천 검색어 필터링
@@ -74,7 +52,7 @@ function SearchBar({
     return () => {
       debouncedSearch.cancel();
     };
-  }, [searchQuery, debouncedSearch, stores]);
+  }, [searchQuery, debouncedSearch]);
 
   // 외부 클릭 감지 (추천 검색어 창 닫기)
   useEffect(() => {
@@ -113,6 +91,11 @@ function SearchBar({
     if (input.length <= MAX_SEARCH_LENGTH) {
       setSearchQuery(input);
       setShowSuggestions(true);
+      
+      // 입력할 때마다 검색 실행 (즉시 검색 결과 반영)
+      if (onSearch) {
+        onSearch(input);
+      }
     }
   };
 
@@ -176,7 +159,7 @@ function SearchBar({
           <ul>
             {suggestions.map((store, index) => (
               <li 
-                key={store.id || index}
+                key={store.id || store.storeId || index}
                 className="px-4 py-2 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-0"
                 onClick={() => handleSuggestionClick(store)}
               >
@@ -205,6 +188,13 @@ function SearchBar({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      
+      {/* 로딩 인디케이터 */}
+      {isLoading && searchQuery.trim() && (
+        <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
+          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-yellow-500"></div>
         </div>
       )}
     </div>

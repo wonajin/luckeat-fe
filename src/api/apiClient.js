@@ -67,46 +67,11 @@ apiClient.interceptors.request.use(
   },
 )
 
-// 로그 관리 및 보안 강화
-const safeLogError = (message, error, includeStack = false) => {
-  // 프로덕션 환경에서는 로깅하지 않음
-  if (process.env.NODE_ENV === 'production') {
-    return;
-  }
-  
-  // 개발 환경에서만 상세 로그 출력
-  const safeError = {
-    message: error.message || '알 수 없는 오류',
-    name: error.name,
-    status: error.response?.status,
-    statusText: error.response?.statusText,
-    url: error.config?.url 
-      ? error.config.url.replace(/\/\/[^\/]+\//, '//[도메인]/')
-      : '알 수 없는 URL',
-  }
-  
-  if (includeStack && error.stack) {
-    safeError.stack = error.stack.split('\n').slice(0, 3).join('\n')
-  }
-  
-  console.error(message, safeError, error)
-}
-
 // HTML 응답인지 확인하는 함수
 const isHtmlResponse = (response) => {
   // Content-Type 헤더 확인
   const contentType = response.headers && response.headers['content-type']
   if (contentType && contentType.includes('text/html')) {
-    // 개발 환경에서만 HTML 응답 로깅
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('HTML 응답 감지됨 (Content-Type 기반)', {
-        url: response.config?.url 
-          ? response.config.url.replace(/\/\/[^\/]+\//, '//[도메인]/') 
-          : '알 수 없는 URL',
-        method: response.config?.method || 'GET',
-        status: response.status,
-      })
-    }
     return true
   }
   
@@ -115,17 +80,6 @@ const isHtmlResponse = (response) => {
       (response.data.includes('<!DOCTYPE html>') || 
        response.data.includes('<html') || 
        response.data.includes('<body'))) {
-    // 개발 환경에서만 HTML 응답 로깅
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('HTML 응답 감지됨 (내용 기반)', {
-        url: response.config?.url 
-          ? response.config.url.replace(/\/\/[^\/]+\//, '//[도메인]/') 
-          : '알 수 없는 URL',
-        method: response.config?.method || 'GET',
-        status: response.status,
-        preview: (response.data || '').substring(0, 100) + '...',
-      })
-    }
     return true
   }
   
@@ -256,35 +210,35 @@ apiClient.interceptors.response.use(
 
       // 권한 에러 (403) - 보안 로깅 강화
       else if (status === 403) {
-        safeLogError('권한 오류 발생', error);
+        // safeLogError 호출 제거
       }
 
       // 리소스 없음 (404)
       else if (status === 404) {
         const notFoundMessage = data.message || '요청한 리소스를 찾을 수 없습니다.'
-        safeLogError('리소스 없음', error);
+        // safeLogError 호출 제거
       }
 
       // 유효성 검사 실패 (400)
       else if (status === 400) {
-        safeLogError('잘못된 요청', error);
+        // safeLogError 호출 제거
       }
 
       // 중복 에러 (409)
       else if (status === 409) {
-        safeLogError('리소스 중복', error);
+        // safeLogError 호출 제거
       }
 
       // 서버 에러 (500)
       else if (status >= 500) {
-        safeLogError('서버 오류', error, true);
+        // safeLogError 호출 제거
       }
     } else if (error.request) {
       // 응답을 받지 못함 처리
-      safeLogError('응답 없음', error);
+      // safeLogError 호출 제거
     } else {
       // 요청 설정 중 오류 처리
-      safeLogError('요청 설정 오류', error);
+      // safeLogError 호출 제거
     }
 
     return Promise.reject(error)

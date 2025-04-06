@@ -6,36 +6,6 @@ import {
 import { API_BASE_URL, API_ENDPOINTS, getApiUrl } from '../config/apiConfig'
 import { TOKEN_KEYS } from './apiClient'
 
-// 안전하게 로깅하는 헬퍼 함수 추가
-const safeLog = (message, data = null) => {
-  // 프로덕션 환경에서는 로깅하지 않음
-  if (process.env.NODE_ENV === 'production') {
-    return;
-  }
-  
-  // 개발 환경에서만 로깅
-  if (data) {
-    console.log(message, data);
-  } else {
-    console.log(message);
-  }
-};
-
-// 안전하게 에러 로깅하는 헬퍼 함수 추가
-const safeError = (message, error = null) => {
-  // 프로덕션 환경에서는 로깅하지 않음
-  if (process.env.NODE_ENV === 'production') {
-    return;
-  }
-  
-  // 개발 환경에서만 로깅
-  if (error) {
-    console.error(message, error);
-  } else {
-    console.error(message);
-  }
-};
-
 // 회원 가입
 export const register = async (userData) => {
   try {
@@ -62,13 +32,11 @@ export const register = async (userData) => {
         if (hasInvalidChar) {
           // 한글이나 공백이 있는 경우 필터링
           requestData.password = requestData.password.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/g, '');
-          safeLog('비밀번호에서 한글 또는 공백이 제거되었습니다.');
         }
         
         // Base64 인코딩 적용
         requestData.password = btoa(requestData.password)
       } catch (encodeError) {
-        safeError('비밀번호 인코딩 중 오류:', encodeError)
         // 인코딩 실패 시 원본 비밀번호 유지 (서버측 보안에 의존)
       }
     }
@@ -116,13 +84,11 @@ export const login = async (credentials) => {
         if (hasInvalidChar) {
           // 한글이나 공백이 있는 경우 필터링
           requestData.password = requestData.password.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/g, '');
-          safeLog('비밀번호에서 한글 또는 공백이 제거되었습니다.');
         }
         
         // Base64 인코딩 적용
         requestData.password = btoa(requestData.password)
       } catch (encodeError) {
-        safeError('비밀번호 인코딩 중 오류:', encodeError)
         // 인코딩 실패 시 원본 비밀번호 유지
       }
     }
@@ -135,17 +101,6 @@ export const login = async (credentials) => {
         (response.data.includes('<!DOCTYPE html>') || 
          response.data.includes('<html') || 
          response.data.includes('<body'))) {
-      safeError('로그인 중 HTML 응답이 감지되었습니다 - 인증 실패로 처리합니다');
-      
-      // 개발자 콘솔에 자세한 정보 기록 (개발 환경에서만)
-      if (process.env.NODE_ENV !== 'production') {
-        safeError('HTML 응답을 받았습니다 (로그인 실패):', {
-          url: response.config?.url || '알 수 없는 URL',
-          status: response.status || '알 수 없는 상태 코드',
-          headers: response.headers || {},
-          data: response.data?.substring(0, 200) + '...' || '데이터 없음'
-        });
-      }
       
       // 인증 실패로 가정하고 사용자 친화적인 오류 메시지 반환
       return {
@@ -207,17 +162,6 @@ export const login = async (credentials) => {
        (error.response.data.includes('<!DOCTYPE html>') || 
         error.response.data.includes('<html') || 
         error.response.data.includes('<body'))) {
-      safeError('로그인 오류에서 HTML 응답이 감지되었습니다 - 인증 실패로 처리합니다');
-      
-      // 개발자 콘솔에 자세한 정보 기록 (개발 환경에서만)
-      if (process.env.NODE_ENV !== 'production') {
-        safeError('HTML 오류 응답을 받았습니다 (로그인 실패):', {
-          url: error.response.config?.url || '알 수 없는 URL',
-          status: error.response.status || '알 수 없는 상태 코드',
-          method: error.response.config?.method || 'UNKNOWN',
-          data: error.response.data?.substring(0, 200) + '...' || '데이터 없음'
-        });
-      }
       
       // 오류 발생 시 토큰 제거
       localStorage.removeItem(TOKEN_KEYS.ACCESS)
@@ -329,7 +273,7 @@ export const updatePassword = async (passwordData) => {
         const filteredOldPassword = requestData.oldPassword.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/g, '');
         requestData.oldPassword = btoa(filteredOldPassword);
       } catch (error) {
-        safeError('현재 비밀번호 인코딩 오류:', error);
+        // safeError 호출 제거
       }
     }
     
@@ -339,7 +283,7 @@ export const updatePassword = async (passwordData) => {
         const filteredNewPassword = requestData.newPassword.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|\s]/g, '');
         requestData.newPassword = btoa(filteredNewPassword);
       } catch (error) {
-        safeError('새 비밀번호 인코딩 오류:', error);
+        // safeError 호출 제거
       }
     }
     

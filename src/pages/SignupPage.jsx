@@ -194,36 +194,6 @@ function SignupPage() {
     setShowErrorPopup(true)
   }
 
-  // 안전하게 로깅하는 헬퍼 함수 추가
-  const safeLog = (message, data = null) => {
-    // 프로덕션 환경에서는 로깅하지 않음
-    if (process.env.NODE_ENV === 'production') {
-      return;
-    }
-    
-    // 개발 환경에서만 로깅
-    if (data) {
-      console.log(message, data);
-    } else {
-      console.log(message);
-    }
-  };
-
-  // 안전하게 에러 로깅하는 헬퍼 함수 추가
-  const safeError = (message, error = null) => {
-    // 프로덕션 환경에서는 로깅하지 않음
-    if (process.env.NODE_ENV === 'production') {
-      return;
-    }
-    
-    // 개발 환경에서만 로깅
-    if (error) {
-      console.error(message, error);
-    } else {
-      console.error(message);
-    }
-  };
-
   const handleSignup = async (e) => {
     e.preventDefault()
     setError('')
@@ -331,7 +301,6 @@ function SignupPage() {
         }
       }
     } catch (error) {
-      safeError('회원가입 오류:', error)
       // 예외 발생 시 오류 모달 표시
       showError(
         '오류 발생',

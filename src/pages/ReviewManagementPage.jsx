@@ -102,9 +102,7 @@ function ReviewManagementPage() {
         }))
 
         setWrittenReviews(formattedReviews)
-        console.log('사용자 리뷰 데이터:', formattedReviews)
       } else {
-        console.log('리뷰 데이터가 없습니다.')
         setWrittenReviews([])
       }
 
@@ -143,7 +141,6 @@ function ReviewManagementPage() {
         )
 
         setWritableStores(sortedStores)
-        console.log('리뷰 작성 가능한 가게:', sortedStores)
       }
 
       setLoading(false)
@@ -300,7 +297,6 @@ function ReviewManagementPage() {
             imageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`
           }
         } catch (error) {
-          console.error('이미지 업로드 중 오류:', error)
           window.dispatchEvent(new CustomEvent('showToast', {
             detail: {
               message: '이미지 업로드에 실패했습니다. 다시 시도해주세요.',
@@ -403,7 +399,6 @@ function ReviewManagementPage() {
             imageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`
           }
         } catch (error) {
-          console.error('이미지 업로드 중 오류:', error)
           // 이미지 업로드 실패 시 이전 이미지를 사용
           const existingReview = writtenReviews.find((review) => review.id === reviewId)
           imageUrl = existingReview?.image || null

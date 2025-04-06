@@ -179,6 +179,9 @@ const ProductManagement = () => {
     if (formData.stock === '') {
       newErrors.stock = '재고 수량을 입력하세요'
       isValid = false
+    } else if (parseInt(formData.stock) <= 0) {
+      newErrors.stock = '재고는 1개 이상부터 가능합니다'
+      isValid = false
     }
 
     setErrors(newErrors)

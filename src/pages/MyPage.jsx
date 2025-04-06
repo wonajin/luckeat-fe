@@ -77,7 +77,7 @@ function MyPage() {
           setCompletedOrders(allCompletedOrders)
         }
       } catch (error) {
-        console.error('사용자 데이터 로딩 중 오류:', error)
+        
       } finally {
         setLoading(false)
       }
@@ -94,10 +94,10 @@ function MyPage() {
       if (result.success) {
         navigate('/')
       } else {
-        console.error('로그아웃 실패:', result.message)
+        
       }
     } catch (error) {
-      console.error('로그아웃 중 오류 발생:', error)
+      
     } finally {
       setShowLogoutModal(false)
     }

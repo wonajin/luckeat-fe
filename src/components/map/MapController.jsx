@@ -5,12 +5,37 @@ import myLocationMarker from '../../assets/images/my_locatoin_maker.png'
  * 지도 컨트롤러 컴포넌트
  */
 const MapController = ({ onMoveToCurrentLocation, onZoomIn, onZoomOut }) => {
+  // 확대/축소 버튼 클릭 시 이벤트 전파 방지 추가
+  const handleZoomIn = (e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    onZoomIn();
+  };
+  
+  const handleZoomOut = (e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    onZoomOut();
+  };
+  
+  const handleLocationButton = (e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    onMoveToCurrentLocation();
+  };
+  
   return (
     <div className="flex flex-col space-y-2">
       {/* 내 위치로 이동 버튼 */}
       <button
-        onClick={onMoveToCurrentLocation}
-        className="bg-white rounded-full w-10 h-10 shadow-md flex items-center justify-center hover:bg-gray-100"
+        onClick={handleLocationButton}
+        className="bg-white rounded-full w-10 h-10 shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
         aria-label="내 위치로 이동"
       >
         <img src={myLocationMarker} alt="내 위치" className="w-6 h-6" />
@@ -18,8 +43,8 @@ const MapController = ({ onMoveToCurrentLocation, onZoomIn, onZoomOut }) => {
 
       {/* 확대 버튼 */}
       <button
-        onClick={onZoomIn}
-        className="bg-white rounded-full w-10 h-10 shadow-md flex items-center justify-center hover:bg-gray-100"
+        onClick={handleZoomIn}
+        className="bg-white rounded-full w-10 h-10 shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
         aria-label="지도 확대"
       >
         <svg
@@ -35,8 +60,8 @@ const MapController = ({ onMoveToCurrentLocation, onZoomIn, onZoomOut }) => {
 
       {/* 축소 버튼 */}
       <button
-        onClick={onZoomOut}
-        className="bg-white rounded-full w-10 h-10 shadow-md flex items-center justify-center hover:bg-gray-100"
+        onClick={handleZoomOut}
+        className="bg-white rounded-full w-10 h-10 shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
         aria-label="지도 축소"
       >
         <svg

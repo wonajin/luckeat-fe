@@ -49,7 +49,7 @@ function EditProfilePage() {
 
   // 성공 모달 상태 확인
   useEffect(() => {
-    
+    console.log('성공 모달 상태 변경:', showSuccessModal)
   }, [showSuccessModal])
 
   // 닉네임 변경 핸들러
@@ -300,7 +300,7 @@ function EditProfilePage() {
         setShowDeleteModal(false)
       }
     } catch (error) {
-      
+      console.error('회원 탈퇴 중 오류:', error)
       alert('회원 탈퇴 중 오류가 발생했습니다.')
       setShowDeleteModal(false)
     } finally {
@@ -310,7 +310,7 @@ function EditProfilePage() {
 
   // 회원 탈퇴 완료 처리 (모달 확인 버튼 클릭 시)
   const handleConfirmDeletion = () => {
-    
+    console.log('확인 버튼 클릭, 탈퇴 완료 처리 시작')
     // 모달 닫기
     setShowSuccessModal(false)
     
@@ -320,7 +320,7 @@ function EditProfilePage() {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
-      
+      console.log('로컬 스토리지 정보 삭제 완료')
       
       // 로그인 페이지로 즉시 이동 (history API 사용)
       window.location.replace('/')

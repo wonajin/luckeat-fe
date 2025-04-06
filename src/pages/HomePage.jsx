@@ -308,7 +308,7 @@ function HomePage() {
 
         setCurrentPage(page)
       } catch (error) {
-        
+        //console.error('API 호출 오류:', error)
         // 오류 발생 시 조용히 처리하고 사용자에게 오류 메시지 표시
         if (page === 0) {
           setStores([])
@@ -318,7 +318,7 @@ function HomePage() {
         setHasMore(false)
       }
     } catch (error) {
-      
+      //dconsole.error('fetchStores 오류:', error)
       // 전체 오류 처리
       if (page === 0) {
         setStores([])

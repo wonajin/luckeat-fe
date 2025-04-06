@@ -71,41 +71,38 @@ const StoreReservationsPage = () => {
         return
       }
 
-      fetchReservations(activeFilter === 'ALL' ? null : activeFilter)
+      fetchReservations()
     }
 
     verifyAuth()
   }, [navigate, storeId, checkCurrentAuthStatus])
 
-  const fetchReservations = async (statusFilter = null) => {
+  const fetchReservations = async () => {
     try {
       setLoading(true)
-      setError(null)
-      
-      const queryParams = statusFilter && statusFilter !== 'ALL' ? { status: statusFilter } : {}
-      const response = await getStoreReservations(storeId, queryParams)
-      
+      const response = await getStoreReservations(storeId)
+
       if (response.success) {
-        const sortedReservations = response.data.sort((a, b) => {
+        // 최신순으로 정렬 (createdAt 기준 내림차순)
+        const sortedReservations = [...response.data].sort((a, b) => {
           return new Date(b.createdAt) - new Date(a.createdAt)
         })
-        
         setReservations(sortedReservations)
+        setError(null)
       } else {
         setError(response.message || '예약 목록을 불러오는데 실패했습니다.')
+        setReservations([])
       }
     } catch (err) {
+      console.error('예약 목록 조회 오류:', err)
       setError('예약 목록을 불러오는데 실패했습니다.')
+      setReservations([])
     } finally {
       setLoading(false)
     }
   }
 
   const handleReservationStatus = async (reservationId, status) => {
-    if (!window.confirm(`예약 상태를 "${getStatusText(status)}"(으)로 변경하시겠습니까?`)) {
-      return
-    }
-    
     try {
       setLoading(true)
 
@@ -139,6 +136,7 @@ const StoreReservationsPage = () => {
         )
       }
     } catch (error) {
+      console.error('예약 상태 변경 중 오류:', error)
       showToastMessage('예약 상태 변경 중 오류가 발생했습니다', 'error')
     } finally {
       setLoading(false)
@@ -160,9 +158,9 @@ const StoreReservationsPage = () => {
     )
   }
 
-  const handleFilterChange = (filter) => {
-    setActiveFilter(filter)
-    fetchReservations(filter)
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter)
+    setActiveFilter(newFilter)
   }
 
   const filteredReservations =

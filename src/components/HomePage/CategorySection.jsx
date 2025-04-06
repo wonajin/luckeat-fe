@@ -21,7 +21,7 @@ const CategorySection = ({ onSelectCategory, selectedCategory }) => {
       try {
         setLoading(true)
         const response = await getCategories()
-        
+        console.log('카테고리 API 응답:', response)
 
         if (response.success) {
           setCategories(response.data || [])
@@ -30,7 +30,7 @@ const CategorySection = ({ onSelectCategory, selectedCategory }) => {
         }
         setLoading(false)
       } catch (error) {
-        
+        console.error('카테고리 데이터 오류:', error)
         setError('카테고리 데이터를 불러오는 중 오류가 발생했습니다.')
         setLoading(false)
       }

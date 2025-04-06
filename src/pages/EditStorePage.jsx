@@ -100,7 +100,7 @@ function EditStorePage() {
         }
       } catch (error) {
         setError('가게 정보를 불러오는데 실패했습니다.')
-        
+        console.error('가게 정보 로딩 중 오류:', error)
       } finally {
         setLoading(false)
       }
@@ -244,7 +244,7 @@ function EditStorePage() {
     } catch (error) {
       setError('가게 정보 수정 중 오류가 발생했습니다.')
       showToastMessage('가게 정보 수정 중 오류가 발생했습니다.')
-      
+      console.error('가게 정보 수정 중 오류:', error)
     } finally {
       setLoading(false)
     }

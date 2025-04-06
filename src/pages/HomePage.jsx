@@ -13,6 +13,7 @@ import luckeatLogo from '../assets/images/luckeat-logo.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 import { API_BASE_URL } from '../config/apiConfig'
+import { debounce } from 'lodash'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -406,28 +407,39 @@ function HomePage() {
     navigate(link)
   }
 
+  // 검색 디바운스 함수 생성 (300ms 지연)
+  const debouncedSearch = useRef(
+    debounce((query) => {
+      setSearchQuery(query)
+      
+      // 검색어가 비었을 때 (사용자가 검색어를 지웠을 때)
+      if (!query || query.trim() === '') {
+        setSearchQuery('')
+        // 모든 필터링 조건을 초기화하고 데이터를 다시 로드
+        setCurrentPage(0)
+        setHasMore(true)
+        fetchStores(0, true)
+        return
+      }
+      
+      // 검색어가 변경되면 백엔드 API를 통해 결과를 가져옵니다
+      setCurrentPage(0)
+      setHasMore(true)
+      // fetchStores가 useEffect를 통해 자동으로 호출됩니다
+    }, 300)
+  ).current
+
   const handleSearch = (query) => {
-    setSearchQuery(query)
-    
-    // 검색어가 비었을 때 (사용자가 검색어를 지웠을 때)
-    if (!query || query.trim() === '') {
-      setSearchQuery('')
-      fetchStores(0, true)
-      return
-    }
-    
-    // 검색어가 있을 경우 현재 데이터에서 즉시 필터링 적용
-    
-    // 현재 표시된 가게 목록에서 검색어로 필터링
-    const filteredResults = stores.filter(store => {
-      const storeName = store.storeName || store.name || ''
-      return storeName.toLowerCase().includes(query.toLowerCase())
-    })
-    
-    setFilteredStores(filteredResults)
-    setDisplayedStores(filteredResults)
-    setTotalStoreCount(filteredResults.length)
+    // 디바운스 함수 호출
+    debouncedSearch(query)
   }
+
+  // 컴포넌트 언마운트 시 디바운스 취소
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel()
+    }
+  }, [debouncedSearch])
 
   return (
     <div className="flex flex-col h-full relative">

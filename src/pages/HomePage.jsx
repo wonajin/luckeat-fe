@@ -197,8 +197,7 @@ function HomePage() {
         setLoadingMore(true)
       }
 
-      // API 경로 설정
-      let url = `https://dxa66rf338pjr.cloudfront.net/api/v1/stores`
+      let url = `${API_BASE_URL}/stores`
       let queryParams = new URLSearchParams()
 
       // 페이지네이션 파라미터 추가

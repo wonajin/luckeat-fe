@@ -127,59 +127,51 @@ function HomePage() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
+          const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          })
-          setLocationPermissionRequested(true)
+          };
+          setUserLocation(newLocation);
+          setLocationPermissionRequested(true);
+          
           // 위치 권한 획득 후 바로 가까운 순으로 정렬된 데이터 가져오기
-          fetchStores(0, true)
+          fetchStores(0, true);
         },
         (error) => {
-          console.log('위치 정보를 가져올 수 없습니다:', error)
-          alert('위치 정보 접근에 실패했습니다. 기본 위치를 사용합니다.')
+          console.log('위치 정보를 가져올 수 없습니다:', error);
+          alert('위치 정보 접근에 실패했습니다. 기본 위치를 사용합니다.');
           // 위치 권한 거부 시에도 가까운 순으로 정렬된 데이터 가져오기 (기본 위치 사용)
-          setLocationPermissionRequested(true)
-          fetchStores(0, true)
+          setLocationPermissionRequested(true);
+          fetchStores(0, true);
         },
         { enableHighAccuracy: true }
-      )
+      );
     } else {
-      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다. 기본 위치를 사용합니다.')
-      setLocationPermissionRequested(true)
-      fetchStores(0, true)
+      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다. 기본 위치를 사용합니다.');
+      setLocationPermissionRequested(true);
+      fetchStores(0, true);
     }
-  }
+  };
 
   // 정렬 옵션 변경 핸들러
   const handleSortOptionChange = (option) => {
+    // 가까운 순 선택 시 위치 권한이 필요함
     if (option === '가까운 순' && !locationPermissionRequested) {
       // 가까운 순 선택 시 위치 권한 요청을 위한 모달 표시
-      setShowLocationModal(true)
-      return
+      setShowLocationModal(true);
+      return;
     }
     
-    setSortOption(option)
-    setShowSortOptions(false)
-    
-    // 가까운 순이 아니거나 이미 위치 권한을 받은 경우 바로 데이터 가져오기
-    if (option !== '가까운 순' || locationPermissionRequested) {
-      // 페이지 리셋 및 데이터 다시 로드
-      setCurrentPage(0)
-      setDisplayedStores([])
-      setStores([])
-      setFilteredStores([])
-      setHasMore(true)
-      fetchStores(0, true)
-    }
-  }
+    setSortOption(option);
+    setShowSortOptions(false);
+  };
 
   // 위치 권한 동의 처리
   const handleLocationPermissionAgree = () => {
-    setShowLocationModal(false)
-    getUserLocation()
-    setSortOption('가까운 순')
-  }
+    setShowLocationModal(false);
+    setSortOption('가까운 순');
+    getUserLocation();
+  };
 
   // 위치 권한 거부 처리
   const handleLocationPermissionDecline = () => {
@@ -742,11 +734,6 @@ function HomePage() {
             </div>
           ) : displayedStores && displayedStores.length > 0 ? (
             <>
-              <div className="bg-yellow-100 p-2 rounded mb-2 text-xs">
-                <p>로드된 가게 수: {displayedStores.length}</p>
-                <p>전체 가게 수: {totalStoreCount}</p>
-              </div>
-              
               {displayedStores.map((store, index) => (
                 <div
                   key={store.id || store.storeId || index}
@@ -818,10 +805,6 @@ function HomePage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-gray-500">
               <p>표시할 가게가 없습니다.</p>
-              <div className="bg-red-100 p-2 rounded mt-2 text-xs text-left w-full">
-                <p>API 응답 검사: {stores ? 'API 응답 있음' : 'API 응답 없음'}</p>
-                <p>필터 상태: 카테고리={categoryFilter}, 검색어={searchQuery}, 할인={showDiscountOnly ? '예' : '아니오'}</p>
-              </div>
               {categoryFilter || searchQuery || showDiscountOnly ? (
                 <button 
                   className="mt-2 text-blue-500 underline"

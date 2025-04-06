@@ -47,29 +47,45 @@ const UserReservationsPage = () => {
     verifyAuth()
   }, [checkCurrentAuthStatus, navigate])
 
-  const fetchReservations = async (statusFilter = null) => {
+  const fetchReservations = async () => {
     try {
       setLoading(true)
-      setError(null)
+      setError(null) // 에러 상태 초기화
       
-      // 필터를 적용하여 API 호출
-      const queryParams = statusFilter ? { status: statusFilter } : {}
-      const response = await getUserReservations(queryParams)
+      // 로컬 스토리지에서 사용자 정보 확인
+      const userString = localStorage.getItem('user')
+      if (!userString) {
+        setError('로그인이 필요합니다.')
+        return
+      }
       
+      const userData = JSON.parse(userString)
+      const userId = userData.userId || userData.id
+      
+      if (!userId) {
+        setError('유효한 사용자 ID를 찾을 수 없습니다.')
+        return
+      }
+
+      const response = await getUserReservations(userId)
+      
+      if (!response) {
+        setError('서버 응답이 없습니다.')
+        return
+      }
+
       if (response.success) {
-        // 데이터 가공 및 정렬
-        const sortedReservations = response.data.sort((a, b) => {
-          // 날짜 기준 내림차순 정렬 (최신순)
-          return new Date(b.createdAt) - new Date(a.createdAt)
-        })
-        
-        setReservations(sortedReservations)
+        // response.data가 배열인지 확인
+        const reservationsData = Array.isArray(response.data) ? response.data : []
+        setReservations(reservationsData)
       } else {
-        setError(response.message || '예약 목록을 불러오는데 실패했습니다.')
+        setError(response.message || '예약 정보를 가져오는데 실패했습니다.')
+        setReservations([]) // 실패 시 빈 배열로 초기화
       }
     } catch (error) {
-      // 로그 제거
-      setError('예약 목록을 불러오는데 실패했습니다.')
+      console.error('예약 목록 조회 오류:', error)
+      setError('예약 정보를 가져오는데 문제가 발생했습니다.')
+      setReservations([]) // 에러 발생 시 빈 배열로 초기화
     } finally {
       setLoading(false)
     }
@@ -103,7 +119,7 @@ const UserReservationsPage = () => {
         setShowToast(true)
       }
     } catch (error) {
-      // 로그 제거
+      console.error('예약 취소 중 오류:', error)
       setToastMessage('예약 취소 중 오류가 발생했습니다')
       setShowToast(true)
     } finally {

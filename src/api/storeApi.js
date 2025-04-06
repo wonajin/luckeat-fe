@@ -1,6 +1,6 @@
 import apiClient from './apiClient'
-import { processImageData, uploadImage, uploadMultipleImages } from './uploadApi'
-import { API_BASE_URL, API_DIRECT_URL, API_ENDPOINTS } from '../config/apiConfig'
+import { processImageData } from './uploadApi'
+import { API_BASE_URL, API_DIRECT_URL } from '../config/apiConfig'
 import { TOKEN_KEYS } from './apiClient'
 import axios from 'axios'
 

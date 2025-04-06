@@ -29,7 +29,7 @@ const ProductSection = ({ selectedCategory, categories }) => {
 
         // 상품 데이터 가져오기
         const productResponse = await getAllProducts()
-        
+        console.log('상품 API 응답:', productResponse)
 
         if (productResponse.success) {
           setProducts(productResponse.data || [])
@@ -39,7 +39,7 @@ const ProductSection = ({ selectedCategory, categories }) => {
 
         // 가게 데이터 가져오기 (카테고리 필터링을 위해 필요)
         const storeResponse = await getAllStores()
-        
+        console.log('가게 API 응답:', storeResponse)
 
         if (storeResponse.success) {
           setStores(storeResponse.data || [])
@@ -47,7 +47,7 @@ const ProductSection = ({ selectedCategory, categories }) => {
 
         setLoading(false)
       } catch (error) {
-        
+        console.error('데이터 가져오기 오류:', error)
         setError('데이터를 불러오는 중 오류가 발생했습니다.')
         setLoading(false)
       }

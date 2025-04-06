@@ -663,7 +663,7 @@ function MapPage() {
       setMapLevel(3) // 줌 레벨 설정
       setLoading(false) // 로딩 완료
     } catch (error) {
-      
+      console.error('현재 위치로 이동 실패:', error)
       alert('현재 위치를 가져올 수 없습니다. 위치 접근 권한을 확인해주세요.')
       setLoading(false) // 에러 발생해도 로딩 종료
     }

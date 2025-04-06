@@ -197,6 +197,7 @@ function HomePage() {
         setLoadingMore(true)
       }
 
+      // API_BASE_URL 사용
       let url = `${API_BASE_URL}/stores`
       let queryParams = new URLSearchParams()
 
@@ -323,7 +324,7 @@ function HomePage() {
       setLoading(false)
       setLoadingMore(false)
     }
-  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, userLocation])
+  }, [showDiscountOnly, categoryFilter, searchQuery, sortOption, storesPerPage, API_BASE_URL, userLocation])
 
   // 초기 데이터 로드 및 필터 변경 시 데이터 다시 로드
   useEffect(() => {
@@ -741,10 +742,15 @@ function HomePage() {
             </div>
           ) : displayedStores && displayedStores.length > 0 ? (
             <>
+              <div className="bg-yellow-100 p-2 rounded mb-2 text-xs">
+                <p>로드된 가게 수: {displayedStores.length}</p>
+                <p>전체 가게 수: {totalStoreCount}</p>
+              </div>
+              
               {displayedStores.map((store, index) => (
                 <div
                   key={store.id || store.storeId || index}
-                  className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer"
+                  className="flex items-center p-3 border rounded-lg mb-3 cursor-pointer bg-white shadow-sm"
                   onClick={() => handleStoreClick(store)}
                 >
                   <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
@@ -812,6 +818,10 @@ function HomePage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-gray-500">
               <p>표시할 가게가 없습니다.</p>
+              <div className="bg-red-100 p-2 rounded mt-2 text-xs text-left w-full">
+                <p>API 응답 검사: {stores ? 'API 응답 있음' : 'API 응답 없음'}</p>
+                <p>필터 상태: 카테고리={categoryFilter}, 검색어={searchQuery}, 할인={showDiscountOnly ? '예' : '아니오'}</p>
+              </div>
               {categoryFilter || searchQuery || showDiscountOnly ? (
                 <button 
                   className="mt-2 text-blue-500 underline"

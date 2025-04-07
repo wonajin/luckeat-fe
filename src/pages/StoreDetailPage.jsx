@@ -690,7 +690,11 @@ function StoreDetailPage() {
 
                   <div className="flex items-center mb-3">
                     <span className="text-sm text-gray-600">
-                      남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span>
+                      {!productInfo.isOpen || productInfo.productCount === 0 ? (
+                        ''
+                      ) : (
+                        <>남은 수량: <span className="font-bold text-yellow-600">{productInfo.productCount || 0}개</span></>
+                      )}
                     </span>
                   </div>
 

@@ -255,7 +255,7 @@ function MapPage() {
         // 가게 데이터 가져오기
         try {
           // 할인중인 가게만 보여주기 옵션이 선택된 경우 API 파라미터 추가
-          let apiUrl = `/api/v1/stores`
+          let apiUrl = `${API_BASE_URL}/stores`
           
           // URL 매개변수 객체 생성
           const params = new URLSearchParams()
@@ -264,6 +264,10 @@ function MapPage() {
           if (showDiscountOnly) {
             params.append('isDiscountOpen', 'true')
           }
+          
+          // 전체 가게 데이터를 한 번에 가져오기 위한 큰 size 값 설정
+          params.append('size', '1000')
+          params.append('page', '0')
           
           // 매개변수가 있으면 URL에 추가
           if (params.toString()) {

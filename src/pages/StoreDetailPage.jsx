@@ -6,7 +6,7 @@ import { Map, MapMarker } from 'react-kakao-maps-sdk' //카카오맵 추가
 import { getStoreById, getProductById } from '../api/storeApi'
 import { createReservation } from '../api/reservationApi' // 예약 API 추가
 import defaultImage from '../assets/images/luckeat-default.png'
-import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
+import bakerDefaultImage from '../assets/images/luckeat_default_image.webp'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 import { API_DIRECT_URL } from '../config/apiConfig'
 import { toast } from 'react-hot-toast'

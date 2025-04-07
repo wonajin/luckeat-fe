@@ -256,7 +256,7 @@ function HomePage() {
           queryParams.append('lng', userLocation.lng)
           break
         case '리뷰 많은 순':
-          sort = 'rating'
+          sort = 'review'
           break
         case '공유 많은 순':
           sort = 'share'

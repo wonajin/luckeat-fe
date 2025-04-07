@@ -387,7 +387,7 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 font-bold">고객 문의</span>
-                    <span className="text-gray-400">example@example.com</span>
+                    <span className="text-gray-400">luckeatnet@gmail.com</span>
                   </div>
                 </div>
               </div>

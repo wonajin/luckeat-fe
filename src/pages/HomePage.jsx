@@ -8,7 +8,7 @@ import defaultImage from '../assets/images/luckeat-default.png'
 import banner01 from '../assets/images/럭킷배너01.png'
 import banner02 from '../assets/images/럭킷배너02.png'
 import banner03 from '../assets/images/럭킷배너03.png'
-import storeDefaultImage from '../assets/images/제빵사디폴트이미지.png'
+import storeDefaultImage from '../assets/images/luckeat_default_image.webp'
 import luckeatLogo from '../assets/images/luckeat-logo.png'
 import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
@@ -19,12 +19,21 @@ function HomePage() {
   const navigate = useNavigate()
   const { isLoggedIn, user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
-  const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-  const [categoryFilter, setCategoryFilter] = useState('전체')
+  const [showDiscountOnly, setShowDiscountOnly] = useState(() => {
+    const saved = sessionStorage.getItem('showDiscountOnly')
+    return saved ? JSON.parse(saved) : false
+  })
+  const [categoryFilter, setCategoryFilter] = useState(() => {
+    const saved = sessionStorage.getItem('categoryFilter')
+    return saved || '전체'
+  })
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
   const [showScrollTopButton, setShowScrollTopButton] = useState(false)
-  const [sortOption, setSortOption] = useState('공유 많은 순')
+  const [sortOption, setSortOption] = useState(() => {
+    const saved = sessionStorage.getItem('sortOption')
+    return saved || '공유 많은 순'
+  })
   const [showSortOptions, setShowSortOptions] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -40,11 +49,22 @@ function HomePage() {
   const [autoSlide, setAutoSlide] = useState(true)
   const autoSlideInterval = useRef(null)
   const [slideDirection, setSlideDirection] = useState('right')
-  const [userLocation, setUserLocation] = useState({
-    lat: 33.4996, // 제주 구름스퀘어 기본값
-    lng: 126.5302,
+  const [userLocation, setUserLocation] = useState(() => {
+    // 세션스토리지에서 사용자 위치 정보 불러오기
+    const savedLocation = sessionStorage.getItem('userLocation')
+    if (savedLocation) {
+      return JSON.parse(savedLocation)
+    }
+    // 기본값 (제주 구름스퀘어)
+    return {
+      lat: 33.4996,
+      lng: 126.5302,
+    }
   })
-  const [locationPermissionRequested, setLocationPermissionRequested] = useState(false)
+  const [locationPermissionRequested, setLocationPermissionRequested] = useState(() => {
+    const saved = sessionStorage.getItem('locationPermissionRequested')
+    return saved ? JSON.parse(saved) : false
+  })
   const [showLocationModal, setShowLocationModal] = useState(false)
 
   const cardNews = [
@@ -123,6 +143,18 @@ function HomePage() {
     return simplified
   }
 
+  // 위치 권한 동의 처리
+  const handleLocationPermissionAgree = () => {
+    setShowLocationModal(false);
+    // 먼저 상태 업데이트
+    setSortOption('가까운 순');
+    sessionStorage.setItem('sortOption', '가까운 순');
+    setLocationPermissionRequested(true);
+    sessionStorage.setItem('locationPermissionRequested', JSON.stringify(true));
+    // 그 다음 위치 정보 가져오기
+    getUserLocation();
+  };
+
   // 사용자 위치 가져오기 - 이제 자동으로 실행되지 않음
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -131,47 +163,43 @@ function HomePage() {
           const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          };
-          setUserLocation(newLocation);
-          setLocationPermissionRequested(true);
+          }
+          // 위치 정보 저장
+          setUserLocation(newLocation)
+          // 위치 정보를 세션스토리지에 저장
+          sessionStorage.setItem('userLocation', JSON.stringify(newLocation))
           
           // 위치 권한 획득 후 바로 가까운 순으로 정렬된 데이터 가져오기
-          fetchStores(0, true);
+          fetchStores(0, true)
         },
         (error) => {
-          console.log('위치 정보를 가져올 수 없습니다:', error);
-          alert('위치 정보 접근에 실패했습니다. 기본 위치를 사용합니다.');
+          console.log('위치 정보를 가져올 수 없습니다:', error)
+          alert('위치 정보 접근에 실패했습니다. 기본 위치를 사용합니다.')
           // 위치 권한 거부 시에도 가까운 순으로 정렬된 데이터 가져오기 (기본 위치 사용)
-          setLocationPermissionRequested(true);
-          fetchStores(0, true);
+          fetchStores(0, true)
         },
         { enableHighAccuracy: true }
-      );
+      )
     } else {
-      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다. 기본 위치를 사용합니다.');
-      setLocationPermissionRequested(true);
-      fetchStores(0, true);
+      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다. 기본 위치를 사용합니다.')
+      fetchStores(0, true)
     }
-  };
+  }
 
   // 정렬 옵션 변경 핸들러
   const handleSortOptionChange = (option) => {
     // 가까운 순 선택 시 위치 권한이 필요함
     if (option === '가까운 순' && !locationPermissionRequested) {
       // 가까운 순 선택 시 위치 권한 요청을 위한 모달 표시
-      setShowLocationModal(true);
+      //setShowLocationModal(true);
+      handleLocationPermissionAgree();
       return;
     }
     
+    // 변경된 옵션을 저장하고 세션스토리지에도 저장
     setSortOption(option);
+    sessionStorage.setItem('sortOption', option);
     setShowSortOptions(false);
-  };
-
-  // 위치 권한 동의 처리
-  const handleLocationPermissionAgree = () => {
-    setShowLocationModal(false);
-    setSortOption('가까운 순');
-    getUserLocation();
   };
 
   // 위치 권한 거부 처리
@@ -179,6 +207,7 @@ function HomePage() {
     setShowLocationModal(false)
     // 기본 옵션으로 돌아가기
     setSortOption('공유 많은 순')
+    sessionStorage.setItem('sortOption', '공유 많은 순')
   }
 
   // 서버에서 페이지별로 데이터 가져오기
@@ -227,7 +256,7 @@ function HomePage() {
           queryParams.append('lng', userLocation.lng)
           break
         case '리뷰 많은 순':
-          sort = 'rating'
+          sort = 'review'
           break
         case '공유 많은 순':
           sort = 'share'
@@ -397,6 +426,7 @@ function HomePage() {
     // "전체" 카테고리 처리
     if (category === '전체') {
       setCategoryFilter('전체')
+      sessionStorage.setItem('categoryFilter', '전체')
       setSearchQuery('') // 검색어 초기화 추가
       return
     }
@@ -404,9 +434,11 @@ function HomePage() {
     // 이미 선택된 카테고리를 다시 클릭하면 해제하고 전체로 돌아감
     if (categoryFilter === category) {
       setCategoryFilter('전체')
+      sessionStorage.setItem('categoryFilter', '전체')
       setSearchQuery('') // 검색어 초기화 추가
     } else {
       setCategoryFilter(category)
+      sessionStorage.setItem('categoryFilter', category)
     }
   }
 
@@ -458,6 +490,13 @@ function HomePage() {
     }
   }, [debouncedSearch])
 
+  // 할인중만 토글 핸들러 추가
+  const toggleDiscountOnly = () => {
+    const newValue = !showDiscountOnly;
+    setShowDiscountOnly(newValue);
+    sessionStorage.setItem('showDiscountOnly', JSON.stringify(newValue));
+  }
+
   return (
     <div className="flex flex-col h-full relative">
       <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-30">
@@ -465,9 +504,12 @@ function HomePage() {
           className="text-2xl font-bold text-yellow-500"
           onClick={() => {
             setCategoryFilter('전체');
+            sessionStorage.setItem('categoryFilter', '전체');
             setSearchQuery('');
             setShowDiscountOnly(false);
+            sessionStorage.setItem('showDiscountOnly', JSON.stringify(false));
             setSortOption('가까운 순');
+            sessionStorage.setItem('sortOption', '가까운 순');
             navigate(0);
           }}
         >
@@ -668,7 +710,7 @@ function HomePage() {
         <div className="px-4 py-2 border-b flex justify-between items-center">
           <button
             className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center ${showDiscountOnly ? 'bg-yellow-100' : 'bg-gray-100'}`}
-            onClick={() => setShowDiscountOnly(!showDiscountOnly)}
+            onClick={toggleDiscountOnly}
           >
             <span className="w-4 h-4 inline-flex items-center justify-center mr-1 bg-yellow-400 text-white rounded-full text-xs">
               {showDiscountOnly ? '✓' : ''}
@@ -822,8 +864,10 @@ function HomePage() {
                   className="mt-2 text-blue-500 underline"
                   onClick={() => {
                     setCategoryFilter('전체');
+                    sessionStorage.setItem('categoryFilter', '전체');
                     setSearchQuery('');
                     setShowDiscountOnly(false);
+                    sessionStorage.setItem('showDiscountOnly', JSON.stringify(false));
                   }}
                 >
                   전체 카테고리보기

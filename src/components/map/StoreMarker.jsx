@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk'
 import defaultImage from '../../assets/images/luckeat-default.png'
-import storeDefaultImage from '../../assets/images/제빵사디폴트이미지.png'
+import storeDefaultImage from '../../assets/images/luckeat_default_image.webp'
 
 // 카카오맵 API에 따른 StoreMarker 컴포넌트 - 이벤트 처리 강화
 function StoreMarker({ store, isSelected, onClick, onDetail }) {

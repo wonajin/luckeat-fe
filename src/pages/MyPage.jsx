@@ -11,7 +11,7 @@ import {
   calculatePlantedTrees,
   formatCurrency,
 } from '../utils/ecoUtils'
-import bakerDefaultImage from '../assets/images/제빵사디폴트이미지.png'
+import bakerDefaultImage from '../assets/images/luckeat_default_image.webp'
 
 function MyPage() {
   const navigate = useNavigate()
@@ -131,7 +131,7 @@ function MyPage() {
                     {displayUser.nickname || '럭킷'}
                   </h2>
                   <div className="text-base text-gray-800">
-                    {displayUser.email || 'luckeat@example.com'}
+                    {displayUser.email || 'luckeatnet@gmail.com'}
                   </div>
                   <div className="mt-1 text-sm text-gray-800">
                     <span className="font-bold">{reviews.length || 0}</span>
@@ -209,7 +209,7 @@ function MyPage() {
               <div className="border-b pb-2">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">고객 문의</span>
-                  <span className="text-gray-400">luckeat@example.com</span>
+                  <span className="text-gray-400">luckeatnet@gmail.com</span>
                 </div>
               </div>
             </div>

@@ -50,7 +50,7 @@ const NoRegisteredStorePage = () => {
             onClick={() => navigate('/business')}
             className="mt-8 px-6 py-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
           >
-            비즈니스 페이지로 돌아가기
+            사업자 페이지로 돌아가기
           </button>
         </div>
       </div>

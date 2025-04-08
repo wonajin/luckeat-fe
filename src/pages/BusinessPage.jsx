@@ -113,6 +113,10 @@ function BusinessPage() {
         // 가게 정보 가져오기
         const storeResponse = await getMyStore()
         if (storeResponse.success) {
+          if (!storeResponse.data || !storeResponse.data.id) {
+            navigate('/no-registered-store')
+            return
+          }
           setStoreData(storeResponse.data)
           console.log('가게 정보:', storeResponse.data)
           
@@ -138,7 +142,7 @@ function BusinessPage() {
     if (user) {
       fetchData()
     }
-  }, [user])
+  }, [user, navigate])
 
   // 예약 상태 업데이트 (승인/거절)
   const handleReservationStatus = async (reservationId, status) => {
@@ -310,12 +314,13 @@ function BusinessPage() {
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
-                      if (storeData) {
+                      if (storeData && storeData.id) {
                         console.log('가게 상세보기 이동:', storeData.id);
                         navigate(`/store/${storeData.id}`);
+                      } else {
+                        navigate('/no-registered-store');
                       }
                     }}
-                    disabled={!storeData}
                   >
                     <span>가게 상세보기</span>
                     <span className="text-gray-400">→</span>
@@ -326,12 +331,13 @@ function BusinessPage() {
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
-                      if (storeData) {
+                      if (storeData && storeData.id) {
                         console.log('럭키트 관리 이동:', storeData.id);
                         navigate(`/store/${storeData.id}/products`);
+                      } else {
+                        navigate('/no-registered-store');
                       }
                     }}
-                    disabled={!storeData}
                   >
                     <span>럭키트 관리</span>
                     <span className="text-gray-400">→</span>
@@ -342,12 +348,13 @@ function BusinessPage() {
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
-                      if (storeData) {
+                      if (storeData && storeData.id) {
                         console.log('가게 예약 리스트 이동:', storeData.id);
                         navigate(`/store/${storeData.id}/reservation`);
+                      } else {
+                        navigate('/no-registered-store');
                       }
                     }}
-                    disabled={!storeData}
                   >
                     <span>가게 예약 리스트</span>
                     <span className="text-gray-400">→</span>

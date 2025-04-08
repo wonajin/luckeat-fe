@@ -8,6 +8,7 @@ import {
   getStoreReservations,
   updateReservationStatus,
 } from '../api/reservationApi'
+import { getMyStore } from '../api/storeApi'
 
 const ReservationStatusBadge = ({ status }) => {
   let bgColor = 'bg-gray-200'
@@ -56,6 +57,7 @@ const StoreReservationsPage = () => {
   const [toastType, setToastType] = useState('success') // 'success' or 'error'
   const [expandedReservationId, setExpandedReservationId] = useState(null)
   const [activeFilter, setActiveFilter] = useState('ALL')
+  const [storeData, setStoreData] = useState(null)
 
   useEffect(() => {
     const verifyAuth = async () => {
@@ -76,6 +78,24 @@ const StoreReservationsPage = () => {
 
     verifyAuth()
   }, [navigate, storeId, checkCurrentAuthStatus])
+
+  useEffect(() => {
+    const fetchStoreData = async () => {
+      try {
+        const response = await getMyStore()
+        if (!response.success || !response.data || !response.data.id) {
+          navigate('/no-registered-store')
+          return
+        }
+        setStoreData(response.data)
+      } catch (error) {
+        console.error('가게 정보 로딩 중 오류:', error)
+        navigate('/no-registered-store')
+      }
+    }
+
+    fetchStoreData()
+  }, [navigate])
 
   const fetchReservations = async () => {
     try {

@@ -298,10 +298,7 @@ export function AuthProvider({ children }) {
       setLoading(true)
       const response = await userApi.updateNickname(nickname)
 
-      if (
-        response.success &&
-        response.message === SUCCESS_MESSAGES.USER_UPDATE_SUCCESS
-      ) {
+      if (response.success) {
         // 사용자 정보 업데이트
         const userResponse = await userApi.getUserInfo()
         if (userResponse.success) {
@@ -329,11 +326,7 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true)
       const response = await userApi.updatePassword(passwordData)
-
-      if (
-        response.success &&
-        response.message === SUCCESS_MESSAGES.USER_UPDATE_SUCCESS
-      ) {
+      if (response.success) {
         return { success: true }
       }
       return {

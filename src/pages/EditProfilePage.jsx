@@ -186,9 +186,8 @@ function EditProfilePage() {
       setNicknameError('')
       
       const result = await updateNickname(nickname)
-      
       if (result.success) {
-        setNicknameSuccess('닉네임이 성공적으로 변경되었습니다.')
+        showToastMessage('닉네임이 성공적으로 변경되었습니다.')
         setNicknameError('')
         setOriginalNickname(nickname)
         setIsNicknameSame(true)
@@ -259,10 +258,7 @@ function EditProfilePage() {
         setPasswordError('')
         setConfirmPasswordError('')
         setPasswordsNotMatch(false)
-        // 수정 완료 시 홈화면으로 이동
-        setTimeout(() => {
-          navigate('/')
-        }, 1500)
+       
       } else {
         if (
           result.message &&
@@ -423,7 +419,7 @@ function EditProfilePage() {
             <p className="text-red-500 text-sm mb-2">* {passwordError}</p>
           ) : (
             <p className="text-gray-500 text-xs mb-2">
-              * 8~20자의 영문, 숫자, 특수문자를 조합하여 입력해주세요.
+              * 8~20자의 영문, 숫자를 조합하여 입력해주세요.
             </p>
           )}
 

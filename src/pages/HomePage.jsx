@@ -498,59 +498,55 @@ function HomePage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       <div className="px-4 py-3 border-b flex justify-center items-center bg-white sticky top-0 z-30">
         <h1
-          className="text-xl font-bold text-jeju-main mr-auto cursor-pointer"
-          onClick={() => navigate('/')}
+          className="text-2xl font-bold text-yellow-500"
+          onClick={() => {
+            setCategoryFilter('전체');
+            sessionStorage.setItem('categoryFilter', '전체');
+            setSearchQuery('');
+            setShowDiscountOnly(false);
+            sessionStorage.setItem('showDiscountOnly', JSON.stringify(false));
+            setSortOption('가까운 순');
+            sessionStorage.setItem('sortOption', '가까운 순');
+            navigate(0);
+          }}
         >
           <img src={luckeatLogo} alt="럭킷" className="h-6" />
         </h1>
-
-        {isLoggedIn ? (
-          <div className="flex items-center">
-            <button onClick={() => navigate(getProfilePath())} className="mr-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6 text-gray-600"
+        <div className="absolute right-4 text-sm">
+          {isLoggedIn ? (
+            <div className="flex space-x-2">
+              <button
+                className="text-xs text-gray-700"
+                onClick={async () => {
+                  await logout()
+                  navigate(0)
+                }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </button>
-          </div>
-        ) : (
-          <button
-            className="px-4 py-1.5 rounded-lg bg-yellow-500 text-white font-medium text-sm"
-            onClick={() => navigate('/login')}
-          >
-            로그인
-          </button>
-        )}
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <div className="flex space-x-2">
+              <button
+                className="text-xs text-gray-700"
+                onClick={() => navigate('/login')}
+              >
+                로그인
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                className="text-xs text-gray-700"
+                onClick={() => navigate('/signup')}
+              >
+                회원가입
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* 스타일 추가 */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        /* 스크롤바 숨기기 위한 스타일 */
-        .flex-1 {
-          -ms-overflow-style: none; /* IE and Edge */
-          scrollbar-width: none; /* Firefox */
-          overflow-y: auto;
-        }
-        .flex-1::-webkit-scrollbar {
-          display: none; /* Chrome, Safari, Opera */
-        }
-        `
-      }}
-      />
 
       <div
         className="flex-1 overflow-hidden pb-16"
@@ -883,6 +879,25 @@ function HomePage() {
       </div>
 
       <ScrollTopButton scrollContainerRef={storeListRef} />
+
+      <div className="w-full bg-white border-t">
+        <Navigation />
+      </div>
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        /* 스크롤바 숨기기 위한 스타일 */
+        .flex-1 {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+          overflow-y: auto;
+        }
+        .flex-1::-webkit-scrollbar {
+          display: none; /* Chrome, Safari, Opera */
+        }
+        `
+      }}
+      />
 
       {/* 위치 정보 동의 모달 */}
       {showLocationModal && (

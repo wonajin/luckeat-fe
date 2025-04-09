@@ -945,9 +945,8 @@ function MapPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* 헤더 */}
       <Header title="지도" />
-
+      
       {/* 하이라이트 스타일 추가 */}
       <style>{`
         .highlight-store {
@@ -1074,8 +1073,6 @@ function MapPage() {
         {/* 가게 목록 */}
         {renderStoreList()}
       </div>
-
-      <Navigation />
     </div>
   )
 }

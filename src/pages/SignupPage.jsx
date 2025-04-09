@@ -614,8 +614,6 @@ function SignupPage() {
       
       {/* 오류 팝업 - renderErrorPopup 함수 사용 */}
       {renderErrorPopup()}
-
-      <Navigation />
     </div>
   )
 }

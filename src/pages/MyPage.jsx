@@ -273,8 +273,6 @@ function MyPage() {
           </div>
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

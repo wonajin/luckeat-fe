@@ -12,7 +12,7 @@ function Navigation() {
   }
 
   return (
-    <nav className="mt-auto bg-white shadow-inner">
+    <nav className="mt-auto border-t border-gray-100 bg-white shadow-inner">
       <ul className="flex justify-around py-1">
         <li>
           <button

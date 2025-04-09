@@ -167,7 +167,6 @@ const UserReservationsPage = () => {
         <div className="flex-1 flex justify-center items-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#F7B32B]"></div>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -179,7 +178,6 @@ const UserReservationsPage = () => {
         <div className="flex-1 flex justify-center items-center">
           <p className="text-red-500">{error}</p>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -392,8 +390,6 @@ const UserReservationsPage = () => {
           {toastMessage}
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

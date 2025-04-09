@@ -1,27 +1,26 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import luckeatDefaultImage from '../assets/images/luckeat_default_image.webp';
-import Header from '../components/layout/Header';
-import Navigation from '../components/layout/Navigation';
+import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import luckeatDefaultImage from '../assets/images/luckeat_default_image.webp'
+import Header from '../components/layout/Header'
 
 const NoRegisteredStorePage = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   // 뒤로가기 방지
   useEffect(() => {
     const preventGoBack = (e) => {
-      e.preventDefault();
+      e.preventDefault()
       // 대신 비즈니스 페이지로 이동
-      navigate('/business');
-    };
+      navigate('/business')
+    }
     
-    window.history.pushState(null, "", window.location.pathname);
-    window.addEventListener('popstate', preventGoBack);
+    window.history.pushState(null, '', window.location.pathname)
+    window.addEventListener('popstate', preventGoBack)
     
     return () => {
-      window.removeEventListener('popstate', preventGoBack);
-    };
-  }, [navigate]);
+      window.removeEventListener('popstate', preventGoBack)
+    }
+  }, [navigate])
 
   return (
     <div className="flex flex-col h-full">
@@ -54,9 +53,8 @@ const NoRegisteredStorePage = () => {
           </button>
         </div>
       </div>
-      <Navigation />
     </div>
-  );
-};
+  )
+}
 
-export default NoRegisteredStorePage; 
+export default NoRegisteredStorePage

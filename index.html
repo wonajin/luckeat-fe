@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/src/assets/images/favicon_hubo_1.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>럭킷(LuckEat)</title>
 
     <!-- 폰트 추가 -->
@@ -25,6 +25,21 @@
       * {
         -ms-overflow-style: none;  /* IE 및 Edge */
         scrollbar-width: none;  /* Firefox */
+      }
+      /* iOS에서의 안전 영역을 위한 CSS 변수 설정 */
+      :root {
+        --sat: env(safe-area-inset-top);
+        --sar: env(safe-area-inset-right);
+        --sab: env(safe-area-inset-bottom);
+        --sal: env(safe-area-inset-left);
+      }
+      
+      /* PC 환경에서 세로로 꽉 차게 표시 */
+      @media (min-width: 768px) {
+        html, body, #root {
+          height: 100%;
+          overflow: hidden;
+        }
       }
     </style>
 

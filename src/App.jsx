@@ -24,6 +24,7 @@ import NoRegisteredStorePage from './pages/NoRegisteredStorePage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
+import Navigation from './components/layout/Navigation'
 // 오류 발생 시 보여줄 폴백 컴포넌트
 const FallbackComponent = () => {
   return (
@@ -112,8 +113,9 @@ function App() {
       <Sentry.ErrorBoundary fallback={<FallbackComponent />}>
         <Router>
           <div className="flex justify-center items-center min-h-screen bg-bread-light">
-            <div className="w-[390px] h-[775px] bg-white flex flex-col  overflow-hidden relative shadow-hover border border-jeju-stone-light">
+            <div className="w-[390px] md:h-screen h-[100vh] max-h-[100vh] md:max-h-screen sm:max-h-[775px] bg-white flex flex-col overflow-auto relative shadow-hover border border-jeju-stone-light">
               <AppRoutes />
+              <Navigation />
             </div>
           </div>
         </Router>

@@ -473,7 +473,7 @@ function StoreDetailPage() {
     store.products?.filter((product) => !product.isOpen) || []
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full">
       <Header title={store.storeName} />
 
       <div
@@ -873,7 +873,8 @@ function StoreDetailPage() {
             <div>
               {/* 리뷰 평점 */}
               <div className="mb-4">
-                <p className="text-3xl font-bold text-center mb-2">
+                <p className="text-3xl font-bold text-center mb-2 flex items-center justify-center">
+                  <span className="text-yellow-500 mr-1">★</span>
                   {(
                     store.reviews.reduce((acc, review) => acc + review.rating, 0) /
                     store.reviews.length
@@ -912,18 +913,7 @@ function StoreDetailPage() {
                     </div>
                   </div>
 
-                  {/* 상품 정보 */}
-                  <div className="mt-2 p-2 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">{review.productName}</span>
-                      <span className="mx-2">·</span>
-                      <span>{review.quantity}개</span>
-                    </p>
-                    <p className="text-sm text-gray-700 mt-1">
-                      <span className="font-medium">주문 금액</span>
-                      <span className="ml-2">{review.totalPrice.toLocaleString()}원</span>
-                    </p>
-                  </div>
+
 
                   {review.reviewImage && (
                     <div className="my-2">
@@ -1283,7 +1273,6 @@ function StoreDetailPage() {
           </div>
         </div>
       )}
-
     </div>
   )
 }

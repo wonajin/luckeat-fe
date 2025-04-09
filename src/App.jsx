@@ -48,6 +48,14 @@ const FallbackComponent = () => {
   )
 }
 
+// 사파리 감지 함수
+const detectSafari = () => {
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if (isSafari) {
+    document.body.classList.add('safari-browser');
+  }
+};
+
 // 토큰 유효성 검사 래퍼 컴포넌트
 function AuthWrapper({ children }) {
   const { checkCurrentAuthStatus } = useAuth()
@@ -108,12 +116,17 @@ function AppRoutes() {
 }
 
 function App() {
+  // 사파리 감지 후 클래스 추가
+  useEffect(() => {
+    detectSafari();
+  }, []);
+
   return (
     <AuthProvider>
       <Sentry.ErrorBoundary fallback={<FallbackComponent />}>
         <Router>
           <div className="flex justify-center items-center min-h-screen bg-bread-light">
-            <div className="w-[390px] md:h-screen h-[100vh] max-h-[100vh] md:max-h-screen sm:max-h-[775px] bg-white flex flex-col overflow-auto relative shadow-hover border border-jeju-stone-light">
+            <div className="w-[390px] md:h-screen h-[100vh] max-h-[100vh] md:max-h-screen sm:max-h-[775px] bg-white flex flex-col overflow-auto relative shadow-hover border border-jeju-stone-light app-container">
               <AppRoutes />
               <Navigation />
             </div>

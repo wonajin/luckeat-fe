@@ -1284,7 +1284,6 @@ function StoreDetailPage() {
         </div>
       )}
 
-      <Navigation />
     </div>
   )
 }

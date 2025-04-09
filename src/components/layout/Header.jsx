@@ -7,7 +7,7 @@ function Header({ title }) {
   const isMainPage = location.pathname === '/' || location.pathname === '/home'
 
   return (
-    <header className="px-4 py-3 border-b border-gray-100 flex items-center relative bg-white shadow-sm">
+    <header className="sticky top-0 px-4 py-3 border-b border-gray-100 flex items-center relative bg-white shadow-sm z-10">
       {!isMainPage && (
         <button
           onClick={() => navigate(-1)}

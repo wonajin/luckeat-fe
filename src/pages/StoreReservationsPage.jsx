@@ -67,35 +67,32 @@ const StoreReservationsPage = () => {
         return
       }
 
-      if (!storeId) {
-        setError('가게 정보를 찾을 수 없습니다.')
-        setLoading(false)
-        return
-      }
+      try {
+        // 가게 정보 확인
+        const storeResponse = await getMyStore();
+        if (!storeResponse.success || !storeResponse.data || !storeResponse.data.id) {
+          // 가게 정보가 없는 경우 안내 페이지로 리디렉션
+          navigate('/no-registered-store');
+          return;
+        }
+        
+        setStoreData(storeResponse.data);
+        
+        if (!storeId) {
+          setError('가게 정보를 찾을 수 없습니다.')
+          setLoading(false)
+          return
+        }
 
-      fetchReservations()
+        fetchReservations()
+      } catch (error) {
+        console.error('가게 정보 조회 중 오류:', error);
+        navigate('/no-registered-store');
+      }
     }
 
     verifyAuth()
   }, [navigate, storeId, checkCurrentAuthStatus])
-
-  useEffect(() => {
-    const fetchStoreData = async () => {
-      try {
-        const response = await getMyStore()
-        if (!response.success || !response.data || !response.data.id) {
-          navigate('/no-registered-store')
-          return
-        }
-        setStoreData(response.data)
-      } catch (error) {
-        console.error('가게 정보 로딩 중 오류:', error)
-        navigate('/no-registered-store')
-      }
-    }
-
-    fetchStoreData()
-  }, [navigate])
 
   const fetchReservations = async () => {
     try {
@@ -210,7 +207,6 @@ const StoreReservationsPage = () => {
         <div className="flex-1 flex justify-center items-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#F7B32B]"></div>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -222,7 +218,6 @@ const StoreReservationsPage = () => {
         <div className="flex-1 flex justify-center items-center">
           <p className="text-red-500">{error}</p>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -423,8 +418,6 @@ const StoreReservationsPage = () => {
           {toastMessage}
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

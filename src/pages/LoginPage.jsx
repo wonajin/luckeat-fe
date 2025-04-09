@@ -168,8 +168,6 @@ function LoginPage() {
           </button>
         </div>
       </div>
-
-      <Navigation />
     </div>
   )
 }

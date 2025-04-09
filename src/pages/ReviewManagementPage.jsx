@@ -533,7 +533,7 @@ function ReviewManagementPage() {
   }
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full">
       <Header title="리뷰 관리" onBack={handleBack} />
       
       {/* 토스트 메시지 */}
@@ -863,8 +863,6 @@ function ReviewManagementPage() {
           </div>
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

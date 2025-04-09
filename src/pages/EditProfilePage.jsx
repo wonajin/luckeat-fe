@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
 import { useAuth } from '../context/AuthContext'
-import Navigation from '../components/layout/Navigation'
 import * as userApi from '../api/userApi'
 
 function EditProfilePage() {
@@ -324,7 +323,7 @@ function EditProfilePage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full">
       <Header title="회원정보 수정" onBack={() => navigate('/mypage')} />
 
       <div className="flex-1 p-4 overflow-y-auto">
@@ -553,8 +552,6 @@ function EditProfilePage() {
           </div>
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

@@ -473,7 +473,7 @@ function StoreDetailPage() {
     store.products?.filter((product) => !product.isOpen) || []
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full">
       <Header title={store.storeName} />
 
       <div
@@ -1273,8 +1273,6 @@ function StoreDetailPage() {
           </div>
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

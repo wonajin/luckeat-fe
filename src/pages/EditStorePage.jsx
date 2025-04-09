@@ -55,52 +55,52 @@ function EditStorePage() {
     const fetchStoreData = async () => {
       try {
         const response = await getMyStore()
-        if (!response.success || !response.data || !response.data.id) {
-          navigate('/no-registered-store')
-          return
-        }
-        setStore(response.data)
-        setFormData({
-          storeName: response.data.storeName || '',
-          storeImg: response.data.storeImg || '',
-          address: response.data.address || '',
-          website: response.data.website || '',
-          storeUrl: response.data.storeUrl || '',
-          permissionUrl: response.data.permissionUrl || '',
-          latitude: response.data.latitude || 0,
-          longitude: response.data.longitude || 0,
-          contactNumber: response.data.contactNumber || '',
-          description: response.data.description || '',
-          businessNumber: response.data.businessNumber || '',
-          businessHours: response.data.businessHours || '',
-          pickupTime: response.data.pickupTime || '',
-          avgRating: response.data.avgRating || 0,
-          avgRatingGoogle: response.data.avgRatingGoogle || 0,
-          googlePlaceId: response.data.googlePlaceId || '',
-        })
-        setImagePreview(response.data.storeImg || '')
-        if (response.data.businessHours) {
-          const times = response.data.businessHours.split(' - ')
-          if (times.length === 2) {
-            setTimeRange({
-              openTime: times[0],
-              closeTime: times[1]
-            })
+        if (response.success) {
+          setStore(response.data)
+          setFormData({
+            storeName: response.data.storeName || '',
+            storeImg: response.data.storeImg || '',
+            address: response.data.address || '',
+            website: response.data.website || '',
+            storeUrl: response.data.storeUrl || '',
+            permissionUrl: response.data.permissionUrl || '',
+            latitude: response.data.latitude || 0,
+            longitude: response.data.longitude || 0,
+            contactNumber: response.data.contactNumber || '',
+            description: response.data.description || '',
+            businessNumber: response.data.businessNumber || '',
+            businessHours: response.data.businessHours || '',
+            pickupTime: response.data.pickupTime || '',
+            avgRating: response.data.avgRating || 0,
+            avgRatingGoogle: response.data.avgRatingGoogle || 0,
+            googlePlaceId: response.data.googlePlaceId || '',
+          })
+          setImagePreview(response.data.storeImg || '')
+          if (response.data.businessHours) {
+            const times = response.data.businessHours.split(' - ')
+            if (times.length === 2) {
+              setTimeRange({
+                openTime: times[0],
+                closeTime: times[1]
+              })
+            }
           }
-        }
-        
-        if (response.data.pickupTime) {
-          const pickupTimes = response.data.pickupTime.split(' - ')
-          if (pickupTimes.length === 2) {
-            setPickupTimeRange({
-              startTime: pickupTimes[0],
-              endTime: pickupTimes[1]
-            })
+          
+          if (response.data.pickupTime) {
+            const pickupTimes = response.data.pickupTime.split(' - ')
+            if (pickupTimes.length === 2) {
+              setPickupTimeRange({
+                startTime: pickupTimes[0],
+                endTime: pickupTimes[1]
+              })
+            }
           }
+        } else {
+          setError('가게 정보를 불러오는데 실패했습니다.')
         }
       } catch (error) {
+        setError('가게 정보를 불러오는데 실패했습니다.')
         console.error('가게 정보 로딩 중 오류:', error)
-        navigate('/no-registered-store')
       } finally {
         setLoading(false)
       }
@@ -109,7 +109,7 @@ function EditStorePage() {
     if (user) {
       fetchStoreData()
     }
-  }, [user, navigate])
+  }, [user])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -244,6 +244,7 @@ function EditStorePage() {
     } catch (error) {
       setError('가게 정보 수정 중 오류가 발생했습니다.')
       showToastMessage('가게 정보 수정 중 오류가 발생했습니다.')
+      console.error('가게 정보 수정 중 오류:', error)
     } finally {
       setLoading(false)
     }
@@ -311,7 +312,6 @@ function EditStorePage() {
         <div className="flex-1 flex justify-center items-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#F7B32B]"></div>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -323,7 +323,6 @@ function EditStorePage() {
         <div className="flex-1 flex justify-center items-center">
           <p className="text-red-500">{error}</p>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -585,8 +584,6 @@ function EditStorePage() {
           {toastMessage}
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

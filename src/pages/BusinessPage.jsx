@@ -223,6 +223,15 @@ function BusinessPage() {
   // API에서 가져온 사용자 정보가 없으면, 로컬 상태의 사용자 정보 사용
   const displayUser = userData || user || {}
 
+  // 가게 관련 페이지로 이동하는 핸들러
+  const handleStorePageNavigation = (path) => {
+    if (storeData) {
+      navigate(path);
+    } else {
+      navigate('/no-registered-store');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
@@ -311,11 +320,11 @@ function BusinessPage() {
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
                       if (storeData) {
-                        console.log('가게 상세보기 이동:', storeData.id);
                         navigate(`/store/${storeData.id}`);
+                      } else {
+                        navigate('/no-registered-store');
                       }
                     }}
-                    disabled={!storeData}
                   >
                     <span>가게 상세보기</span>
                     <span className="text-gray-400">→</span>
@@ -327,11 +336,11 @@ function BusinessPage() {
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
                       if (storeData) {
-                        console.log('럭키트 관리 이동:', storeData.id);
                         navigate(`/store/${storeData.id}/products`);
+                      } else {
+                        navigate('/no-registered-store');
                       }
                     }}
-                    disabled={!storeData}
                   >
                     <span>럭키트 관리</span>
                     <span className="text-gray-400">→</span>
@@ -343,11 +352,11 @@ function BusinessPage() {
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
                       if (storeData) {
-                        console.log('가게 예약 리스트 이동:', storeData.id);
                         navigate(`/store/${storeData.id}/reservation`);
+                      } else {
+                        navigate('/no-registered-store');
                       }
                     }}
-                    disabled={!storeData}
                   >
                     <span>가게 예약 리스트</span>
                     <span className="text-gray-400">→</span>
@@ -357,7 +366,13 @@ function BusinessPage() {
                 <div className="border-b pb-2">
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
-                    onClick={() => navigate('/edit-store')}
+                    onClick={() => {
+                      if (storeData) {
+                        navigate('/edit-store');
+                      } else {
+                        navigate('/no-registered-store');
+                      }
+                    }}
                   >
                     <span>가게 정보 수정</span>
                     <span className="text-gray-400">→</span>

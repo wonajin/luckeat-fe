@@ -25,6 +25,8 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
 import Navigation from './components/layout/Navigation'
+import { getMyStore } from './api/storeApi'
+
 // 오류 발생 시 보여줄 폴백 컴포넌트
 const FallbackComponent = () => {
   return (
@@ -58,7 +60,7 @@ const detectSafari = () => {
 
 // 토큰 유효성 검사 래퍼 컴포넌트
 function AuthWrapper({ children }) {
-  const { checkCurrentAuthStatus } = useAuth()
+  const { checkCurrentAuthStatus, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -87,15 +89,50 @@ function AuthWrapper({ children }) {
     }
   }, [location.pathname, checkCurrentAuthStatus, navigate, location])
 
+  // 가게 관련 경로 체크
+  useEffect(() => {
+    const checkStoreAccess = async () => {
+      try {
+        const storeResponse = await getMyStore()
+        const hasStore = storeResponse.success && storeResponse.data
+
+        // 가게 관련 경로 목록
+        const storePaths = [
+          '/store/:id',
+          '/store/:storeId/products',
+          '/edit-store',
+          '/store/:storeId/reservation'
+        ]
+
+        // 현재 경로가 가게 관련 경로인지 확인
+        const isStorePath = storePaths.some((path) => {
+          const regex = new RegExp('^' + path.replace(/:[^/]+/g, '[^/]+') + '$')
+          return regex.test(location.pathname)
+        })
+
+        // 가게가 없고 가게 관련 경로에 접근하려는 경우
+        if (!hasStore && isStorePath) {
+          navigate('/no-registered-store', { replace: true })
+        }
+      } catch (error) {
+        console.error('가게 정보 확인 중 오류:', error)
+      }
+    }
+
+    if (user) {
+      checkStoreAccess()
+    }
+  }, [location.pathname, user, navigate])
+
   return children
 }
 
 // 네비게이션 바가 필요한지 확인하는 함수
 const shouldShowNavigation = (pathname) => {
   // 네비게이션 바를 표시하지 않을 경로 목록
-  const hideNavigationPaths = ['/login', '/signup'];
-  return !hideNavigationPaths.includes(pathname);
-};
+  const hideNavigationPaths = ['/login', '/signup']
+  return !hideNavigationPaths.includes(pathname)
+}
 
 function AppRoutes() {
   const location = useLocation();

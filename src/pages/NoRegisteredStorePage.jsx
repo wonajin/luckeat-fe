@@ -28,7 +28,7 @@ function NoRegisteredStorePage() {
         <img
           src={storeDefaultImage}
           alt="기본 이미지"
-          className="w-40 h-40 object-cover rounded-lg mb-6"
+          className="w-20 h-25 object-cover rounded-lg mb-6"
         />
         
         <h2 className="text-xl font-bold mb-4">
@@ -43,7 +43,7 @@ function NoRegisteredStorePage() {
           onClick={() => navigate('/business')}
           className="px-6 py-2 bg-yellow-500 text-white font-medium rounded-lg shadow"
         >
-          비즈니스 페이지로 돌아가기
+          사업자 페이지로 돌아가기
         </button>
       </div>
     </div>

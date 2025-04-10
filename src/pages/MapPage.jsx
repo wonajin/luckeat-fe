@@ -167,6 +167,7 @@ function MapPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [stores, setStores] = useState([])
   const [filteredStores, setFilteredStores] = useState([])
+  const [visibleStores, setVisibleStores] = useState([]) // 현재 지도에 보이는 가게들
   const [selectedStoreId, setSelectedStoreId] = useState(null)
   const [mapCenter, setMapCenter] = useState({
     lat: 33.4996, //제주 구름스퀘어
@@ -571,10 +572,13 @@ function MapPage() {
     })
   }
 
-  // 검색어, 카테고리, 할인 필터가 변경될 때 가게 목록 필터링
+  // 필터링 함수 업데이트 - 검색어, 카테고리, 할인 여부로 필터링
   const filterStores = useCallback(
-    (query, category, discountOnly) => {
-      if (stores.length === 0) return
+    (query = '', category = '', discountOnly = false) => {
+      if (!stores || !Array.isArray(stores)) {
+        setFilteredStores([])
+        return
+      }
 
       let result = [...stores]
 
@@ -582,21 +586,24 @@ function MapPage() {
       if (query && query.trim() !== '') {
         const lowerQuery = query.toLowerCase()
         result = result.filter((store) => {
-          const storeName = (store.name || store.storeName || '').toLowerCase()
-          const storeAddress = (store.address || '').toLowerCase()
-          return (
-            storeName.includes(lowerQuery) || storeAddress.includes(lowerQuery)
-          )
+          const storeName = (store.storeName || store.name || '').toLowerCase()
+          const address = (store.address || '').toLowerCase()
+          return storeName.includes(lowerQuery) || address.includes(lowerQuery)
         })
       }
 
       // 카테고리 필터링
-      if (category && category !== 'all') {
-        result = result.filter((store) => store.categoryId === category)
+      if (category) {
+        result = result.filter((store) => {
+          return (
+            store.categoryId === category ||
+            store.category === category ||
+            store.categoryName === category
+          )
+        })
       }
 
-      // 할인 매장만 필터링 - 이미 API 레벨에서 필터링되므로
-      // 추가 클라이언트 필터링은 showDiscountOnly가 true이고, API 호출이 변경되지 않은 경우만 필요
+      // 할인 상품만 보기 필터링
       if (discountOnly && !showDiscountOnly) {
         result = result.filter(
           (store) =>
@@ -629,14 +636,64 @@ function MapPage() {
       }
 
       setFilteredStores(uniqueStores)
+      
+      // 현재 지도 경계 내의 가게 필터링도 실행
+      if (mapRef.current) {
+        updateVisibleStores(uniqueStores)
+      } else {
+        setVisibleStores(uniqueStores)
+      }
     },
     [stores, showDiscountOnly],
   )
+
+  // 현재 지도 경계 내에 있는 가게만 필터링하는 함수 추가
+  const updateVisibleStores = useCallback((stores) => {
+    if (!mapRef.current || !stores || !Array.isArray(stores)) {
+      setVisibleStores(stores || [])
+      return
+    }
+
+    // 현재 지도 경계 가져오기
+    const bounds = mapRef.current.getBounds()
+    if (!bounds) {
+      setVisibleStores(stores)
+      return
+    }
+
+    // 남서쪽과 북동쪽 좌표 가져오기
+    const sw = bounds.getSouthWest()
+    const ne = bounds.getNorthEast()
+
+    // 경계 내에 있는 가게만 필터링
+    const inBoundsStores = stores.filter((store) => {
+      if (!store.lat || !store.lng) return false
+      
+      const lat = parseFloat(store.lat)
+      const lng = parseFloat(store.lng)
+      
+      return (
+        lat >= sw.getLat() && 
+        lat <= ne.getLat() && 
+        lng >= sw.getLng() && 
+        lng <= ne.getLng()
+      )
+    })
+
+    setVisibleStores(inBoundsStores)
+  }, [])
 
   // 검색어, 카테고리, 할인 필터가 변경될 때 필터링 실행
   useEffect(() => {
     filterStores(searchQuery, categoryFilter, showDiscountOnly)
   }, [searchQuery, categoryFilter, showDiscountOnly, filterStores])
+
+  // 지도 이동 완료 후 가게 목록 업데이트 핸들러
+  const handleMapIdle = useCallback(() => {
+    if (mapRef.current && filteredStores.length > 0) {
+      updateVisibleStores(filteredStores)
+    }
+  }, [filteredStores, updateVisibleStores])
 
   // 가게 마커 클릭 핸들러 개선
   const handleMarkerClick = useCallback(
@@ -807,7 +864,7 @@ function MapPage() {
     }
 
     // 중복 ID 체크 및 유효한 좌표 확인
-    const validStores = filteredStores.filter((store, index, self) => {
+    const validStores = visibleStores.filter((store, index, self) => {
       // ID가 없는 경우 제외
       if (!store.id) return false
 
@@ -833,6 +890,8 @@ function MapPage() {
         ref={mapRef}
         onClick={handleMapClick}
         disableDoubleClickZoom={true}
+        onDragEnd={handleMapIdle}
+        onZoomChanged={handleMapIdle}
       >
         {/* 사용자 위치 마커 - 빨간색 마커 사용 */}
         {userLocation && (
@@ -913,7 +972,7 @@ function MapPage() {
   // 가상화된 목록을 위한 메모이제이션된 아이템 데이터
   const itemData = useMemo(
     () => ({
-      store: filteredStores,
+      store: visibleStores,
       selectedStoreId,
       storeItemRefs,
       handleMarkerClick,
@@ -921,7 +980,7 @@ function MapPage() {
       simplifyAddress,
     }),
     [
-      filteredStores,
+      visibleStores,
       selectedStoreId,
       handleMarkerClick,
       handleStoreDetail,
@@ -957,15 +1016,15 @@ function MapPage() {
 
         <div className="p-3 pb-0">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="font-bold">주변 가게 ({filteredStores.length})</h3>
+            <h3 className="font-bold">주변 가게 ({visibleStores.length})</h3>
           </div>
 
           <div className="space-y-0.5">
-            {filteredStores.length > 0 ? (
+            {visibleStores.length > 0 ? (
               <List
                 className="StoreList"
                 height={listHeight - 70} // 헤더 높이 등을 고려해 조정
-                itemCount={filteredStores.length}
+                itemCount={visibleStores.length}
                 itemSize={90} // 각 아이템의 높이 축소
                 width="100%"
                 itemData={itemData}
@@ -976,7 +1035,7 @@ function MapPage() {
               <div className="text-center py-4 text-gray-500">
                 {loading
                   ? '가게 정보를 불러오는 중...'
-                  : '표시할 가게가 없습니다.'}
+                  : '표시할 가게가 없습니다. 다른 위치로 이동해보세요.'}
               </div>
             )}
           </div>

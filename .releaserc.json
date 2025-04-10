@@ -5,7 +5,8 @@
     },
     {
       "name": "dev",
-      "prerelease": "beta"
+      "prerelease": true,
+      "channel": "beta"
     }
   ],
   "plugins": [

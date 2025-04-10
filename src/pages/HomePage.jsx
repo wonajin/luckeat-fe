@@ -13,6 +13,7 @@ import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 import { API_BASE_URL } from '../config/apiConfig'
 import { debounce } from 'lodash'
+import Navigation from '../components/layout/Navigation'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -548,7 +549,7 @@ function HomePage() {
       </div>
 
       <div
-        className="flex-1 overflow-hidden pb-16"
+        className="flex-1 overflow-y-auto scroll-container pb-16"
         ref={storeListRef}
         onScroll={handleScroll}
       >
@@ -679,7 +680,7 @@ function HomePage() {
                   }}
                 >
                   <span>{option.icon}</span>
-                  <span className="text-sm font-medium">{option.name}</span>
+                  <span className="text-xs font-medium">{option.name}</span>
                 </button>
               ))}
             </div>
@@ -699,7 +700,7 @@ function HomePage() {
                   }}
                 >
                   <span>{option.icon}</span>
-                  <span className="text-sm font-medium">{option.name}</span>
+                  <span className="text-xs font-medium">{option.name}</span>
                 </button>
               ))}
             </div>
@@ -877,7 +878,24 @@ function HomePage() {
         </div>
       </div>
 
-      <ScrollTopButton scrollContainerRef={storeListRef} />
+      {showScrollTopButton && (
+        <ScrollTopButton onClick={scrollToTop} />
+      )}
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        /* 스크롤바 숨기기 위한 스타일 */
+        .flex-1 {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+          overflow-y: auto;
+        }
+        .flex-1::-webkit-scrollbar {
+          display: none; /* Chrome, Safari, Opera */
+        }
+        `
+      }}
+      />
 
       {/* 위치 정보 동의 모달 */}
       {showLocationModal && (

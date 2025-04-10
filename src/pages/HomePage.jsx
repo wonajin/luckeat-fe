@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import { getStores } from '../api/storeApi'
@@ -879,25 +878,6 @@ function HomePage() {
       </div>
 
       <ScrollTopButton scrollContainerRef={storeListRef} />
-
-      <div className="w-full bg-white border-t">
-        <Navigation />
-      </div>
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        /* 스크롤바 숨기기 위한 스타일 */
-        .flex-1 {
-          -ms-overflow-style: none; /* IE and Edge */
-          scrollbar-width: none; /* Firefox */
-          overflow-y: auto;
-        }
-        .flex-1::-webkit-scrollbar {
-          display: none; /* Chrome, Safari, Opera */
-        }
-        `
-      }}
-      />
 
       {/* 위치 정보 동의 모달 */}
       {showLocationModal && (

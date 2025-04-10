@@ -45,6 +45,7 @@ function StoreDetailPage() {
   const [showSellerModal, setShowSellerModal] = useState(false) // 사업자 안내 모달 상태 추가
   const [modalQuantity, setModalQuantity] = useState(1)
   const [stockError, setStockError] = useState('')
+  const [isScrolling, setIsScrolling] = useState(false)
 
   // Google Maps 이미지 URL인지 확인하는 함수
   const isGoogleMapsImage = (url) => {
@@ -267,22 +268,72 @@ function StoreDetailPage() {
 
   // 스크롤 관련 함수
   const handleScroll = () => {
-    // 스크롤 이벤트는 유지하되 맨 위로 버튼 관련 코드 제거
+    if (!mainContainerRef.current || isScrolling) return
+
+    const container = mainContainerRef.current
+    const scrollTop = container.scrollTop
+    const containerHeight = container.clientHeight
+    const offset = 100 // 탭 전환 위치 조정을 위한 오프셋
+
+    // 각 섹션의 위치 계산
+    const sections = {
+      map: mapRef.current?.getBoundingClientRect().top,
+      products: productsRef.current?.getBoundingClientRect().top,
+      storeInfo: storeInfoRef.current?.getBoundingClientRect().top,
+      reviews: reviewsRef.current?.getBoundingClientRect().top
+    }
+
+    // 현재 보이는 섹션 찾기
+    const currentSection = Object.entries(sections).reduce((visible, [key, value]) => {
+      if (value && value <= containerHeight * 0.3) {
+        return key
+      }
+      return visible
+    }, 'map')
+
+    // activeTab이 현재 섹션과 다를 때만 업데이트
+    if (!isScrolling && activeTab !== currentSection) {
+      setActiveTab(currentSection)
+    }
   }
 
   // 탭 클릭 시 해당 섹션으로 스크롤
   const handleTabClick = (tab) => {
     setActiveTab(tab)
+    setIsScrolling(true)
     setTimeout(() => {
+      const container = mainContainerRef.current
+      const offset = 100 // 상단 여백 추가
+
       if (tab === 'map' && mapRef.current) {
-        mapRef.current.scrollIntoView({ behavior: 'smooth' })
+        const elementTop = mapRef.current.offsetTop - offset
+        container.scrollTo({
+          top: elementTop,
+          behavior: 'smooth'
+        })
       } else if (tab === 'products' && productsRef.current) {
-        productsRef.current.scrollIntoView({ behavior: 'smooth' })
+        const elementTop = productsRef.current.offsetTop - offset
+        container.scrollTo({
+          top: elementTop,
+          behavior: 'smooth'
+        })
       } else if (tab === 'storeInfo' && storeInfoRef.current) {
-        storeInfoRef.current.scrollIntoView({ behavior: 'smooth' })
+        const elementTop = storeInfoRef.current.offsetTop - offset
+        container.scrollTo({
+          top: elementTop,
+          behavior: 'smooth'
+        })
       } else if (tab === 'reviews' && reviewsRef.current) {
-        reviewsRef.current.scrollIntoView({ behavior: 'smooth' })
+        const elementTop = reviewsRef.current.offsetTop - offset
+        container.scrollTo({
+          top: elementTop,
+          behavior: 'smooth'
+        })
       }
+      // 스크롤 애니메이션이 끝난 후 isScrolling 상태 해제
+      setTimeout(() => {
+        setIsScrolling(false)
+      }, 500)
     }, 100)
   }
 

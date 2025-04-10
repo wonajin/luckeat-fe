@@ -1,5 +1,6 @@
 import apiClient from './apiClient'
 import { processImageData } from './uploadApi'
+import { uploadImage } from './uploadApi'
 import { API_BASE_URL, API_DIRECT_URL } from '../config/apiConfig'
 import { TOKEN_KEYS } from './apiClient'
 import axios from 'axios'
@@ -8,18 +9,26 @@ import axios from 'axios'
 export const registerStore = async (storeData, storeImage) => {
   try {
     // 이미지 처리
-    const processedData = await processImageData(
-      storeData,
-      storeImage,
-      'storeImg',
-      'stores',
-    )
+    let storeImgUrl = null;
+    if (storeImage) {
+      try {
+        storeImgUrl = await uploadImage(storeImage, 'stores');
+      } catch (error) {
+        console.error('이미지 업로드 실패:', error);
+        throw new Error('이미지 업로드에 실패했습니다.');
+      }
+    }
 
     // 가게 등록 API 호출
-    const response = await apiClient.post('/stores', processedData)
-    return response.data
+    const dataToSubmit = {
+      ...storeData,
+      storeImg: storeImgUrl
+    };
+    
+    const response = await apiClient.post('/stores', dataToSubmit);
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 
@@ -124,36 +133,36 @@ export const getStoreById = async (storeId) => {
 export const updateStore = async (storeId, storeData, storeImage) => {
   try {
     // 이미지 처리 (이미지 파일이 있는 경우에만)
-    let processedData = storeData
+    let storeImgUrl = storeData.storeImg;
     if (storeImage) {
-      processedData = await processImageData(
-        storeData,
-        storeImage,
-        'storeImg',
-        'stores',
-      )
+      try {
+        storeImgUrl = await uploadImage(storeImage, 'stores');
+      } catch (error) {
+        console.error('이미지 업로드 실패:', error);
+        // 이미지 업로드 실패 시 기존 이미지 유지
+      }
     }
 
     // API 호출
     const response = await apiClient.put(`/api/v1/stores/${storeId}`, {
-      storeName: processedData.storeName,
-      storeImg: processedData.storeImg,
-      address: processedData.address,
-      categoryId: processedData.categoryId,
-      website: processedData.website || '',
-      storeUrl: processedData.storeUrl || '',
-      permissionUrl: processedData.permissionUrl || '',
-      latitude: processedData.latitude || 0,
-      longitude: processedData.longitude || 0,
-      contactNumber: processedData.contactNumber,
-      description: processedData.description,
-      businessNumber: processedData.businessNumber,
-      pickupTime: processedData.pickupTime || '',
-      businessHours: processedData.businessHours || '',
-      reviewSummary: processedData.reviewSummary || '',
-      avgRating: processedData.avgRating || 0,
-      avgRatingGoogle: processedData.avgRatingGoogle || 0,
-      googlePlaceId: processedData.googlePlaceId || '',
+      storeName: storeData.storeName,
+      storeImg: storeImgUrl,
+      address: storeData.address,
+      categoryId: storeData.categoryId,
+      website: storeData.website || '',
+      storeUrl: storeData.storeUrl || '',
+      permissionUrl: storeData.permissionUrl || '',
+      latitude: storeData.latitude || 0,
+      longitude: storeData.longitude || 0,
+      contactNumber: storeData.contactNumber,
+      description: storeData.description,
+      businessNumber: storeData.businessNumber,
+      pickupTime: storeData.pickupTime || '',
+      businessHours: storeData.businessHours || '',
+      reviewSummary: storeData.reviewSummary || '',
+      avgRating: storeData.avgRating || 0,
+      avgRatingGoogle: storeData.avgRatingGoogle || 0,
+      googlePlaceId: storeData.googlePlaceId || '',
     })
 
     return {

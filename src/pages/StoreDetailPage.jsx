@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
 import { Map, MapMarker } from 'react-kakao-maps-sdk' //카카오맵 추가
 import { getStoreById, getProductById } from '../api/storeApi'

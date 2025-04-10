@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
 import { Map, MapMarker, MarkerClusterer } from 'react-kakao-maps-sdk'
 import StoreMarker from '../components/map/StoreMarker'

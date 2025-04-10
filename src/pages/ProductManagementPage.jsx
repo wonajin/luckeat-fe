@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import Header from '../components/layout/Header'
-import Navigation from '../components/layout/Navigation'
 import ProductManagement from '../components/products/ProductManagement'
 import { getMyStore } from '../api/storeApi'
 import { useNavigate } from 'react-router-dom'

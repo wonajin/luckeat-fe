@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
-import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { getMyStore, updateStore } from '../api/storeApi'
 

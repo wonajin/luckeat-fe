@@ -12,7 +12,7 @@ function Navigation() {
   }
 
   return (
-    <nav className="mt-auto border-t border-gray-100 bg-white shadow-inner">
+    <nav className="fixed bottom-0 left-0 right-0 w-[390px] mx-auto border-t border-gray-100 bg-white shadow-inner z-50">
       <ul className="flex justify-around py-1">
         <li>
           <button

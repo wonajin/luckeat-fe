@@ -292,13 +292,8 @@ function ReviewManagementPage() {
       // 이미지가 있는 경우 먼저 업로드
       if (newReview.image) {
         try {
-          const uploadedImageUrl = await uploadImage(newReview.image, 'reviews')
-          if (uploadedImageUrl) {
-            // S3 URL 구조에서 필요한 경로 부분 추출
-            const pathPart = uploadedImageUrl.replace('https://luckeat-front.s3.ap-northeast-2.amazonaws.com', '')
-            // CloudFront URL로 변환
-            imageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`
-          }
+          // uploadImage 함수 호출하여 URL 받기 (프리사인드 URL 방식으로 변경됨)
+          imageUrl = await uploadImage(newReview.image, 'reviews')
         } catch (error) {
           console.error('이미지 업로드 중 오류:', error)
           window.dispatchEvent(new CustomEvent('showToast', {
@@ -393,15 +388,10 @@ function ReviewManagementPage() {
       let imageUrl = null
       
       // 이미지가 있고 변경된 경우에만 업로드
-      if (editReview.image && editReview.image !== editReview.imagePreview) {
+      if (editReview.image && typeof editReview.image !== 'string') {
         try {
-          const uploadedImageUrl = await uploadImage(editReview.image, 'reviews')
-          if (uploadedImageUrl) {
-            // S3 URL 구조에서 필요한 경로 부분 추출
-            const pathPart = uploadedImageUrl.replace('https://luckeat-front.s3.ap-northeast-2.amazonaws.com', '')
-            // CloudFront URL로 변환
-            imageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`
-          }
+          // uploadImage 함수 호출하여 URL 받기 (프리사인드 URL 방식으로 변경됨)
+          imageUrl = await uploadImage(editReview.image, 'reviews')
         } catch (error) {
           console.error('이미지 업로드 중 오류:', error)
           // 이미지 업로드 실패 시 이전 이미지를 사용

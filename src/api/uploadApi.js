@@ -16,37 +16,51 @@ export const uploadImage = async (imageFile, type) => {
   }
 
   try {
-    // 이미지 업로드를 위한 FormData 객체 생성
-    const imageFormData = new FormData()
-    imageFormData.append('file', imageFile)
-
     // 토큰 가져오기
     const accessToken = localStorage.getItem('accessToken')
 
-    // 업로드할 API 엔드포인트 결정
-    const endpoint = API_ENDPOINTS.IMAGES(type)
+    // 1. 먼저 Presigned URL 생성을 위한 요청
+    const presignedUrlEndpoint = `/images/${type}/presigned-url`
+    const presignedUrlParams = new URLSearchParams({
+      fileName: imageFile.name,
+      contentType: imageFile.type
+    })
     
-    // API_URL 사용
-    const uploadUrl = `${API_DIRECT_URL}/api/v1${endpoint}`
-    
-    // fetch를 사용한 이미지 업로드
-    const response = await fetch(uploadUrl, {
+    // Presigned URL 요청
+    const presignedUrlResponse = await fetch(`${API_DIRECT_URL}/api/v1${presignedUrlEndpoint}?${presignedUrlParams}`, {
       method: 'POST',
       headers: {
         Authorization: accessToken ? `Bearer ${accessToken}` : '',
       },
-      body: imageFormData,
     })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`이미지 업로드 실패: ${response.status} ${response.statusText}`)
+    if (!presignedUrlResponse.ok) {
+      throw new Error(
+        `Presigned URL 생성 실패: ${presignedUrlResponse.status} ${presignedUrlResponse.statusText}`
+      )
     }
 
-    const result = await response.json()
+    const { presignedUrl, fileKey } = await presignedUrlResponse.json()
 
-    // 업로드된 이미지 URL 반환
-    return result.imageUrl
+    // 2. S3에 직접 파일 업로드
+    const uploadResponse = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': imageFile.type,
+        'x-amz-acl': 'public-read',
+      },
+      body: imageFile,
+    })
+
+    if (!uploadResponse.ok) {
+      throw new Error(
+        `이미지 업로드 실패: ${uploadResponse.status} ${uploadResponse.statusText}`
+      )
+    }
+
+    // 3. CloudFront URL 생성 (S3 도메인을 CloudFront로 변환)
+    // S3 URL 구조에서 필요한 경로 부분 추출
+    return `https://dxa66rf338pjr.cloudfront.net/${fileKey}`
   } catch (error) {
     throw error
   }
@@ -74,22 +88,11 @@ export const processImageData = async (
   try {
     // 이미지 업로드 함수 호출하여 URL 받기
     const imageUrl = await uploadImage(imageFile, type)
-
-    // S3 URL 구조에서 필요한 경로 부분 추출
-    // 예: https://luckeat-front.s3.ap-northeast-2.amazonaws.com/images/products/34abb3e9-6791-4a15-816f-539b91f4ebbd-레오나르도디카프리오.jpeg
-    // 에서 /images/products/34abb3e9-6791-4a15-816f-539b91f4ebbd-레오나르도디카프리오.jpeg 부분만 추출
-    const pathPart = imageUrl.replace(
-      'https://luckeat-front.s3.ap-northeast-2.amazonaws.com',
-      '',
-    )
-    
-    // API_DIRECT_URL 변수를 사용하여 새 URL 생성 (.env의 VITE_API_URL 값이 설정되어 있음)
-    const formattedImageUrl = `https://dxa66rf338pjr.cloudfront.net${pathPart}`;
     
     // 업로드된 이미지 URL을 원본 데이터에 추가
     return {
       ...formData,
-      [imageFieldName]: formattedImageUrl,
+      [imageFieldName]: imageUrl,
     }
   } catch (error) {
     throw error

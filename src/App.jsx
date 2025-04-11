@@ -20,9 +20,11 @@ import EditStorePage from './pages/EditStorePage'
 import StoreReservationsPage from './pages/StoreReservationsPage'
 import UserReservationsPage from './pages/UserReservationsPage'
 import NotFoundPage from './pages/NotFoundPage'
+import NoRegisteredStorePage from './pages/NoRegisteredStorePage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
+import Navigation from './components/layout/Navigation'
 // 오류 발생 시 보여줄 폴백 컴포넌트
 const FallbackComponent = () => {
   return (
@@ -45,6 +47,14 @@ const FallbackComponent = () => {
     </div>
   )
 }
+
+// 사파리 감지 함수
+const detectSafari = () => {
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if (isSafari) {
+    document.body.classList.add('safari-browser');
+  }
+};
 
 // 토큰 유효성 검사 래퍼 컴포넌트
 function AuthWrapper({ children }) {
@@ -80,7 +90,16 @@ function AuthWrapper({ children }) {
   return children
 }
 
+// 네비게이션 바가 필요한지 확인하는 함수
+const shouldShowNavigation = (pathname) => {
+  // 네비게이션 바를 표시하지 않을 경로 목록
+  const hideNavigationPaths = [];
+  return !hideNavigationPaths.includes(pathname);
+};
+
 function AppRoutes() {
+  const location = useLocation();
+  
   return (
     <AuthWrapper>
       <Routes>
@@ -98,19 +117,26 @@ function AppRoutes() {
         <Route path="/edit-store" element={<EditStorePage />} />
         <Route path="/store/:storeId/reservation" element={<StoreReservationsPage />} />
         <Route path="/reservation" element={<UserReservationsPage />} />
+        <Route path="/no-registered-store" element={<NoRegisteredStorePage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      {shouldShowNavigation(location.pathname) && <Navigation />}
     </AuthWrapper>
   )
 }
 
 function App() {
+  // 사파리 감지 후 클래스 추가
+  useEffect(() => {
+    detectSafari();
+  }, []);
+
   return (
     <AuthProvider>
       <Sentry.ErrorBoundary fallback={<FallbackComponent />}>
         <Router>
-          <div className="flex justify-center items-center min-h-screen bg-bread-light">
-            <div className="w-[390px] h-[775px] bg-white flex flex-col  overflow-hidden relative shadow-hover border border-jeju-stone-light">
+          <div className="flex justify-center items-center min-h-screen h-full bg-bread-light">
+            <div className="w-[390px] md:h-screen h-[100vh] max-h-[100vh] md:max-h-screen sm:max-h-[775px] bg-white flex flex-col overflow-auto relative shadow-hover border border-jeju-stone-light app-container pb-[50px]">
               <AppRoutes />
             </div>
           </div>

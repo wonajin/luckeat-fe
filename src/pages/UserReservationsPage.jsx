@@ -4,15 +4,24 @@ import Header from '../components/layout/Header'
 import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { formatDateTime } from '../utils/dateUtils'
-import { RESERVATION_STATUS, getStatusText, getStatusStyle } from '../utils/reservationStatus'
-import { getUserReservations, updateReservationStatus } from '../api/reservationApi'
+import {
+  RESERVATION_STATUS,
+  getStatusText,
+  getStatusStyle,
+} from '../utils/reservationStatus'
+import {
+  getUserReservations,
+  updateReservationStatus,
+} from '../api/reservationApi'
 
 const ReservationStatusBadge = ({ status }) => {
   const { bgColor, textColor } = getStatusStyle(status)
   const statusText = getStatusText(status)
 
   return (
-    <span className={`${bgColor} ${textColor} text-xs font-medium px-2.5 py-0.5 rounded`}>
+    <span
+      className={`${bgColor} ${textColor} text-xs font-medium px-2.5 py-0.5 rounded`}
+    >
       {statusText}
     </span>
   )
@@ -51,24 +60,24 @@ const UserReservationsPage = () => {
     try {
       setLoading(true)
       setError(null) // 에러 상태 초기화
-      
+
       // 로컬 스토리지에서 사용자 정보 확인
       const userString = localStorage.getItem('user')
       if (!userString) {
         setError('로그인이 필요합니다.')
         return
       }
-      
+
       const userData = JSON.parse(userString)
       const userId = userData.userId || userData.id
-      
+
       if (!userId) {
         setError('유효한 사용자 ID를 찾을 수 없습니다.')
         return
       }
 
       const response = await getUserReservations(userId)
-      
+
       if (!response) {
         setError('서버 응답이 없습니다.')
         return
@@ -76,7 +85,9 @@ const UserReservationsPage = () => {
 
       if (response.success) {
         // response.data가 배열인지 확인
-        const reservationsData = Array.isArray(response.data) ? response.data : []
+        const reservationsData = Array.isArray(response.data)
+          ? response.data
+          : []
         setReservations(reservationsData)
       } else {
         setError(response.message || '예약 정보를 가져오는데 실패했습니다.')
@@ -98,30 +109,30 @@ const UserReservationsPage = () => {
       setLoading(true)
       const response = await updateReservationStatus({
         reservationId: reservationToCancel.id,
-        status: 'CANCELED'
+        status: 'CANCELED',
       })
-      
+
       if (response.success) {
         // 예약 상태 업데이트
-        setReservations(prev => 
-          prev.map(reservation =>
+        setReservations((prev) =>
+          prev.map((reservation) =>
             reservation.id === reservationToCancel.id
               ? { ...reservation, status: 'CANCELED' }
-              : reservation
-          )
+              : reservation,
+          ),
         )
         setShowCancelConfirm(false)
         setReservationToCancel(null)
-        setToastMessage('예약이 취소되었습니다')
-        setShowToast(true)
+        showToastMessage('예약이 취소되었습니다', 'success')
       } else {
-        setToastMessage(response.message || '예약 취소에 실패했습니다')
-        setShowToast(true)
+        showToastMessage(
+          response.message || '예약 취소에 실패했습니다',
+          'error',
+        )
       }
     } catch (error) {
       console.error('예약 취소 중 오류:', error)
-      setToastMessage('예약 취소 중 오류가 발생했습니다')
-      setShowToast(true)
+      showToastMessage('예약 취소 중 오류가 발생했습니다', 'error')
     } finally {
       setLoading(false)
     }
@@ -133,11 +144,13 @@ const UserReservationsPage = () => {
     setShowToast(true)
     setTimeout(() => {
       setShowToast(false)
-    }, 3000)
+    }, 2000)
   }
 
   const toggleReservationDetails = (reservationId) => {
-    setExpandedReservationId(expandedReservationId === reservationId ? null : reservationId)
+    setExpandedReservationId(
+      expandedReservationId === reservationId ? null : reservationId,
+    )
   }
 
   const openCancelConfirm = (reservation) => {
@@ -151,13 +164,14 @@ const UserReservationsPage = () => {
   }
 
   // 예약 상태에 따른 필터링
-  const filteredReservations = filter === 'ALL' 
-    ? reservations 
-    : reservations.filter(r => r.status === filter)
+  const filteredReservations =
+    filter === 'ALL'
+      ? reservations
+      : reservations.filter((r) => r.status === filter)
 
   // 최신순 정렬
-  const sortedReservations = [...filteredReservations].sort((a, b) => 
-    new Date(b.createdAt) - new Date(a.createdAt)
+  const sortedReservations = [...filteredReservations].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
   )
 
   if (loading) {
@@ -167,7 +181,6 @@ const UserReservationsPage = () => {
         <div className="flex-1 flex justify-center items-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#F7B32B]"></div>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -179,7 +192,6 @@ const UserReservationsPage = () => {
         <div className="flex-1 flex justify-center items-center">
           <p className="text-red-500">{error}</p>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -191,9 +203,7 @@ const UserReservationsPage = () => {
       <div className="flex-1 overflow-y-auto">
         {/* 상단 정보 영역 */}
         <div className="bg-white p-4 shadow-sm">
-          <h1 className="text-xl font-bold text-gray-800 mb-2">
-            나의 예약
-          </h1>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">나의 예약</h1>
           <p className="text-sm text-gray-600">
             모든 예약 내역을 확인하고 관리할 수 있습니다.
           </p>
@@ -229,7 +239,9 @@ const UserReservationsPage = () => {
             <div className="bg-white rounded-lg shadow-sm p-2 flex flex-wrap gap-2">
               <button
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'ALL' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+                  filter === 'ALL'
+                    ? 'bg-[#F7B32B] text-white'
+                    : 'bg-gray-100 text-gray-700'
                 }`}
                 onClick={() => setFilter('ALL')}
               >
@@ -237,7 +249,9 @@ const UserReservationsPage = () => {
               </button>
               <button
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'PENDING' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+                  filter === 'PENDING'
+                    ? 'bg-[#F7B32B] text-white'
+                    : 'bg-gray-100 text-gray-700'
                 }`}
                 onClick={() => setFilter('PENDING')}
               >
@@ -245,7 +259,9 @@ const UserReservationsPage = () => {
               </button>
               <button
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'CONFIRMED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+                  filter === 'CONFIRMED'
+                    ? 'bg-[#F7B32B] text-white'
+                    : 'bg-gray-100 text-gray-700'
                 }`}
                 onClick={() => setFilter('CONFIRMED')}
               >
@@ -253,7 +269,9 @@ const UserReservationsPage = () => {
               </button>
               <button
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  filter === 'CANCELED' ? 'bg-[#F7B32B] text-white' : 'bg-gray-100 text-gray-700'
+                  filter === 'CANCELED'
+                    ? 'bg-[#F7B32B] text-white'
+                    : 'bg-gray-100 text-gray-700'
                 }`}
                 onClick={() => setFilter('CANCELED')}
               >
@@ -272,7 +290,7 @@ const UserReservationsPage = () => {
                   key={reservation.id}
                   className="bg-white rounded-lg shadow overflow-hidden cursor-pointer hover:bg-gray-50 transition-colors"
                 >
-                  <div 
+                  <div
                     className="p-4"
                     onClick={() => toggleReservationDetails(reservation.id)}
                   >
@@ -300,17 +318,36 @@ const UserReservationsPage = () => {
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <div className="space-y-2">
                           <p className="text-sm">
-                            <span className="font-medium text-gray-700">예약 번호:</span>{' '}
-                            <span className="text-gray-600">{reservation.id}</span>
+                            <span className="font-medium text-gray-700">
+                              예약 번호:
+                            </span>{' '}
+                            <span className="text-gray-600">
+                              {reservation.id}
+                            </span>
                           </p>
                           <p className="text-sm">
-                            <span className="font-medium text-gray-700">가격:</span>{' '}
-                            <span className="text-gray-600">{reservation.totalPrice?.toLocaleString() || '0'}원</span>
+                            <span className="font-medium text-gray-700">
+                              가격:
+                            </span>{' '}
+                            <span className="text-gray-600">
+                              {reservation.totalPrice?.toLocaleString() || '0'}
+                              원
+                            </span>
                           </p>
                           <p className="text-sm">
-                            <span className="font-medium text-gray-700">포장 방법:</span>{' '}
-                            <span className={reservation.isZerowaste ? "text-green-600 font-medium" : "text-gray-600"}>
-                              {reservation.isZerowaste ? '제로웨이스트 (포장용기 지참)' : '일반 포장'}
+                            <span className="font-medium text-gray-700">
+                              포장 방법:
+                            </span>{' '}
+                            <span
+                              className={
+                                reservation.isZerowaste
+                                  ? 'text-green-600 font-medium'
+                                  : 'text-gray-600'
+                              }
+                            >
+                              {reservation.isZerowaste
+                                ? '제로웨이스트 (포장용기 지참)'
+                                : '일반 포장'}
                             </span>
                           </p>
                         </div>
@@ -349,7 +386,9 @@ const UserReservationsPage = () => {
           ) : (
             <div className="bg-white rounded-lg shadow-sm p-4 text-center">
               <p className="text-gray-500 text-sm">
-                {filter === 'ALL' ? '예약 내역이 없습니다.' : `${getStatusText(filter)} 상태의 예약이 없습니다.`}
+                {filter === 'ALL'
+                  ? '예약 내역이 없습니다.'
+                  : `${getStatusText(filter)} 상태의 예약이 없습니다.`}
               </p>
             </div>
           )}
@@ -360,7 +399,9 @@ const UserReservationsPage = () => {
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-sm p-5">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">예약 취소 확인</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              예약 취소 확인
+            </h3>
             <p className="text-gray-500 mb-5">
               정말로 예약을 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </p>
@@ -392,8 +433,6 @@ const UserReservationsPage = () => {
           {toastMessage}
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

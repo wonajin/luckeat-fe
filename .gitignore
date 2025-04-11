@@ -171,6 +171,8 @@ psd
 thumb
 sketch
 
+test-images/covy-test.png
+
 package-lock.json
 
 # End of https://www.toptal.com/developers/gitignore/api/react,node,git

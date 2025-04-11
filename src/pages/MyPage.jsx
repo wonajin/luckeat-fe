@@ -123,46 +123,73 @@ function MyPage() {
         ) : (
           <>
             {/* 프로필 카드 */}
-
-            <div className="m-4 p-6 bg-[#ffe985cc] rounded-2xl">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h2 className="text-xl font-bold mb-1 text-black">
-                    {displayUser.nickname || '럭킷'}
-                  </h2>
-                  <div className="text-base text-gray-800">
-                    {displayUser.email || 'luckeatnet@gmail.com'}
-                  </div>
-                  <div className="mt-1 text-sm text-gray-800">
-                    <span className="font-bold">{reviews.length || 0}</span>
-                    <span className="ml-1">개의 리뷰</span>
-                  </div>
-                  <div className="mt-1 text-sm text-gray-800">
-                    <span className="font-bold">{totalOrders}</span>
-                    <span className="ml-1">개의 주문 완료</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2 pt-1 border-t border-black border-opacity-20">
-                <div className="grid grid-cols-3 gap-1">
-                  <div className="rounded-xl p-1 text-center">
-                    <div className="text-lg mb-0">💵</div>
-                    <div className="text-base font-bold text-black">{formatCurrency(ecoStats.savedMoney)}원</div>
-                    <div className="text-xs text-gray-700">아낀 금액</div>
-                  </div>
-                  <div className="rounded-xl p-1 text-center">
-                    <div className="text-lg mb-0">🌎</div>
-                    <div className="text-base font-bold text-black">{ecoStats.savedCO2}kg</div>
-                    <div className="text-xs text-gray-700">절약한 CO2</div>
-                  </div>
-                  <div className="rounded-xl p-1 text-center">
-                    <div className="text-lg mb-0">🌳</div>
-                    <div className="text-base font-bold text-black">{ecoStats.plantedTrees}그루</div>
-                    <div className="text-xs text-gray-700">심은 나무</div>
+            <div className="px-4 pt-3 pb-1">
+              <div className="p-6 bg-[#ffe985cc] rounded-xl">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h2 className="text-xl font-bold mb-1 text-black">
+                      {displayUser.nickname || '럭킷'}
+                    </h2>
+                    <div className="text-base text-gray-800">
+                      {displayUser.email || 'luckeatnet@gmail.com'}
+                    </div>
+                    <div className="mt-1 text-sm text-gray-800">
+                      <span className="font-bold">{reviews.length || 0}</span>
+                      <span className="ml-1">개의 리뷰</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-800">
+                      <span className="font-bold">{totalOrders}</span>
+                      <span className="ml-1">개의 주문 완료</span>
+                    </div>
                   </div>
                 </div>
+                {/* <div className="mt-2 pt-1 border-t border-black border-opacity-20">
+                  <div className="grid grid-cols-3 gap-1">
+                    <div className="rounded-xl p-1 text-center">
+                      <div className="text-lg mb-0">💵</div>
+                      <div className="text-base font-bold text-black">{formatCurrency(ecoStats.savedMoney)}원</div>
+                      <div className="text-xs text-gray-700">아낀 금액</div>
+                    </div>
+                    <div className="rounded-xl p-1 text-center">
+                      <div className="text-lg mb-0">🌎</div>
+                      <div className="text-base font-bold text-black">{ecoStats.savedCO2}kg</div>
+                      <div className="text-xs text-gray-700">절약한 CO2</div>
+                    </div>
+                    <div className="rounded-xl p-1 text-center">
+                      <div className="text-lg mb-0">🌳</div>
+                      <div className="text-base font-bold text-black">{ecoStats.plantedTrees}그루</div>
+                      <div className="text-xs text-gray-700">심은 나무</div>
+                    </div>
+                  </div>
+                </div> */}
               </div>
             </div>
+            {/* 환경 기여 섹션 */}
+            {totalOrders > 0 && (
+              <div className="px-4 pt-2">
+                
+                <div className="bg-green-50 p-4 rounded-xl">
+                <h3 className="font-bold text-lg mb-2">♻️ 나의 환경 기여</h3>
+                  <p className="text-sm text-gray-700 mb-2">
+                    럭키트를 통해 쓰레기를 줄이고 환경을 보호하고 있어요!
+                  </p>
+                  <div className="flex justify-between items-center mt-3">
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500">주문 횟수</p>
+                      <p className="font-bold text-green-600">{totalOrders}회</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500">절약 금액</p>
+                      <p className="font-bold text-green-600">{formatCurrency(ecoStats.savedMoney)}원</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500">CO2 감소</p>
+                      <p className="font-bold text-green-600">{ecoStats.savedCO2}kg</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 메뉴 목록 */}
             <div className="p-4 space-y-4">
@@ -215,7 +242,7 @@ function MyPage() {
             </div>
             
             {/* 환경 기여 섹션 */}
-            {totalOrders > 0 && (
+            {/* {totalOrders > 0 && (
               <div className="p-4">
                 <h3 className="font-bold text-lg mb-3">나의 환경 기여</h3>
                 <div className="bg-green-50 p-4 rounded-lg">
@@ -238,7 +265,7 @@ function MyPage() {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </>
         )}
 
@@ -273,8 +300,6 @@ function MyPage() {
           </div>
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

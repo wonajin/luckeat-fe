@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
-import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import { getMyStore, updateStore } from '../api/storeApi'
 
@@ -312,7 +311,6 @@ function EditStorePage() {
         <div className="flex-1 flex justify-center items-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#F7B32B]"></div>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -324,7 +322,6 @@ function EditStorePage() {
         <div className="flex-1 flex justify-center items-center">
           <p className="text-red-500">{error}</p>
         </div>
-        <Navigation />
       </div>
     )
   }
@@ -586,8 +583,6 @@ function EditStorePage() {
           {toastMessage}
         </div>
       )}
-
-      <Navigation />
     </div>
   )
 }

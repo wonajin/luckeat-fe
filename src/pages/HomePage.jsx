@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navigation from '../components/layout/Navigation'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import { getStores } from '../api/storeApi'
@@ -14,6 +13,7 @@ import SearchBar from '../components/Search/SearchBar'
 import ScrollTopButton from '../components/common/ScrollTopButton'
 import { API_BASE_URL } from '../config/apiConfig'
 import { debounce } from 'lodash'
+import Navigation from '../components/layout/Navigation'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -549,7 +549,7 @@ function HomePage() {
       </div>
 
       <div
-        className="flex-1 overflow-hidden pb-16"
+        className="flex-1 overflow-y-auto scroll-container pb-16"
         ref={storeListRef}
         onScroll={handleScroll}
       >
@@ -680,7 +680,7 @@ function HomePage() {
                   }}
                 >
                   <span>{option.icon}</span>
-                  <span className="text-sm font-medium">{option.name}</span>
+                  <span className="text-xs font-medium">{option.name}</span>
                 </button>
               ))}
             </div>
@@ -700,7 +700,7 @@ function HomePage() {
                   }}
                 >
                   <span>{option.icon}</span>
-                  <span className="text-sm font-medium">{option.name}</span>
+                  <span className="text-xs font-medium">{option.name}</span>
                 </button>
               ))}
             </div>
@@ -878,11 +878,9 @@ function HomePage() {
         </div>
       </div>
 
-      <ScrollTopButton scrollContainerRef={storeListRef} />
-
-      <div className="w-full bg-white border-t">
-        <Navigation />
-      </div>
+      {showScrollTopButton && (
+        <ScrollTopButton onClick={scrollToTop} />
+      )}
 
       <style dangerouslySetInnerHTML={{
         __html: `

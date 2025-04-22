@@ -4,12 +4,12 @@ import App from './App'
 import './index.css'
 import * as Sentry from '@sentry/react'
 
-// 환경 변수 확인
-console.log('Current Environment:', {
-  MODE: import.meta.env.MODE,
-  VITE_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN ? 'exists' : 'missing',
-  BASE_URL: import.meta.env.BASE_URL,
-})
+// // 환경 변수 확인
+// console.log('Current Environment:', {
+//   MODE: import.meta.env.MODE,
+//   VITE_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN ? 'exists' : 'missing',
+//   BASE_URL: import.meta.env.BASE_URL,
+// })
 
 // Sentry 초기화
 Sentry.init({

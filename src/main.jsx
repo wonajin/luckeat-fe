@@ -13,7 +13,11 @@ Sentry.init({
   ],
   // Tracing
   tracesSampleRate: 1.0,
-  tracePropagationTargets: ['localhost', /^https:\/\/luckeat\.com/],
+  tracePropagationTargets: [
+    'localhost',
+    /^https:\/\/luckeat\.com/,
+    /^https:\/\/dxa66rf338pjr\.cloudfront\.net/,
+  ],
   // Session Replay
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,

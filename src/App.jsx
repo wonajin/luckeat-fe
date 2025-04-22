@@ -25,6 +25,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import * as Sentry from '@sentry/react'
 import { hasValidAccessToken } from './utils/jwtUtils'
 import Navigation from './components/layout/Navigation'
+
 // 오류 발생 시 보여줄 폴백 컴포넌트
 const FallbackComponent = () => {
   return (
@@ -50,11 +51,11 @@ const FallbackComponent = () => {
 
 // 사파리 감지 함수
 const detectSafari = () => {
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
   if (isSafari) {
-    document.body.classList.add('safari-browser');
+    document.body.classList.add('safari-browser')
   }
-};
+}
 
 // 토큰 유효성 검사 래퍼 컴포넌트
 function AuthWrapper({ children }) {
@@ -65,9 +66,7 @@ function AuthWrapper({ children }) {
   useEffect(() => {
     // 현재 경로가 인증이 필요하지 않은 경로인지 확인
     const publicPaths = ['/login', '/signup', '/', '/home', '/map']
-    
     const isStoreDetailPath = /^\/store\/[^/]+$/.test(location.pathname)
-   
     const isPublicPath = publicPaths.includes(location.pathname) || isStoreDetailPath
 
     // 인증이 필요한 경로에서만 토큰 유효성 검사
@@ -80,7 +79,7 @@ function AuthWrapper({ children }) {
           replace: true,
           state: {
             from: location.pathname,
-            message: '로그인이 필요하거나 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.',
+            message: '로그인이 필요하거나 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.'
           },
         })
       }
@@ -93,12 +92,12 @@ function AuthWrapper({ children }) {
 // 네비게이션 바가 필요한지 확인하는 함수
 const shouldShowNavigation = (pathname) => {
   // 네비게이션 바를 표시하지 않을 경로 목록
-  const hideNavigationPaths = [];
-  return !hideNavigationPaths.includes(pathname);
-};
+  const hideNavigationPaths = []
+  return !hideNavigationPaths.includes(pathname)
+}
 
 function AppRoutes() {
-  const location = useLocation();
+  const location = useLocation()
   
   return (
     <AuthWrapper>
@@ -136,8 +135,8 @@ function App() {
         fallback={<FallbackComponent />}
         showDialog
         beforeCapture={(scope) => {
-          scope.setTag("location", window.location.href)
-          scope.setExtra("state", "error_boundary_triggered")
+          scope.setTag('location', window.location.href)
+          scope.setExtra('state', 'error_boundary_triggered')
         }}
       >
         <Router>

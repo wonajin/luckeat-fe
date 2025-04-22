@@ -126,14 +126,20 @@ function AppRoutes() {
 }
 
 function App() {
-  // 사파리 감지 후 클래스 추가
   useEffect(() => {
-    detectSafari();
-  }, []);
+    detectSafari()
+  }, [])
 
   return (
     <AuthProvider>
-      <Sentry.ErrorBoundary fallback={<FallbackComponent />}>
+      <Sentry.ErrorBoundary
+        fallback={<FallbackComponent />}
+        showDialog
+        beforeCapture={(scope) => {
+          scope.setTag("location", window.location.href)
+          scope.setExtra("state", "error_boundary_triggered")
+        }}
+      >
         <Router>
           <div className="flex justify-center items-center min-h-screen h-full bg-bread-light">
             <div className="w-[390px] md:h-screen h-[100vh] max-h-[100vh] md:max-h-screen sm:max-h-[775px] bg-white flex flex-col overflow-auto relative shadow-hover border border-jeju-stone-light app-container pb-[50px]">
@@ -146,4 +152,4 @@ function App() {
   )
 }
 
-export default Sentry.withProfiler(App)
+export default Sentry.withProfiler(App, { name: 'LuckEatApp' })

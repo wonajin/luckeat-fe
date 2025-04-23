@@ -58,7 +58,7 @@ function StoreDetailPage() {
 
     // 구글 이미지 URL인 경우 CORS 이슈가 있을 수 있으므로 특별히 처리
     if (isGoogleMapsImage(imageUrl)) {
-      console.log('구글 맵스 이미지 URL 감지:', imageUrl)
+      // console.log('구글 맵스 이미지 URL 감지:', imageUrl)
 
       // 가게 이름이 있으면 그에 맞는 일반적인 이미지를 표시
       // 예: 베이커리 가게인 경우 베이커리 이미지
@@ -119,22 +119,22 @@ function StoreDetailPage() {
       try {
         setLoading(true)
         setError(null)
-        console.log(`가게 상세 정보 요청 - 가게 ID: ${id}`)
+        // console.log(`가게 상세 정보 요청 - 가게 ID: ${id}`)
 
         const response = await getStoreById(id)
-        console.log('가게 상세 정보 응답:', response)
+        // console.log('가게 상세 정보 응답:', response)
 
         if (response.success) {
           const storeData = response.data
 
           // 이미지 URL 확인 및 디버깅
-          console.log('가게 이미지 URL:', storeData.storeImg)
+          // console.log('가게 이미지 URL:', storeData.storeImg)
 
           // 이미지 미리 로드 시도
           if (storeData.storeImg) {
             const img = new Image()
             img.onload = () => {
-              console.log('이미지 미리 로드 성공:', storeData.storeImg)
+              // console.log('이미지 미리 로드 성공:', storeData.storeImg)
             }
             img.onerror = () => {
               console.error('이미지 미리 로드 실패:', storeData.storeImg)
@@ -146,15 +146,15 @@ function StoreDetailPage() {
 
           // 구글 이미지인지 확인
           if (isGoogleMapsImage(storeData.storeImg)) {
-            console.log('구글 맵스 이미지 URL 감지됨')
+            // console.log('구글 맵스 이미지 URL 감지됨')
           }
 
           // JSON으로 응답 객체 로깅 (민감 정보 제외)
           const safeStoreData = { ...storeData }
-          console.log('가게 데이터:', JSON.stringify(safeStoreData, null, 2))
+          // console.log('가게 데이터:', JSON.stringify(safeStoreData, null, 2))
 
           setStore(storeData)
-          console.log('지도 정보:', storeData.latitude, storeData.longitude) // 디버깅용
+          // console.log('지도 정보:', storeData.latitude, storeData.longitude) // 디버깅용
           // 맵 로드 완료 처리
           setMapLoaded(true)
         } else {
@@ -206,12 +206,12 @@ function StoreDetailPage() {
 
       script.onload = () => {
         window.kakao.maps.load(() => {
-          console.log('카카오맵 API 로드 완료')
+          // console.log('카카오맵 API 로드 완료')
           setMapLoaded(true)
         })
       }
     } else {
-      console.log('카카오맵 API가 이미 로드되어 있습니다.')
+      // console.log('카카오맵 API가 이미 로드되어 있습니다.')
       setMapLoaded(true)
     }
   }, [])
@@ -365,8 +365,8 @@ function StoreDetailPage() {
         return
       }
 
-      console.log('출발 위치:', startLocation)
-      console.log('도착 위치:', { lat: store.latitude, lng: store.longitude })
+      // console.log('출발 위치:', startLocation)
+      // console.log('도착 위치:', { lat: store.latitude, lng: store.longitude })
 
       // 카카오맵 길찾기 URL 생성 (출발지->목적지)
       const kakaoMapDirectUrl = `https://map.kakao.com/link/from/내 위치,${startLocation.lat},${startLocation.lng}/to/${store.storeName},${store.latitude},${store.longitude}`
@@ -423,7 +423,7 @@ function StoreDetailPage() {
         isZerowaste: isZerowaste
       }
       
-      console.log('예약 요청 데이터:', reservationData)
+      // console.log('예약 요청 데이터:', reservationData)
       
       // 예약 API 호출
       const result = await createReservation(id, reservationData)

@@ -50,7 +50,7 @@ apiClient.interceptors.request.use(
     }
 
     // 로컬 스토리지에서 토큰 가져오기
-    const token = localStorage.getItem('accessToken')
+    const token = sessionStorage.getItem('accessToken')
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
@@ -191,9 +191,9 @@ apiClient.interceptors.response.use(
         // 토큰 만료인 경우
         if (errorMessage === ERROR_MESSAGES.TOKEN_EXPIRED) {
           // 토큰 제거 및 로그인 페이지로 리다이렉션
-          localStorage.removeItem(TOKEN_KEYS.ACCESS)
-          localStorage.removeItem(TOKEN_KEYS.REFRESH)
-          localStorage.removeItem('user')
+          sessionStorage.removeItem(TOKEN_KEYS.ACCESS)
+          sessionStorage.removeItem(TOKEN_KEYS.REFRESH)
+          sessionStorage.removeItem('user')
           window.location.href = '/login'
         }
       }

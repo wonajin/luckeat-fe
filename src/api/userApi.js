@@ -106,11 +106,11 @@ export const login = async (credentials) => {
     if ((hasSuccessFlag && response.data.success === true) || isImplicitSuccess) {
       // 토큰 저장
       if (response.data.accessToken) {
-        localStorage.setItem(TOKEN_KEYS.ACCESS, response.data.accessToken)
+        sessionStorage.setItem(TOKEN_KEYS.ACCESS, response.data.accessToken)
       }
       
       if (response.data.refreshToken) {
-        localStorage.setItem(TOKEN_KEYS.REFRESH, response.data.refreshToken)
+        sessionStorage.setItem(TOKEN_KEYS.REFRESH, response.data.refreshToken)
       }
 
       // 사용자 정보 저장 (더 유연하게 처리)
@@ -121,7 +121,7 @@ export const login = async (credentials) => {
         role: response.data.role || 'BUYER', // 기본값 설정
       }
       
-      localStorage.setItem('user', JSON.stringify(userData))
+      sessionStorage.setItem('user', JSON.stringify(userData))
       
       // success 플래그가 없는 경우, 응답에 명시적으로 추가
       if (!hasSuccessFlag) {
@@ -129,9 +129,9 @@ export const login = async (credentials) => {
       }
     } else {
       // 로그인 실패 시 기존 토큰 제거
-      localStorage.removeItem(TOKEN_KEYS.ACCESS)
-      localStorage.removeItem(TOKEN_KEYS.REFRESH)
-      localStorage.removeItem('user')
+      sessionStorage.removeItem(TOKEN_KEYS.ACCESS)
+      sessionStorage.removeItem(TOKEN_KEYS.REFRESH)
+      sessionStorage.removeItem('user')
       
       // success 플래그가 없는 경우, 응답에 명시적으로 추가
       if (!hasSuccessFlag) {
@@ -158,9 +158,9 @@ export const login = async (credentials) => {
       });
       
       // 오류 발생 시 토큰 제거
-      localStorage.removeItem(TOKEN_KEYS.ACCESS)
-      localStorage.removeItem(TOKEN_KEYS.REFRESH)
-      localStorage.removeItem('user')
+      sessionStorage.removeItem(TOKEN_KEYS.ACCESS)
+      sessionStorage.removeItem(TOKEN_KEYS.REFRESH)
+      sessionStorage.removeItem('user')
       
       // 사용자 친화적인 오류 메시지 반환
       return {
@@ -170,9 +170,9 @@ export const login = async (credentials) => {
     }
     
     // 오류 발생 시 토큰 제거
-    localStorage.removeItem(TOKEN_KEYS.ACCESS)
-    localStorage.removeItem(TOKEN_KEYS.REFRESH)
-    localStorage.removeItem('user')
+    sessionStorage.removeItem(TOKEN_KEYS.ACCESS)
+    sessionStorage.removeItem(TOKEN_KEYS.REFRESH)
+    sessionStorage.removeItem('user')
 
     return handleErrorResponse(error)
   }
@@ -182,7 +182,7 @@ export const login = async (credentials) => {
 export const logout = async () => {
   try {
     // 현재 액세스 토큰 가져오기
-    const accessToken = localStorage.getItem('accessToken')
+    const accessToken = sessionStorage.getItem('accessToken')
 
     // 헤더에 Authorization 토큰 추가
     const config = {
@@ -195,16 +195,16 @@ export const logout = async () => {
     const response = await apiClient.post(API_ENDPOINTS.LOGOUT, {}, config)
 
     // 로그아웃 성공 시 로컬 스토리지의 모든 토큰 제거
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('user')
+    sessionStorage.removeItem('accessToken')
+    sessionStorage.removeItem('refreshToken')
+    sessionStorage.removeItem('user')
 
     return handleSuccessResponse(response)
   } catch (error) {
     // 에러가 발생해도 토큰은 제거
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('user')
+    sessionStorage.removeItem('accessToken')
+    sessionStorage.removeItem('refreshToken')
+    sessionStorage.removeItem('user')
 
     return handleErrorResponse(error)
   }

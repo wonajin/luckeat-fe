@@ -17,7 +17,7 @@ export const uploadImage = async (imageFile, type) => {
 
   try {
     // 토큰 가져오기
-    const accessToken = localStorage.getItem('accessToken')
+    const accessToken = sessionStorage.getItem('accessToken')
 
     // 1. 먼저 Presigned URL 생성을 위한 요청
     const presignedUrlEndpoint = `/images/${type}/presigned-url`

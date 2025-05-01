@@ -61,8 +61,8 @@ const UserReservationsPage = () => {
       setLoading(true)
       setError(null) // 에러 상태 초기화
 
-      // 로컬 스토리지에서 사용자 정보 확인
-      const userString = localStorage.getItem('user')
+      // 세션 스토리지에서 사용자 정보 확인
+      const userString = sessionStorage.getItem('user')
       if (!userString) {
         setError('로그인이 필요합니다.')
         return

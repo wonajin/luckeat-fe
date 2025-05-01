@@ -17,8 +17,8 @@ export function AuthProvider({ children }) {
     const checkAuthStatus = async () => {
       try {
         setLoading(true)
-        const accessToken = localStorage.getItem('accessToken')
-        const storedUser = localStorage.getItem('user')
+        const accessToken = sessionStorage.getItem('accessToken')
+        const storedUser = sessionStorage.getItem('user')
 
         if (accessToken && storedUser) {
           // 토큰 유효성 검사 추가
@@ -26,9 +26,9 @@ export function AuthProvider({ children }) {
             // 토큰이 만료된 경우 - 사용자 친화적 메시지
             setUser(null)
             setIsLoggedIn(false)
-            localStorage.removeItem('accessToken')
-            localStorage.removeItem('refreshToken')
-            localStorage.removeItem('user')
+            sessionStorage.removeItem('accessToken')
+            sessionStorage.removeItem('refreshToken')
+            sessionStorage.removeItem('user')
             setLoading(false)
             return
           }
@@ -52,7 +52,7 @@ export function AuthProvider({ children }) {
               const response = await userApi.getUserInfo()
               if (response.success) {
                 setUser(response.data)
-                localStorage.setItem('user', JSON.stringify(response.data))
+                sessionStorage.setItem('user', JSON.stringify(response.data))
               }
             } catch (error) {
               // API 요청 실패 시 토큰 유효성 다시 확인
@@ -60,9 +60,9 @@ export function AuthProvider({ children }) {
                 // 토큰이 만료된 경우 - 사용자 친화적 메시지
                 setUser(null)
                 setIsLoggedIn(false)
-                localStorage.removeItem('accessToken')
-                localStorage.removeItem('refreshToken')
-                localStorage.removeItem('user')
+                sessionStorage.removeItem('accessToken')
+                sessionStorage.removeItem('refreshToken')
+                sessionStorage.removeItem('user')
               }
             }
           } catch (parseError) {
@@ -101,8 +101,8 @@ export function AuthProvider({ children }) {
       if (response.success) {
         // 로그인 성공 시 이미 userApi.login에서 로컬 스토리지에 사용자 정보와 토큰을 저장함
         // 저장된 사용자 정보 가져오기
-        const storedUser = localStorage.getItem('user')
-        const accessToken = localStorage.getItem('accessToken')
+        const storedUser = sessionStorage.getItem('user')
+        const accessToken = sessionStorage.getItem('accessToken')
         
         // 토큰과 사용자 정보가 모두 있는지 확인
         if (storedUser && accessToken) {
@@ -126,7 +126,7 @@ export function AuthProvider({ children }) {
               if (userInfoResponse.success) {
                 const updatedUserData = userInfoResponse.data
                 setUser(updatedUserData)
-                localStorage.setItem('user', JSON.stringify(updatedUserData))
+                sessionStorage.setItem('user', JSON.stringify(updatedUserData))
                 return { success: true, user: updatedUserData }
               } else {
                 // 로컬에 저장된 정보로 계속 진행
@@ -147,7 +147,7 @@ export function AuthProvider({ children }) {
             
             setUser(basicUserData)
             setIsLoggedIn(true)
-            localStorage.setItem('user', JSON.stringify(basicUserData))
+            sessionStorage.setItem('user', JSON.stringify(basicUserData))
             
             return { success: true, user: basicUserData }
           }
@@ -156,10 +156,10 @@ export function AuthProvider({ children }) {
           
           // API에서 성공으로 응답했지만 토큰이 저장되지 않은 경우
           if (response.data && response.data.accessToken) {
-            localStorage.setItem('accessToken', response.data.accessToken)
+            sessionStorage.setItem('accessToken', response.data.accessToken)
             
             if (response.data.refreshToken) {
-              localStorage.setItem('refreshToken', response.data.refreshToken)
+              sessionStorage.setItem('refreshToken', response.data.refreshToken)
             }
             
             // 최소한의 사용자 정보 구성
@@ -170,7 +170,7 @@ export function AuthProvider({ children }) {
               role: response.data.role || 'BUYER'
             }
             
-            localStorage.setItem('user', JSON.stringify(minimalUserData))
+            sessionStorage.setItem('user', JSON.stringify(minimalUserData))
             setUser(minimalUserData)
             setIsLoggedIn(true)
             
@@ -273,9 +273,9 @@ export function AuthProvider({ children }) {
       if (response.success) {
         setUser(null)
         setIsLoggedIn(false)
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
+        sessionStorage.removeItem('accessToken')
+        sessionStorage.removeItem('refreshToken')
+        sessionStorage.removeItem('user')
         return { success: true }
       }
       return {
@@ -303,7 +303,7 @@ export function AuthProvider({ children }) {
         const userResponse = await userApi.getUserInfo()
         if (userResponse.success) {
           setUser(userResponse.data)
-          localStorage.setItem('user', JSON.stringify(userResponse.data))
+          sessionStorage.setItem('user', JSON.stringify(userResponse.data))
           return { success: true }
         }
       }
@@ -352,9 +352,9 @@ export function AuthProvider({ children }) {
       if (response.success) {
         setUser(null)
         setIsLoggedIn(false)
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
+        sessionStorage.removeItem('accessToken')
+        sessionStorage.removeItem('refreshToken')
+        sessionStorage.removeItem('user')
         return { success: true }
       }
       return {
@@ -375,8 +375,8 @@ export function AuthProvider({ children }) {
   const checkCurrentAuthStatus = () => {
     try {
       // 액세스 토큰 유효성 검사
-      const accessToken = localStorage.getItem('accessToken')
-      const storedUser = localStorage.getItem('user')
+      const accessToken = sessionStorage.getItem('accessToken')
+      const storedUser = sessionStorage.getItem('user')
       
       // 토큰이 없거나 사용자 정보가 없으면 무효한 것으로 간주
       if (!accessToken || !storedUser) {
@@ -390,9 +390,9 @@ export function AuthProvider({ children }) {
         if (isLoggedIn) {
           setUser(null)
           setIsLoggedIn(false)
-          localStorage.removeItem('accessToken')
-          localStorage.removeItem('refreshToken')
-          localStorage.removeItem('user')
+          sessionStorage.removeItem('accessToken')
+          sessionStorage.removeItem('refreshToken')
+          sessionStorage.removeItem('user')
         }
         return false
       }
@@ -404,9 +404,9 @@ export function AuthProvider({ children }) {
         if (isLoggedIn) {
           setUser(null)
           setIsLoggedIn(false)
-          localStorage.removeItem('accessToken')
-          localStorage.removeItem('refreshToken')
-          localStorage.removeItem('user')
+          sessionStorage.removeItem('accessToken')
+          sessionStorage.removeItem('refreshToken')
+          sessionStorage.removeItem('user')
         }
         return false
       }

@@ -91,7 +91,7 @@ export const getStores = async (params = {}) => {
 export const getStoreById = async (storeId) => {
   try {
     // 현재 액세스 토큰 확인
-    const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS)
+    const accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS)
 
     const response = await apiClient.get(`/stores/${storeId}`)
 

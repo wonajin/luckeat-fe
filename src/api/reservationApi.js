@@ -145,7 +145,7 @@ export const getUserReservations = async (userId) => {
 export const getUserCompletedReservations = async () => {
   try {
     // 사용자 정보 가져오기
-    const userString = localStorage.getItem('user')
+    const userString = sessionStorage.getItem('user')
     if (!userString) {
       return {
         success: false,

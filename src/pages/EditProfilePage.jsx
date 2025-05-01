@@ -312,9 +312,9 @@ function EditProfilePage() {
     // 실제 로그아웃 처리 (로컬 스토리지 삭제)
     if (deletionSuccessful) {
       // 로컬 스토리지 직접 접근 대신 로그아웃 함수 사용
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
+      sessionStorage.removeItem('accessToken')
+      sessionStorage.removeItem('refreshToken')
+      sessionStorage.removeItem('user')
       console.log('로컬 스토리지 정보 삭제 완료')
       
       // 로그인 페이지로 즉시 이동 (history API 사용)

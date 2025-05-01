@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - 371-센트리-self-hosted-로-이관
 
 jobs:
   deploy:

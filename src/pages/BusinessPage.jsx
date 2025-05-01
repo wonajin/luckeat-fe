@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navigation from '../components/layout/Navigation'
 import Header from '../components/layout/Header'
 import { useAuth } from '../context/AuthContext'
 import { getUserInfo } from '../api/userApi'
 import { getMyStore } from '../api/storeApi'
 import { getStorePendingReservations, updateReservationStatus } from '../api/reservationApi'
-import StoreCard from '../components/store/StoreCard'
 import { formatDate, formatTime } from '../utils/dateUtils'
 
 function BusinessPage() {
@@ -28,75 +26,6 @@ function BusinessPage() {
       navigate('/mypage')
     }
   }, [user, navigate])
-
-  // 예약 더미 데이터
-  const dummyReservations = [
-    {
-      id: 1,
-      customerName: '김고객',
-      quantity: 2,
-      reservationDate: '2023-05-15',
-      reservationTime: '18:00',
-      isZeroWaste: true
-    },
-    {
-      id: 2,
-      customerName: '박손님',
-      quantity: 1,
-      reservationDate: '2023-05-15',
-      reservationTime: '19:30',
-      isZeroWaste: false
-    },
-    {
-      id: 3,
-      customerName: '이방문',
-      quantity: 3,
-      reservationDate: '2023-05-16',
-      reservationTime: '12:00',
-      isZeroWaste: true
-    },
-    // 추가 데이터 (스크롤 테스트용)
-    {
-      id: 4,
-      customerName: '강고객',
-      quantity: 2,
-      reservationDate: '2023-05-17',
-      reservationTime: '13:00',
-      isZeroWaste: true
-    },
-    {
-      id: 5,
-      customerName: '윤손님',
-      quantity: 3,
-      reservationDate: '2023-05-17',
-      reservationTime: '14:30',
-      isZeroWaste: false
-    },
-    {
-      id: 6,
-      customerName: '임방문',
-      quantity: 1,
-      reservationDate: '2023-05-17',
-      reservationTime: '16:00',
-      isZeroWaste: true
-    },
-    {
-      id: 7,
-      customerName: '한손님',
-      quantity: 2,
-      reservationDate: '2023-05-18',
-      reservationTime: '12:30',
-      isZeroWaste: false
-    },
-    {
-      id: 8,
-      customerName: '오방문',
-      quantity: 4,
-      reservationDate: '2023-05-18',
-      reservationTime: '18:30',
-      isZeroWaste: true
-    }
-  ]
 
   // 사용자 정보와 가게 정보 가져오기
   useEffect(() => {
@@ -123,8 +52,6 @@ function BusinessPage() {
               setPendingReservations(pendingResponse.data)
             } else {
               console.error('대기 중인 예약 조회 실패:', pendingResponse.message)
-              // API 실패 시 더미 데이터 사용(개발용)
-              // setPendingReservations(dummyReservations)
             }
           }
         }
@@ -223,15 +150,6 @@ function BusinessPage() {
   // API에서 가져온 사용자 정보가 없으면, 로컬 상태의 사용자 정보 사용
   const displayUser = userData || user || {}
 
-  // 가게 관련 페이지로 이동하는 핸들러
-  const handleStorePageNavigation = (path) => {
-    if (storeData) {
-      navigate(path);
-    } else {
-      navigate('/no-registered-store');
-    }
-  };
-
   return (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
@@ -319,10 +237,10 @@ function BusinessPage() {
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
-                      if (storeData) {
-                        navigate(`/store/${storeData.id}`);
+                      if (storeData && storeData.id) {
+                        navigate(`/store/${storeData.id}`)
                       } else {
-                        navigate('/no-registered-store');
+                        navigate('/no-registered-store')
                       }
                     }}
                   >
@@ -335,10 +253,10 @@ function BusinessPage() {
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
-                      if (storeData) {
-                        navigate(`/store/${storeData.id}/products`);
+                      if (storeData && storeData.id) {
+                        navigate(`/store/${storeData.id}/products`)
                       } else {
-                        navigate('/no-registered-store');
+                        navigate('/no-registered-store')
                       }
                     }}
                   >
@@ -351,10 +269,10 @@ function BusinessPage() {
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
-                      if (storeData) {
-                        navigate(`/store/${storeData.id}/reservation`);
+                      if (storeData && storeData.id) {
+                        navigate(`/store/${storeData.id}/reservation`)
                       } else {
-                        navigate('/no-registered-store');
+                        navigate('/no-registered-store')
                       }
                     }}
                   >
@@ -367,10 +285,10 @@ function BusinessPage() {
                   <button
                     className="w-full text-left font-bold text-gray-700 flex justify-between items-center"
                     onClick={() => {
-                      if (storeData) {
-                        navigate('/edit-store');
+                      if (storeData && storeData.id) {
+                        navigate('/edit-store')
                       } else {
-                        navigate('/no-registered-store');
+                        navigate('/no-registered-store')
                       }
                     }}
                   >

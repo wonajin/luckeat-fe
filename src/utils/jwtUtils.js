@@ -66,6 +66,6 @@ export const isValidToken = (token) => {
  * @returns {boolean} 유효한 토큰이 있으면 true, 그렇지 않으면 false
  */
 export const hasValidAccessToken = () => {
-  const accessToken = localStorage.getItem('accessToken')
+  const accessToken = sessionStorage.getItem('accessToken')
   return isValidToken(accessToken)
 }

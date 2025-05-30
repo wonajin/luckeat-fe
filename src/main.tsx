@@ -4,13 +4,6 @@ import App from './App'
 import './index.css'
 import * as Sentry from '@sentry/react'
 
-// // 환경 변수 확인
-// console.log('Current Environment:', {
-//   MODE: import.meta.env.MODE,
-//   VITE_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN ? 'exists' : 'missing',
-//   BASE_URL: import.meta.env.BASE_URL,
-// })
-
 // Sentry 초기화
 Sentry.init({
   // 기본 설정
@@ -62,8 +55,11 @@ Sentry.init({
   release: '1.0.0',
 })
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const rootElement = document.getElementById('root')
+if (!rootElement) throw new Error('Failed to find the root element')
+
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
-)
+) 

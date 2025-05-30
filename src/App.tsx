@@ -4,8 +4,10 @@ import {
   Route,
   useNavigate,
   useLocation,
+  Location,
+  NavigateFunction
 } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, ReactNode } from 'react'
 import HomePage from './pages/HomePage'
 import MapPage from './pages/MapPage'
 import LoginPage from './pages/LoginPage'
@@ -27,7 +29,7 @@ import { hasValidAccessToken } from './utils/jwtUtils'
 import Navigation from './components/layout/Navigation'
 
 // 오류 발생 시 보여줄 폴백 컴포넌트
-const FallbackComponent = () => {
+const FallbackComponent = (): JSX.Element => {
   return (
     <div className="flex justify-center items-center min-h-screen bg-bread-light">
       <div className="w-[390px] h-[775px] bg-white flex flex-col border border-gray-200 rounded-2xl overflow-hidden relative p-6 shadow-soft">
@@ -50,28 +52,32 @@ const FallbackComponent = () => {
 }
 
 // 사파리 감지 함수
-const detectSafari = () => {
+const detectSafari = (): void => {
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
   if (isSafari) {
     document.body.classList.add('safari-browser')
   }
 }
 
+interface AuthWrapperProps {
+  children: ReactNode;
+}
+
 // 토큰 유효성 검사 래퍼 컴포넌트
-function AuthWrapper({ children }) {
+function AuthWrapper({ children }: AuthWrapperProps): JSX.Element {
   const { checkCurrentAuthStatus } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate: NavigateFunction = useNavigate()
+  const location: Location = useLocation()
 
   useEffect(() => {
     // 현재 경로가 인증이 필요하지 않은 경로인지 확인
-    const publicPaths = ['/login', '/signup', '/', '/home', '/map']
-    const isStoreDetailPath = /^\/store\/[^/]+$/.test(location.pathname)
-    const isPublicPath = publicPaths.includes(location.pathname) || isStoreDetailPath
+    const publicPaths: string[] = ['/login', '/signup', '/', '/home', '/map']
+    const isStoreDetailPath: boolean = /^\/store\/[^/]+$/.test(location.pathname)
+    const isPublicPath: boolean = publicPaths.includes(location.pathname) || isStoreDetailPath
 
     // 인증이 필요한 경로에서만 토큰 유효성 검사
     if (!isPublicPath) {
-      const isValid = checkCurrentAuthStatus()
+      const isValid: boolean = checkCurrentAuthStatus()
 
       // 유효하지 않은 토큰을 가진 경우 로그인 페이지로 리다이렉션
       if (!isValid && location.pathname !== '/login') {
@@ -86,18 +92,18 @@ function AuthWrapper({ children }) {
     }
   }, [location.pathname, checkCurrentAuthStatus, navigate, location])
 
-  return children
+  return <>{children}</>
 }
 
 // 네비게이션 바가 필요한지 확인하는 함수
-const shouldShowNavigation = (pathname) => {
+const shouldShowNavigation = (pathname: string): boolean => {
   // 네비게이션 바를 표시하지 않을 경로 목록
-  const hideNavigationPaths = []
+  const hideNavigationPaths: string[] = []
   return !hideNavigationPaths.includes(pathname)
 }
 
-function AppRoutes() {
-  const location = useLocation()
+function AppRoutes(): JSX.Element {
+  const location: Location = useLocation()
   
   return (
     <AuthWrapper>
@@ -124,7 +130,7 @@ function AppRoutes() {
   )
 }
 
-function App() {
+function App(): JSX.Element {
   useEffect(() => {
     detectSafari()
   }, [])
@@ -151,4 +157,4 @@ function App() {
   )
 }
 
-export default Sentry.withProfiler(App, { name: 'LuckEatApp' })
+export default Sentry.withProfiler(App, { name: 'LuckEatApp' }) 
